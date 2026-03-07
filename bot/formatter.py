@@ -44,6 +44,28 @@ def _format_amount(amount: int) -> str:
         return f"{sign}{abs_amount:,}"
 
 
+def _format_shares(shares: int) -> str:
+    """주식 수량을 읽기 쉬운 단위로 변환한다 (주 단위).
+
+    Examples:
+        1500000 -> "150만주"
+        23000   -> "2.3만주"
+        500     -> "500주"
+    """
+    if shares == 0:
+        return "0주"
+
+    abs_shares = abs(shares)
+
+    if abs_shares >= 10_000:
+        value = abs_shares / 10_000
+        if value == int(value):
+            return f"{int(value)}만주"
+        return f"{value:.1f}만주"
+    else:
+        return f"{abs_shares:,}주"
+
+
 def _format_price(price: int) -> str:
     """가격을 천 단위 콤마 포맷으로 변환한다.
 
@@ -194,22 +216,24 @@ def _build_signal_block(stock: dict) -> str:
     if has_investor:
         lines.append("[수급]")
         if foreign_net is not None:
-            amt_str = _format_amount(foreign_net)
+            amt_str = _format_shares(abs(foreign_net))
             if foreign_consec and foreign_consec > 0:
                 lines.append(f" • 외인 {foreign_consec}일 연속 순매수 ({amt_str})")
             elif foreign_consec and foreign_consec < 0:
                 lines.append(f" • 외인 {abs(foreign_consec)}일 연속 순매도 ({amt_str})")
             else:
-                lines.append(f" • 외인 순매수: {amt_str}")
+                direction = "순매수" if foreign_net >= 0 else "순매도"
+                lines.append(f" • 외인 {direction}: {amt_str}")
 
         if institutional_net is not None:
-            amt_str = _format_amount(institutional_net)
+            amt_str = _format_shares(abs(institutional_net))
             if institutional_consec and institutional_consec > 0:
                 lines.append(f" • 기관 {institutional_consec}일 연속 순매수 ({amt_str})")
             elif institutional_consec and institutional_consec < 0:
                 lines.append(f" • 기관 {abs(institutional_consec)}일 연속 순매도 ({amt_str})")
             else:
-                lines.append(f" • 기관 순매수: {amt_str}")
+                direction = "순매수" if institutional_net >= 0 else "순매도"
+                lines.append(f" • 기관 {direction}: {amt_str}")
 
         lines.append("")
 

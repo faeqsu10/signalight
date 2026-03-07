@@ -71,3 +71,11 @@ export function calcMACD(
 
   return { macdLine, signalLine, histogram };
 }
+
+export function calcVolumeRatio(volumes: number[], period: number = 20): number {
+  if (volumes.length < period) return 1.0;
+  const window = volumes.slice(-period);
+  const avg = window.reduce((sum, v) => sum + v, 0) / period;
+  if (avg === 0) return 1.0;
+  return volumes[volumes.length - 1] / avg;
+}

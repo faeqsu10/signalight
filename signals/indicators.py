@@ -30,3 +30,13 @@ def calc_macd(closes: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
     histogram = macd_line - signal_line
 
     return macd_line, signal_line, histogram
+
+
+def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
+    """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
+    if len(volumes) < period:
+        return 1.0
+    avg = volumes.iloc[-period:].mean()
+    if avg == 0:
+        return 1.0
+    return float(volumes.iloc[-1] / avg)
