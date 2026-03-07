@@ -6,6 +6,7 @@ import {
   ColorType,
   CandlestickSeries,
   LineSeries,
+  HistogramSeries,
 } from "lightweight-charts";
 import { OHLCVData } from "@/lib/yahoo-finance";
 import { useTheme } from "./ThemeProvider";
@@ -38,7 +39,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
         horzLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
       },
       width: containerRef.current.clientWidth,
-      height: 400,
+      height: window.innerWidth < 640 ? 250 : 400,
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -63,7 +64,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
     const shortMASeries = chart.addSeries(LineSeries, {
       color: "#facc15",
       lineWidth: 1,
-      title: "MA5",
+      title: "MA10",
     });
     shortMASeries.setData(
       ohlcv
@@ -78,7 +79,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
     const longMASeries = chart.addSeries(LineSeries, {
       color: "#a78bfa",
       lineWidth: 1,
-      title: "MA20",
+      title: "MA50",
     });
     longMASeries.setData(
       ohlcv
@@ -90,11 +91,32 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
         .filter(Boolean) as { time: string; value: number }[]
     );
 
+    // Volume histogram
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: "volume" },
+      priceScaleId: "volume",
+    });
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+    });
+    volumeSeries.setData(
+      ohlcv.map((d) => ({
+        time: d.date,
+        value: d.volume,
+        color: d.close >= d.open
+          ? (isDark ? "rgba(239,68,68,0.3)" : "rgba(239,68,68,0.4)")
+          : (isDark ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.4)"),
+      }))
+    );
+
     chart.timeScale().fitContent();
 
     const handleResize = () => {
       if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth });
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+          height: window.innerWidth < 640 ? 250 : 400,
+        });
       }
     };
     window.addEventListener("resize", handleResize);

@@ -65,8 +65,8 @@ def analyze_detailed(
     result["change_pct"] = round(change_pct, 2)
 
     signals = []  # type: List[Dict]
-    buy_count = 0
-    sell_count = 0
+    buy_score = 0.0
+    sell_score = 0.0
 
     # 지표 계산
     short_ma = calc_moving_average(closes, SHORT_MA)
@@ -87,22 +87,28 @@ def analyze_detailed(
     }
 
     # 1. 이동평균선 크로스
+    vol_note = ""
+    if volume_ratio >= 1.5:
+        vol_note = " [거래량 확인 ↑]"
+    elif volume_ratio < 0.5:
+        vol_note = " [거래량 부족 주의]"
+
     if short_ma.iloc[-2] <= long_ma.iloc[-2] and short_ma.iloc[-1] > long_ma.iloc[-1]:
         signals.append({
             "trigger": "골든크로스",
             "type": "buy",
             "source": "MA_CROSS",
-            "detail": f"{SHORT_MA}일선({short_ma.iloc[-1]:,.0f}) > {LONG_MA}일선({long_ma.iloc[-1]:,.0f}) 상향 돌파",
+            "detail": f"{SHORT_MA}일선({short_ma.iloc[-1]:,.0f}) > {LONG_MA}일선({long_ma.iloc[-1]:,.0f}) 상향 돌파{vol_note}",
         })
-        buy_count += 1
+        buy_score += 1.0
     elif short_ma.iloc[-2] >= long_ma.iloc[-2] and short_ma.iloc[-1] < long_ma.iloc[-1]:
         signals.append({
             "trigger": "데드크로스",
             "type": "sell",
             "source": "MA_CROSS",
-            "detail": f"{SHORT_MA}일선({short_ma.iloc[-1]:,.0f}) < {LONG_MA}일선({long_ma.iloc[-1]:,.0f}) 하향 돌파",
+            "detail": f"{SHORT_MA}일선({short_ma.iloc[-1]:,.0f}) < {LONG_MA}일선({long_ma.iloc[-1]:,.0f}) 하향 돌파{vol_note}",
         })
-        sell_count += 1
+        sell_score += 1.0
 
     # 2. RSI
     if current_rsi is not None:
@@ -113,7 +119,7 @@ def analyze_detailed(
                 "source": "RSI",
                 "detail": f"RSI {current_rsi:.1f} (기준: {RSI_OVERSOLD} 이하)",
             })
-            buy_count += 1
+            buy_score += 1.0
         elif current_rsi >= RSI_OVERBOUGHT:
             signals.append({
                 "trigger": "RSI 과매수",
@@ -121,7 +127,7 @@ def analyze_detailed(
                 "source": "RSI",
                 "detail": f"RSI {current_rsi:.1f} (기준: {RSI_OVERBOUGHT} 이상)",
             })
-            sell_count += 1
+            sell_score += 1.0
 
     # 3. MACD
     if not pd.isna(macd_line.iloc[-2]) and not pd.isna(macd_line.iloc[-1]):
@@ -132,7 +138,7 @@ def analyze_detailed(
                 "source": "MACD",
                 "detail": "MACD 라인이 시그널 라인을 상향 돌파",
             })
-            buy_count += 1
+            buy_score += 1.0
         elif macd_line.iloc[-2] >= signal_line.iloc[-2] and macd_line.iloc[-1] < signal_line.iloc[-1]:
             signals.append({
                 "trigger": "MACD 매도",
@@ -140,7 +146,7 @@ def analyze_detailed(
                 "source": "MACD",
                 "detail": "MACD 라인이 시그널 라인을 하향 돌파",
             })
-            sell_count += 1
+            sell_score += 1.0
 
     # 4. VIX 공포지수
     vix_value = None
@@ -156,7 +162,7 @@ def analyze_detailed(
                     "source": "VIX",
                     "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
                 })
-                buy_count += 1
+                buy_score += 1.0
             elif vix_value >= VIX_FEAR:
                 signals.append({
                     "trigger": "VIX 주의",
@@ -164,7 +170,7 @@ def analyze_detailed(
                     "source": "VIX",
                     "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
                 })
-                buy_count += 1
+                buy_score += 1.0
             elif vix_value <= VIX_EXTREME_GREED:
                 signals.append({
                     "trigger": "VIX 과열",
@@ -172,7 +178,7 @@ def analyze_detailed(
                     "source": "VIX",
                     "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
                 })
-                sell_count += 1
+                sell_score += 1.0
     except Exception:
         pass
 
@@ -206,7 +212,7 @@ def analyze_detailed(
                 "source": "INVESTOR",
                 "detail": f"외인+기관 {INVESTOR_CONSEC_DAYS}일 연속 순매수",
             })
-            buy_count += 1
+            buy_score += 1.5  # 수급 시그널 가중치
         elif (recent_frgn < 0).all() and (recent_inst < 0).all():
             signals.append({
                 "trigger": "외인/기관 동시 매도",
@@ -214,11 +220,15 @@ def analyze_detailed(
                 "source": "INVESTOR",
                 "detail": f"외인+기관 {INVESTOR_CONSEC_DAYS}일 연속 순매도",
             })
-            sell_count += 1
+            sell_score += 1.5  # 수급 시그널 가중치
 
     result["signals"] = signals
-    result["confluence_score"] = max(buy_count, sell_count)
-    result["confluence_direction"] = "buy" if buy_count >= sell_count else "sell"
+    if buy_score > 0 and buy_score == sell_score:
+        result["confluence_score"] = 0
+        result["confluence_direction"] = "mixed"
+    else:
+        result["confluence_score"] = round(max(buy_score, sell_score), 1)
+        result["confluence_direction"] = "buy" if buy_score > sell_score else "sell"
 
     return result
 

@@ -7,16 +7,35 @@ def calc_moving_average(closes: pd.Series, period: int) -> pd.Series:
 
 
 def calc_rsi(closes: pd.Series, period: int = 14) -> pd.Series:
-    """RSI(상대강도지수) 계산."""
-    delta = closes.diff()
-    gain = delta.where(delta > 0, 0.0)
-    loss = -delta.where(delta < 0, 0.0)
+    """RSI(상대강도지수) 계산 — Wilder's Smoothing 방식."""
+    delta = closes.diff().dropna()
+    gains = delta.where(delta > 0, 0.0).values
+    losses = (-delta.where(delta < 0, 0.0)).values
 
-    avg_gain = gain.rolling(window=period).mean()
-    avg_loss = loss.rolling(window=period).mean()
+    rsi = pd.Series([float('nan')] * len(closes), index=closes.index)
 
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
+    if len(gains) < period:
+        return rsi
+
+    # Seed: SMA of first `period` values
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+
+    if avg_loss == 0:
+        rsi.iloc[period] = 100.0
+    else:
+        rsi.iloc[period] = 100.0 - 100.0 / (1.0 + avg_gain / avg_loss)
+
+    # Wilder's smoothing
+    for i in range(period, len(gains)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+
+        if avg_loss == 0:
+            rsi.iloc[i + 1] = 100.0
+        else:
+            rsi.iloc[i + 1] = 100.0 - 100.0 / (1.0 + avg_gain / avg_loss)
+
     return rsi
 
 

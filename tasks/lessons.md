@@ -30,11 +30,12 @@
 - Claude Code는 세션 시작 시 에이전트를 스캔 → 세션 중 추가한 에이전트는 다음 세션부터 인식
 - 비엔지니어 역할(UX, PM, PO, Quant Researcher)도 에이전트로 정의하면 전문 관점 활용 가능
 
-## Claude API (anthropic 패키지)
-- `anthropic.Anthropic(api_key=..., timeout=5.0)` — 생성자에 timeout 직접 지정 가능
-- `temperature=0`은 `messages.create()` 파라미터로 전달 (재현성 보장)
-- 응답 텍스트: `response.content[0].text`
-- JSON이 응답 앞뒤에 설명 텍스트와 섞일 수 있으므로 `find("{")`/`rfind("}")` 로 추출
+## Google Gemini REST API (감성 분석)
+- REST endpoint: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+- API 키는 query parameter로 전달: `?key={GOOGLE_API_KEY}`
+- 응답 구조: `result["candidates"][0]["content"]["parts"][0]["text"]`
+- Gemini는 JSON을 마크다운 코드블록(```json)으로 감싸서 반환할 수 있으므로 ``` 제거 필요
+- `maxOutputTokens`가 너무 작으면 JSON이 잘림 — Gemini 2.5 Flash는 thinking 토큰이 포함되므로 2048 이상 권장
 - API 키 없음/오류 시 예외를 전파하지 말고 `None` 반환 — 감성 분석은 선택적 기능
 
 ## 네이버 금융 크롤링 패턴

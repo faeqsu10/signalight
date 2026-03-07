@@ -47,8 +47,8 @@ export function analyze(
 
   const signals: Signal[] = [];
   const n = closes.length;
-  let buyCount = 0;
-  let sellCount = 0;
+  let buyScore = 0;
+  let sellScore = 0;
 
   // VIX 현재값 추출
   const currentVIX =
@@ -78,6 +78,12 @@ export function analyze(
   const curShort = shortMA[n - 1];
   const curLong = longMA[n - 1];
 
+  const volNote = volumeRatio >= 1.5
+    ? " [거래량 확인 ↑]"
+    : volumeRatio < 0.5
+      ? " [거래량 부족 주의]"
+      : "";
+
   if (
     prevShort !== null &&
     prevLong !== null &&
@@ -88,16 +94,16 @@ export function analyze(
       signals.push({
         type: "buy",
         label: "이동평균",
-        detail: `골든크로스 - 단기(${SHORT_MA}일)이 장기(${LONG_MA}일) 상향 돌파`,
+        detail: `골든크로스 - 단기(${SHORT_MA}일)이 장기(${LONG_MA}일) 상향 돌파${volNote}`,
       });
-      buyCount++;
+      buyScore++;
     } else if (prevShort >= prevLong && curShort < curLong) {
       signals.push({
         type: "sell",
         label: "이동평균",
-        detail: `데드크로스 - 단기(${SHORT_MA}일)이 장기(${LONG_MA}일) 하향 돌파`,
+        detail: `데드크로스 - 단기(${SHORT_MA}일)이 장기(${LONG_MA}일) 하향 돌파${volNote}`,
       });
-      sellCount++;
+      sellScore++;
     } else {
       signals.push({
         type: "neutral",
@@ -119,14 +125,14 @@ export function analyze(
         label: "RSI",
         detail: `${currentRSI.toFixed(1)} - 과매도 (${RSI_OVERSOLD} 이하)`,
       });
-      buyCount++;
+      buyScore++;
     } else if (currentRSI >= RSI_OVERBOUGHT) {
       signals.push({
         type: "sell",
         label: "RSI",
         detail: `${currentRSI.toFixed(1)} - 과매수 (${RSI_OVERBOUGHT} 이상)`,
       });
-      sellCount++;
+      sellScore++;
     } else {
       signals.push({
         type: "neutral",
@@ -154,14 +160,14 @@ export function analyze(
         label: "MACD",
         detail: "MACD 라인이 시그널 라인 상향 돌파",
       });
-      buyCount++;
+      buyScore++;
     } else if (prevMACD >= prevSignal && curMACD < curSignal) {
       signals.push({
         type: "sell",
         label: "MACD",
         detail: "MACD 라인이 시그널 라인 하향 돌파",
       });
-      sellCount++;
+      sellScore++;
     } else {
       signals.push({
         type: "neutral",
@@ -179,21 +185,21 @@ export function analyze(
         label: "VIX",
         detail: `${currentVIX.toFixed(1)} - 극단적 공포 (${VIX_EXTREME_FEAR} 이상, 역발상 매수)`,
       });
-      buyCount++;
+      buyScore++;
     } else if (currentVIX >= VIX_FEAR) {
       signals.push({
         type: "buy",
         label: "VIX",
         detail: `${currentVIX.toFixed(1)} - 공포 구간 (${VIX_FEAR} 이상)`,
       });
-      buyCount++;
+      buyScore++;
     } else if (currentVIX <= VIX_EXTREME_GREED) {
       signals.push({
         type: "sell",
         label: "VIX",
         detail: `${currentVIX.toFixed(1)} - 극단적 탐욕 (${VIX_EXTREME_GREED} 이하, 과열 주의)`,
       });
-      sellCount++;
+      sellScore++;
     } else {
       signals.push({
         type: "neutral",
@@ -218,14 +224,14 @@ export function analyze(
         label: "수급",
         detail: `외인+기관 ${INVESTOR_CONSEC_DAYS}일 연속 순매수`,
       });
-      buyCount++;
+      buyScore += 1.5; // 수급 시그널 가중치
     } else if (allForeignSell && allInstitutionalSell) {
       signals.push({
         type: "sell",
         label: "수급",
         detail: `외인+기관 ${INVESTOR_CONSEC_DAYS}일 연속 순매도`,
       });
-      sellCount++;
+      sellScore += 1.5; // 수급 시그널 가중치
     } else if (allForeignBuy || allInstitutionalBuy) {
       const who = allForeignBuy ? "외국인" : "기관";
       signals.push({
@@ -254,7 +260,7 @@ export function analyze(
     currentRSI,
     currentVIX,
     volumeRatio,
-    confluenceScore: Math.max(buyCount, sellCount),
+    confluenceScore: (buyScore > 0 && buyScore === sellScore) ? 0 : Math.max(buyScore, sellScore),
     shortMA,
     longMA,
     macdLine,

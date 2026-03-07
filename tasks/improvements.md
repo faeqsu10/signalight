@@ -7,8 +7,8 @@
 > 상세 로드맵: `tasks/llm-pipeline-roadmap.md`
 
 ### Phase 1: 뉴스 감성 분석 (완료)
-- [x] `signals/sentiment.py` 구현 — Claude Haiku `claude-haiku-4-5-20251001` 호출
-- [x] `config.py`에 `ANTHROPIC_API_KEY` 추가
+- [x] `signals/sentiment.py` 구현 — Google Gemini 2.5 Flash REST API 호출
+- [x] `config.py`에 `GOOGLE_API_KEY` 추가
 - [x] `data/news.py` 구현 — 네이버 금융 종목별 뉴스 크롤러
 - [x] `bot/formatter.py` — [뉴스 감성] 블록 (감성+신뢰도+요약+방향 불일치 경고)
 - [x] `main.py` — 뉴스+감성 통합 (try/except 격리)

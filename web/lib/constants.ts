@@ -1,9 +1,9 @@
-export const SHORT_MA = 5;
-export const LONG_MA = 20;
+export const SHORT_MA = 10;
+export const LONG_MA = 50;
 export const RSI_PERIOD = 14;
 export const RSI_OVERSOLD = 30;
 export const RSI_OVERBOUGHT = 70;
-export const DATA_PERIOD_DAYS = 60;
+export const DATA_PERIOD_DAYS = 120;
 
 // VIX (공포지수) thresholds
 export const VIX_EXTREME_FEAR = 30;

@@ -18,7 +18,7 @@ signalight/
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, RSI, MACD)
 │   │   ├── strategy.py     # 시그널 판단 로직
-│   │   └── sentiment.py    # Claude Haiku 뉴스 감성 분석
+│   │   └── sentiment.py    # Google Gemini 뉴스 감성 분석
 │   └── bot/
 │       ├── telegram.py     # 텔레그램 메시지 전송
 │       └── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)

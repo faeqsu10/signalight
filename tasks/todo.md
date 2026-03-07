@@ -40,9 +40,16 @@
 - [x] 일일 종합 브리핑 (평일 16:00, 전 종목 요약)
 - [x] 주간 리포트 (금요일 16:30, 주간 등락률 + 시그널 요약)
 - [x] systemd 서비스 등록 (자동 시작 + 자동 재시작)
+- [x] RSI Wilder's Smoothing 변경 (Python + TS 동기화)
+- [x] 거래량 확인 로직 시그널 활용 (volume_ratio 기반 강화/경고)
+- [x] 거래량 차트 추가 (캔들 하단 HistogramSeries)
+- [x] MA 조합 변경 (5/20 → 10/50) + DATA_PERIOD_DAYS 120
+- [x] 합류 점수 가중치 도입 (수급 1.5x, 기술적 1.0x, 상충 시 혼재)
+- [x] 종합 시그널 배너 화면 최상단 추가
+- [x] Tooltip 모바일 터치 지원 (onClick 토글 + 외부 클릭 닫힘)
+- [x] 차트 모바일 반응형 높이 + 마지막 갱신 시각 표시
 - [ ] 신규 지표 추가 (볼린저밴드, OBV 등) + TS 동기화
 - [ ] 복합 전략 프레임워크 (멀티 시그널 조합)
-- [ ] 파라미터 최적화 (MA 조합 탐색)
 - [ ] 백테스트 결과 웹 대시보드 표시
 
 ### 인프라 안정화 (Phase 2 신규)
@@ -55,9 +62,9 @@
 - 참고: `DEVOPS_ANALYSIS.md`
 
 ## LLM 파이프라인 (Phase 1 - 완료)
-- [x] anthropic 패키지 설치
-- [x] signals/sentiment.py 구현 (Claude Haiku 감성 분석)
-- [x] config.py에 ANTHROPIC_API_KEY 추가
+- [x] google-generativeai 패키지 설치 (→ REST API 직접 호출로 전환)
+- [x] signals/sentiment.py 구현 (Google Gemini 2.5 Flash 감성 분석)
+- [x] config.py에 GOOGLE_API_KEY + SENTIMENT_MODEL 등 설정 추가
 - [x] data/news.py 구현 (네이버 금융 뉴스 크롤러)
 - [x] bot/formatter.py에 [뉴스 감성] 블록 추가 (감성+신뢰도+요약+불일치 경고)
 - [x] main.py에 뉴스+감성 통합 (실패 격리, 기존 기능 영향 없음)

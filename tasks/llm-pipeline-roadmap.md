@@ -29,14 +29,14 @@ Signalight에 단계적으로 적용하는 로드맵.
 
 ### 파일 변경 계획
 - [신규] `data/news.py` — 네이버 금융 뉴스 크롤링
-- [신규] `signals/sentiment.py` — Claude Haiku로 감성 분류
+- [신규] `signals/sentiment.py` — Google Gemini 2.5 Flash REST API로 감성 분류
 - [수정] `bot/formatter.py` — [뉴스 감성] 블록 추가
 - [수정] `main.py` — 시그널 체크에 뉴스 분석 통합
-- [수정] `config.py` — ANTHROPIC_API_KEY 환경변수
+- [수정] `config.py` — GOOGLE_API_KEY + SENTIMENT_MODEL 등 설정
 
 ### 기술 결정
 - 뉴스 소스: 네이버 금융 종목별 뉴스 (investor.py 크롤링 패턴 재활용)
-- LLM 모델: Claude Haiku 4.5 (비용 최소화, 감성 분류에 충분)
+- LLM 모델: Google Gemini 2.5 Flash (무료 티어, 감성 분류에 충분)
 - 비용: 하루 ~20원, 월 ~400원
 - 실패 격리: 뉴스 수집/분석 실패 시 기존 알림 정상 동작 (try/except)
 
@@ -98,7 +98,7 @@ Signalight에 단계적으로 적용하는 로드맵.
 | 뉴스 감성 | 한국 시장에서 뉴스 감성이 주가 예측에 유효 (학술 논문) |
 | LLM 트레이딩 | 멀티모달 결합 시 최강 성능, 장기 백테스트에서 우위 약화 주의 |
 | 차트 비전 | VISTA(2025) 89% 향상 보고, 과적합 위험 경고 |
-| 비용 | Claude Haiku 기준 전체 파이프라인 월 5,000원 이하 |
+| 비용 | Google Gemini 2.5 Flash 기준 전체 파이프라인 무료 티어 내 (월 5,000원 이하) |
 | 할루시네이션 | 구조화 출력 + temperature 0 + 수치 입력으로 완화 |
 
 ## 참고 논문/자료
@@ -112,7 +112,7 @@ Signalight에 단계적으로 적용하는 로드맵.
 
 ```
 signalight/
-├── config.py                    # + ANTHROPIC_API_KEY
+├── config.py                    # + GOOGLE_API_KEY
 ├── main.py                      # + 뉴스/LLM 플로우 통합
 ├── data/
 │   ├── fetcher.py               # [기존 유지]

@@ -94,8 +94,10 @@ def _signal_emoji(signal_type: str) -> str:
     return "⬜ 관망"
 
 
-def _confluence_label(score: int, total: int, direction: str = "buy") -> str:
+def _confluence_label(score: float, total: int, direction: str = "buy") -> str:
     """합류 점수를 텍스트로 변환한다."""
+    if direction == "mixed" or score == 0:
+        return "혼재"
     if total == 0:
         return "데이터 없음"
     ratio = score / total

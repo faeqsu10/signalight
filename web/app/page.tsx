@@ -75,7 +75,14 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
       {/* Header */}
       <header className="border-b border-[var(--card-border)] px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">SIGNALIGHT</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight">SIGNALIGHT</h1>
+          {data && !data.error && (
+            <span className="text-xs text-[var(--muted)]">
+              {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <select
             value={selectedIdx}
@@ -107,6 +114,31 @@ export default function Home() {
 
         {data && !data.error && (
           <>
+            {/* Signal Banner */}
+            {(() => {
+              const buySignals = (data.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
+              const sellSignals = (data.signals as { type: string }[]).filter((s) => s.type === "SELL").length;
+              if (buySignals > 0 && buySignals >= sellSignals) {
+                return (
+                  <div className="w-full rounded-lg px-4 py-3 bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-400 text-center font-semibold text-sm">
+                    매수 시그널 {buySignals}개 활성
+                  </div>
+                );
+              }
+              if (sellSignals > 0) {
+                return (
+                  <div className="w-full rounded-lg px-4 py-3 bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 text-center font-semibold text-sm">
+                    매도 시그널 {sellSignals}개 활성
+                  </div>
+                );
+              }
+              return (
+                <div className="w-full rounded-lg px-4 py-3 bg-gray-500/10 border border-gray-500/20 text-[var(--muted)] text-center font-semibold text-sm">
+                  시그널 없음
+                </div>
+              );
+            })()}
+
             {/* Price Info + VIX */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
@@ -134,8 +166,8 @@ export default function Home() {
                         <tbody>
                           <tr><td className="text-red-500 pr-2">빨간 봉</td><td>상승일 (시가 &lt; 종가)</td></tr>
                           <tr><td className="text-blue-500 pr-2">파란 봉</td><td>하락일 (시가 &gt; 종가)</td></tr>
-                          <tr><td className="text-yellow-500 pr-2">빠른 선</td><td>5일 이동평균</td></tr>
-                          <tr><td className="text-orange-400 pr-2">느린 선</td><td>20일 이동평균</td></tr>
+                          <tr><td className="text-yellow-500 pr-2">빠른 선</td><td>10일 이동평균</td></tr>
+                          <tr><td className="text-orange-400 pr-2">느린 선</td><td>50일 이동평균</td></tr>
                           <tr><td className="text-[var(--muted)] pr-2">교차</td><td>골든크로스(매수) / 데드크로스(매도)</td></tr>
                         </tbody>
                       </table>

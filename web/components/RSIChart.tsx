@@ -32,7 +32,7 @@ export default function RSIChart({ ohlcv, rsiValues }: Props) {
         horzLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
       },
       width: containerRef.current.clientWidth,
-      height: 200,
+      height: window.innerWidth < 640 ? 150 : 200,
       rightPriceScale: {
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
@@ -78,7 +78,10 @@ export default function RSIChart({ ohlcv, rsiValues }: Props) {
 
     const handleResize = () => {
       if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth });
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+          height: window.innerWidth < 640 ? 150 : 200,
+        });
       }
     };
     window.addEventListener("resize", handleResize);

@@ -30,12 +30,12 @@ WATCH_LIST = [
 ]
 
 # 시그널 설정
-SHORT_MA = 5       # 단기 이동평균 (5일)
-LONG_MA = 20       # 장기 이동평균 (20일)
+SHORT_MA = 10      # 단기 이동평균 (10일)
+LONG_MA = 50       # 장기 이동평균 (50일)
 RSI_PERIOD = 14    # RSI 기간
 RSI_OVERSOLD = 30  # RSI 과매도 기준
 RSI_OVERBOUGHT = 70  # RSI 과매수 기준
-DATA_PERIOD_DAYS = 60  # 데이터 조회 기간 (일)
+DATA_PERIOD_DAYS = 120  # 데이터 조회 기간 (일)
 INVESTOR_CONSEC_DAYS = 3  # 외인/기관 연속 순매수/순매도 판단 기준 (일)
 
 # VIX 공포지수 기준

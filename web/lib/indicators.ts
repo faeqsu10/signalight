@@ -19,22 +19,30 @@ export function calcRSI(closes: number[], period: number = 14): (number | null)[
   const gains = deltas.map((d) => (d > 0 ? d : 0));
   const losses = deltas.map((d) => (d < 0 ? -d : 0));
 
-  // Simple rolling mean (matches Python rolling().mean())
-  for (let i = period - 1; i < deltas.length; i++) {
-    let avgGain = 0;
-    let avgLoss = 0;
-    for (let j = i - period + 1; j <= i; j++) {
-      avgGain += gains[j];
-      avgLoss += losses[j];
-    }
-    avgGain /= period;
-    avgLoss /= period;
+  // Wilder's Smoothing: first value is SMA, then EMA with alpha=1/period
+  let avgGain = 0;
+  let avgLoss = 0;
+  for (let j = 0; j < period; j++) {
+    avgGain += gains[j];
+    avgLoss += losses[j];
+  }
+  avgGain /= period;
+  avgLoss /= period;
+
+  if (avgLoss === 0) {
+    result[period] = 100;
+  } else {
+    result[period] = 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  for (let i = period; i < deltas.length; i++) {
+    avgGain = (avgGain * (period - 1) + gains[i]) / period;
+    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
 
     if (avgLoss === 0) {
       result[i + 1] = 100;
     } else {
-      const rs = avgGain / avgLoss;
-      result[i + 1] = 100 - 100 / (1 + rs);
+      result[i + 1] = 100 - 100 / (1 + avgGain / avgLoss);
     }
   }
 

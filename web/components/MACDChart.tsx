@@ -44,7 +44,7 @@ export default function MACDChart({
         horzLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
       },
       width: containerRef.current.clientWidth,
-      height: 200,
+      height: window.innerWidth < 640 ? 150 : 200,
     });
 
     const histSeries = chart.addSeries(HistogramSeries, {
@@ -99,7 +99,10 @@ export default function MACDChart({
 
     const handleResize = () => {
       if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth });
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+          height: window.innerWidth < 640 ? 150 : 200,
+        });
       }
     };
     window.addEventListener("resize", handleResize);
