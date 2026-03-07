@@ -18,7 +18,8 @@ signalight/
 │   │   ├── indicators.py   # 기술적 지표 (MA, RSI, MACD)
 │   │   └── strategy.py     # 시그널 판단 로직
 │   └── bot/
-│       └── telegram.py     # 텔레그램 메시지 전송
+│       ├── telegram.py     # 텔레그램 메시지 전송
+│       └── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
 │
 ├── [Next.js 프론트엔드] 웹 대시보드
 │   └── web/
@@ -95,6 +96,7 @@ signalight/
 | `config.py` (WATCH_LIST, 파라미터) | `web/lib/constants.ts` | 종목 리스트, MA/RSI/MACD 설정값 |
 | `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD 계산 로직 |
 | `signals/strategy.py` | `web/lib/strategy.ts` | 시그널 판단 (골든크로스, 과매도 등) |
+| `bot/formatter.py` | (텔레그램 전용) | 메시지 포맷 (시그널 알림, 일일 브리핑, 주간 리포트) |
 
 **중요**: 지표 로직을 수정하면 Python과 TypeScript 양쪽 모두 반영해야 한다.
 
