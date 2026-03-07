@@ -1,6 +1,7 @@
 # Signalight
 
 > **GitHub**: https://github.com/faeqsu10/signalight
+> **웹 대시보드**: https://signalight.vercel.app
 
 한국 주식 매매 시그널 분석 시스템. 기술적 지표 + 수급 + 뉴스 감성을 종합하여 매수/매도 타이밍을 알려줍니다.
 
