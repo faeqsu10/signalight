@@ -129,6 +129,12 @@ export default function Home() {
     refreshInterval: 300000, // 5분 간격
   });
 
+  const { data: backtestData } = useSWR(
+    `/api/backtest/${selected.ticker}`,
+    fetcher,
+    { refreshInterval: 600000 } // 10분 간격
+  );
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
       {/* Header */}
@@ -325,6 +331,35 @@ export default function Home() {
 
         {data?.error && (
           <div className="text-center py-20 text-red-500">{data.error}</div>
+        )}
+
+        {/* Backtest Summary */}
+        {backtestData && !backtestData.error && (
+          <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)] transition-colors">
+            <h3 className="text-sm font-semibold text-[var(--muted)] mb-3">백테스트 (최근 1년)</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className={`text-lg font-bold ${backtestData.totalReturnPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  {backtestData.totalReturnPct >= 0 ? "+" : ""}{backtestData.totalReturnPct}%
+                </div>
+                <div className="text-xs text-[var(--muted)]">총 수익률</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-blue-500">
+                  -{backtestData.maxDrawdownPct}%
+                </div>
+                <div className="text-xs text-[var(--muted)]">MDD</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold">{backtestData.winRate}%</div>
+                <div className="text-xs text-[var(--muted)]">승률</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold">{backtestData.totalTrades}회</div>
+                <div className="text-xs text-[var(--muted)]">거래 수</div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Screener Section */}

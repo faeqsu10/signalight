@@ -36,10 +36,10 @@
 - 개선: 캔들차트 하단에 거래량 바 차트 오버레이
 - lightweight-charts의 HistogramSeries를 별도 pane으로 추가
 
-### 볼린저 밴드 지표 추가
-- 현재: MA, RSI, MACD 3개 지표만 지원
-- 개선: 볼린저 밴드 (20일 MA ± 2σ) 추가
-- Python indicators.py + TS indicators.ts 양쪽 구현 필요
+### 볼린저 밴드 + OBV 지표 추가 (완료)
+- [x] 볼린저 밴드 (20일 MA ± 2σ) Python + TS 양쪽 구현
+- [x] OBV (On-Balance Volume) Python + TS 양쪽 구현
+- [x] 전략 통합 (하단밴드 이탈=매수, 상단밴드 이탈=매도)
 
 ### 시그널 히스토리
 - 현재: 최신 시그널만 표시
@@ -67,16 +67,15 @@
 
 ## P0 - 인프라 안정성 (Phase 2 우선)
 
-### Python 봇 안정성 강화
-- [ ] systemd 서비스 재시작 정책 확인 (`Restart=on-failure`, `RestartSec=60`)
-- [ ] 구조화 로깅 추가: `infra/logging_config.py` (일별 로테이션, 10MB)
-- [ ] 각 fetch 함수에 timeout 설정 (pykrx, requests)
-- [ ] `send_message()` 재시도 로직 (exponential backoff)
-- [ ] 헬스체크 메시지 (매일 09:00)
-- 참고: `DEVOPS_ANALYSIS.md` 섹션 4.1~4.3
+### Python 봇 안정성 강화 (완료)
+- [x] systemd 서비스 재시작 정책 (Restart=always, RestartSec=10)
+- [x] 구조화 로깅: `infra/logging_config.py` (콘솔+파일, 10MB 로테이션)
+- [x] 각 fetch 함수에 timeout 설정 (pykrx, requests)
+- [x] `send_message()` 재시도 로직 (3회, exponential backoff)
+- [x] 헬스체크 메시지 (매일 09:00)
 
-### 네이버 금융 크롤링 안정성
-- [ ] in-memory 캐시 도입 (24시간 → 매일 1회만 fetch)
+### 네이버 금융 크롤링 안정성 (일부 완료)
+- [x] in-memory 캐시 도입 (4시간 TTL, investor.py + news.py)
 - [ ] XPath 파싱 실패 시 graceful degradation
 - [ ] OpenDART API 시범 도입 (외인/기관 데이터, 공식)
 - [ ] Terms of Service 법적 검토 (뉴스, 외인/기관)
@@ -110,11 +109,9 @@
 
 ## P2 - 기술 품질
 
-### RSI 계산 방식 개선
-- 현재: 단순 rolling mean 방식 (SMA 기반 RSI)
-- 개선: Wilder's smoothing (EMA 기반) 방식으로 변경
-- 대부분의 트레이딩 플랫폼이 Wilder's 방식 사용
-- Python과 TS 양쪽 동시 변경 필요
+### RSI 계산 방식 개선 (완료)
+- [x] Wilder's smoothing (EMA 기반) 방식으로 변경
+- [x] Python과 TS 양쪽 동시 반영
 
 ### API 에러 핸들링 강화
 - Yahoo Finance API 요청 제한(rate limit) 대응

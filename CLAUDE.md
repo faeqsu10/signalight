@@ -17,7 +17,7 @@ signalight/
 │   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
 │   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
 │   ├── signals/
-│   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, 거래량)
+│   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, 거래량)
 │   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수 (VIX 외부 전달)
 │   │   ├── sentiment.py    # Google Gemini 뉴스 감성 분석
 │   │   └── llm_analyzer.py # Gemini 종합 판단 (상충 시그널 해석)
@@ -26,7 +26,7 @@ signalight/
 │   ├── infra/
 │   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
 │   ├── bot/
-│   │   ├── telegram.py     # 텔레그램 메시지 전송 (4096자 자동 분할)
+│   │   ├── telegram.py     # 텔레그램 메시지 전송 (4096자 분할 + 3회 재시도)
 │   │   ├── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
 │   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, /add, /remove, /list)
 │   ├── trading/
@@ -46,7 +46,8 @@ signalight/
 │       │   └── api/
 │       │       ├── stock/[ticker]/route.ts # 종목 데이터+지표+시그널
 │       │       ├── watchlist/route.ts      # 감시 종목 목록 API
-│       │       └── scanner/route.ts        # 스크리너 API (골든크로스/RSI/거래량)
+│       │       ├── scanner/route.ts        # 스크리너 API (골든크로스/RSI/거래량)
+│       │       └── backtest/[ticker]/route.ts # 백테스트 API (1년 수익률/MDD/승률)
 │       ├── components/
 │       │   ├── CandleChart.tsx             # 캔들차트 + MA 오버레이
 │       │   ├── RSIChart.tsx                # RSI 라인 + 30/70 기준선
@@ -119,7 +120,7 @@ signalight/
 | Python | TypeScript | 설명 |
 |--------|-----------|------|
 | `config.py` (WATCH_LIST, 파라미터) | `web/lib/constants.ts` | 종목 리스트, MA/RSI/MACD 설정값 |
-| `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD 계산 로직 |
+| `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD, BB, OBV 계산 로직 |
 | `signals/strategy.py` | `web/lib/strategy.ts` | 시그널 판단 (골든크로스, 과매도 등) |
 | `bot/formatter.py` | (텔레그램 전용) | 메시지 포맷 (시그널 알림, 일일 브리핑, 주간 리포트) |
 

@@ -48,17 +48,19 @@
 - [x] 종합 시그널 배너 화면 최상단 추가
 - [x] Tooltip 모바일 터치 지원 (onClick 토글 + 외부 클릭 닫힘)
 - [x] 차트 모바일 반응형 높이 + 마지막 갱신 시각 표시
-- [ ] 신규 지표 추가 (볼린저밴드, OBV 등) + TS 동기화
+- [x] 신규 지표 추가 (볼린저밴드, OBV) + TS 동기화
+- [x] 볼린저밴드/OBV 시그널 전략 통합 + 웹 차트 표시
+- [x] 백테스트 결과 웹 대시보드 표시 (API + 요약 카드)
 - [ ] 복합 전략 프레임워크 (멀티 시그널 조합)
-- [ ] 백테스트 결과 웹 대시보드 표시
 
 ### 인프라 안정화 (Phase 2 신규)
-- [ ] systemd 재시작 정책 확인 및 설정
-- [ ] 구조화 로깅 구현 (`infra/logging_config.py`)
-- [ ] Python 봇 timeout + 재시도 로직
-- [ ] 헬스체크 메시지 추가 (매일 09:00)
+- [x] systemd 재시작 정책 확인 (Restart=always, RestartSec=10)
+- [x] 구조화 로깅 구현 (`infra/logging_config.py`)
+- [x] Python 봇 timeout + 재시도 로직 (send_message 3회 backoff)
+- [x] 헬스체크 메시지 추가 (매일 09:00)
+- [x] 네이버 금융 크롤링 캐시 (investor/news 4시간 in-memory)
 - [ ] Vercel 배포 및 API 캐싱
-- [ ] 네이버 금융 크롤링 캐시 + OpenDART 시범
+- [ ] OpenDART 시범 도입
 - 참고: `DEVOPS_ANALYSIS.md`
 
 ## LLM 파이프라인 (Phase 1 - 완료)

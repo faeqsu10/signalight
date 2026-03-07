@@ -1,11 +1,16 @@
 """네이버 금융 종목별 뉴스를 크롤링한다."""
 
-from typing import List
+import time
+from typing import Dict, List, Tuple
 
 import requests
 from lxml import html
 
 from config import NEWS_FETCH_LIMIT, NEWS_TIMEOUT
+
+# in-memory 캐시: {ticker: (timestamp, results)}
+_cache: Dict[str, Tuple[float, List[dict]]] = {}
+_CACHE_TTL = 4 * 3600  # 4시간
 
 
 _HEADERS = {
@@ -31,6 +36,12 @@ def fetch_news(ticker: str, limit: int = NEWS_FETCH_LIMIT) -> List[dict]:
         List of dicts: [{"title": "뉴스 제목", "date": "2026.03.07", "url": "https://..."}]
         오류 시 빈 리스트 반환.
     """
+    # 캐시 확인
+    if ticker in _cache:
+        cached_time, cached_results = _cache[ticker]
+        if time.time() - cached_time < _CACHE_TTL:
+            return cached_results[:limit]
+
     url = (
         f"https://finance.naver.com/item/news_news.naver"
         f"?code={ticker}&page=1&sm=title_entity_id.basic&clusterId="
@@ -104,4 +115,5 @@ def fetch_news(ticker: str, limit: int = NEWS_FETCH_LIMIT) -> List[dict]:
         if len(results) >= limit:
             break
 
+    _cache[ticker] = (time.time(), results)
     return results

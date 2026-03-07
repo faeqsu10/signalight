@@ -78,6 +78,28 @@ def calc_atr(highs: pd.Series, lows: pd.Series, closes: pd.Series, period: int =
     return atr
 
 
+def calc_bollinger_bands(closes: pd.Series, period: int = 20, num_std: int = 2):
+    """볼린저밴드 계산. (upper, middle, lower) Series 반환."""
+    middle = closes.rolling(window=period).mean()
+    std = closes.rolling(window=period).std()
+    upper = middle + num_std * std
+    lower = middle - num_std * std
+    return upper, middle, lower
+
+
+def calc_obv(closes: pd.Series, volumes: pd.Series) -> pd.Series:
+    """OBV(On-Balance Volume) 계산."""
+    obv = pd.Series(0.0, index=closes.index)
+    for i in range(1, len(closes)):
+        if closes.iloc[i] > closes.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] + volumes.iloc[i]
+        elif closes.iloc[i] < closes.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] - volumes.iloc[i]
+        else:
+            obv.iloc[i] = obv.iloc[i - 1]
+    return obv
+
+
 def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
     """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
     if len(volumes) < period:

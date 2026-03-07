@@ -113,6 +113,49 @@ export function calcATR(
   return result;
 }
 
+export interface BollingerBandsResult {
+  upper: (number | null)[];
+  middle: (number | null)[];
+  lower: (number | null)[];
+}
+
+export function calcBollingerBands(
+  closes: number[],
+  period: number = 20,
+  numStd: number = 2
+): BollingerBandsResult {
+  const middle = calcMovingAverage(closes, period);
+  const upper: (number | null)[] = new Array(closes.length).fill(null);
+  const lower: (number | null)[] = new Array(closes.length).fill(null);
+
+  for (let i = period - 1; i < closes.length; i++) {
+    if (middle[i] === null) continue;
+    let sumSq = 0;
+    for (let j = i - period + 1; j <= i; j++) {
+      sumSq += (closes[j] - middle[i]!) ** 2;
+    }
+    const std = Math.sqrt(sumSq / period);
+    upper[i] = middle[i]! + numStd * std;
+    lower[i] = middle[i]! - numStd * std;
+  }
+
+  return { upper, middle, lower };
+}
+
+export function calcOBV(closes: number[], volumes: number[]): number[] {
+  const obv: number[] = [0];
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i] > closes[i - 1]) {
+      obv.push(obv[i - 1] + volumes[i]);
+    } else if (closes[i] < closes[i - 1]) {
+      obv.push(obv[i - 1] - volumes[i]);
+    } else {
+      obv.push(obv[i - 1]);
+    }
+  }
+  return obv;
+}
+
 export function calcVolumeRatio(volumes: number[], period: number = 20): number {
   if (volumes.length < period) return 1.0;
   const window = volumes.slice(-period);

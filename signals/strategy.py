@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from signals.indicators import calc_moving_average, calc_rsi, calc_macd, calc_volume_ratio, calc_atr
+from signals.indicators import calc_moving_average, calc_rsi, calc_macd, calc_volume_ratio, calc_atr, calc_bollinger_bands, calc_obv
 from config import (
     SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT,
     VIX_EXTREME_FEAR, VIX_FEAR, VIX_EXTREME_GREED, INVESTOR_CONSEC_DAYS,
@@ -50,7 +50,7 @@ def analyze_detailed(
         "indicators": {},
         "investor": {},
         "confluence_score": 0,
-        "total_indicators": 5,  # MA, RSI, MACD, VIX, 수급
+        "total_indicators": 7,  # MA, RSI, MACD, BB, OBV, VIX, 수급
     }
 
     if len(df) < LONG_MA:
@@ -84,6 +84,15 @@ def analyze_detailed(
     # ATR 기반 손절가 (현재가 - 2 * ATR)
     atr_stop_loss = int(current_price - 2 * current_atr) if current_atr else None
 
+    # 볼린저밴드
+    bb_upper, bb_middle, bb_lower = calc_bollinger_bands(closes, 20, 2)
+    current_bb_upper = float(bb_upper.iloc[-1]) if not pd.isna(bb_upper.iloc[-1]) else None
+    current_bb_lower = float(bb_lower.iloc[-1]) if not pd.isna(bb_lower.iloc[-1]) else None
+
+    # OBV
+    obv = calc_obv(closes, volumes)
+    current_obv = float(obv.iloc[-1])
+
     result["indicators"] = {
         "rsi": current_rsi,
         "macd_histogram": current_histogram,
@@ -92,6 +101,9 @@ def analyze_detailed(
         "volume_ratio": round(volume_ratio, 2),
         "atr": round(current_atr, 0) if current_atr else None,
         "atr_stop_loss": atr_stop_loss,
+        "bb_upper": round(current_bb_upper, 0) if current_bb_upper else None,
+        "bb_lower": round(current_bb_lower, 0) if current_bb_lower else None,
+        "obv": current_obv,
     }
 
     # 1. 이동평균선 크로스
@@ -156,7 +168,26 @@ def analyze_detailed(
             })
             sell_score += 1.0
 
-    # 4. VIX 공포지수 (외부에서 전달받음 — 종목마다 중복 호출 방지)
+    # 4. 볼린저밴드
+    if current_bb_lower is not None and current_bb_upper is not None:
+        if current_price <= current_bb_lower:
+            signals.append({
+                "trigger": "볼린저밴드 하단 이탈",
+                "type": "buy",
+                "source": "BB",
+                "detail": f"현재가({current_price:,}) <= 하단밴드({current_bb_lower:,.0f}), 반등 가능성",
+            })
+            buy_score += 1.0
+        elif current_price >= current_bb_upper:
+            signals.append({
+                "trigger": "볼린저밴드 상단 이탈",
+                "type": "sell",
+                "source": "BB",
+                "detail": f"현재가({current_price:,}) >= 상단밴드({current_bb_upper:,.0f}), 과열 주의",
+            })
+            sell_score += 1.0
+
+    # 5. VIX 공포지수 (외부에서 전달받음 — 종목마다 중복 호출 방지)
     if vix_value is not None:
         result["indicators"]["vix"] = vix_value
         if vix_value >= VIX_EXTREME_FEAR:

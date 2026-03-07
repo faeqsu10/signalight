@@ -1,10 +1,15 @@
 """외인/기관 매매동향 데이터를 네이버 금융에서 가져온다."""
 
-from typing import List
+import time
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import requests
 from lxml import html
+
+# in-memory 캐시: {ticker: (timestamp, DataFrame)}
+_cache: Dict[str, Tuple[float, pd.DataFrame]] = {}
+_CACHE_TTL = 4 * 3600  # 4시간
 
 
 def _parse_int(text: str) -> int:
@@ -29,6 +34,12 @@ def fetch_investor_trading(ticker: str, days: int = 20) -> pd.DataFrame:
         DataFrame with columns: 외인순매수, 기관순매수 (index: 날짜)
         날짜 오름차순 정렬.
     """
+    # 캐시 확인
+    if ticker in _cache:
+        cached_time, cached_df = _cache[ticker]
+        if time.time() - cached_time < _CACHE_TTL:
+            return cached_df
+
     rows = []  # type: List[dict]
     pages_needed = (days // 20) + 2  # 한 페이지에 약 20행
 
@@ -91,4 +102,6 @@ def fetch_investor_trading(ticker: str, days: int = 20) -> pd.DataFrame:
     df = df.set_index("날짜")
     df = df.sort_index()  # 날짜 오름차순
 
-    return df.tail(days)
+    result = df.tail(days)
+    _cache[ticker] = (time.time(), result)
+    return result

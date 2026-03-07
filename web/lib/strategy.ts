@@ -1,4 +1,4 @@
-import { calcMovingAverage, calcRSI, calcMACD, calcVolumeRatio } from "./indicators";
+import { calcMovingAverage, calcRSI, calcMACD, calcVolumeRatio, calcBollingerBands } from "./indicators";
 import {
   SHORT_MA,
   LONG_MA,
@@ -31,6 +31,8 @@ export interface AnalysisResult {
   signalLine: (number | null)[];
   histogram: (number | null)[];
   rsiValues: (number | null)[];
+  bollingerUpper: (number | null)[];
+  bollingerLower: (number | null)[];
 }
 
 export function analyze(
@@ -44,6 +46,7 @@ export function analyze(
   const rsiValues = calcRSI(closes, RSI_PERIOD);
   const { macdLine, signalLine, histogram } = calcMACD(closes);
   const volumeRatio = volumes ? calcVolumeRatio(volumes) : 1.0;
+  const { upper: bollingerUpper, lower: bollingerLower } = calcBollingerBands(closes, 20, 2);
 
   const signals: Signal[] = [];
   const n = closes.length;
@@ -69,6 +72,8 @@ export function analyze(
       signalLine,
       histogram,
       rsiValues,
+      bollingerUpper,
+      bollingerLower,
     };
   }
 
@@ -177,7 +182,35 @@ export function analyze(
     }
   }
 
-  // 4. VIX (공포지수)
+  // 4. 볼린저밴드
+  const bbUpper = bollingerUpper[n - 1];
+  const bbLower = bollingerLower[n - 1];
+  const lastClose = closes[n - 1];
+  if (bbLower !== null && bbUpper !== null) {
+    if (lastClose <= bbLower) {
+      signals.push({
+        type: "buy",
+        label: "볼린저밴드",
+        detail: `현재가(${lastClose.toFixed(0)}) <= 하단밴드(${bbLower.toFixed(0)}), 반등 가능성`,
+      });
+      buyScore++;
+    } else if (lastClose >= bbUpper) {
+      signals.push({
+        type: "sell",
+        label: "볼린저밴드",
+        detail: `현재가(${lastClose.toFixed(0)}) >= 상단밴드(${bbUpper.toFixed(0)}), 과열 주의`,
+      });
+      sellScore++;
+    } else {
+      signals.push({
+        type: "neutral",
+        label: "볼린저밴드",
+        detail: `밴드 내 정상 범위`,
+      });
+    }
+  }
+
+  // 5. VIX (공포지수)
   if (currentVIX !== null) {
     if (currentVIX >= VIX_EXTREME_FEAR) {
       signals.push({
@@ -267,5 +300,7 @@ export function analyze(
     signalLine,
     histogram,
     rsiValues,
+    bollingerUpper,
+    bollingerLower,
   };
 }
