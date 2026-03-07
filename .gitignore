@@ -8,9 +8,7 @@ venv/
 dist/
 build/
 .claude/
-.omc/state/
-.omc/sessions/
-.omc/project-memory.json
+.omc/
 web/.omc/
 test.html
 web/node_modules/
