@@ -5,6 +5,8 @@ from typing import List
 import requests
 from lxml import html
 
+from config import NEWS_FETCH_LIMIT, NEWS_TIMEOUT
+
 
 _HEADERS = {
     "User-Agent": (
@@ -16,7 +18,7 @@ _HEADERS = {
 }
 
 
-def fetch_news(ticker: str, limit: int = 5) -> List[dict]:
+def fetch_news(ticker: str, limit: int = NEWS_FETCH_LIMIT) -> List[dict]:
     """네이버 금융 종목별 뉴스를 크롤링한다.
 
     URL: https://finance.naver.com/item/news_news.naver?code={ticker}&page=1
@@ -35,7 +37,7 @@ def fetch_news(ticker: str, limit: int = 5) -> List[dict]:
     )
 
     try:
-        resp = requests.get(url, headers=_HEADERS, timeout=10)
+        resp = requests.get(url, headers=_HEADERS, timeout=NEWS_TIMEOUT)
         resp.encoding = "euc-kr"
     except requests.RequestException:
         return []

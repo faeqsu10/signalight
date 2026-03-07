@@ -6,8 +6,18 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Claude AI API (뉴스 감성 분석)
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+# Google Gemini API (뉴스 감성 분석)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# 감성 분석 설정
+SENTIMENT_MODEL = "gemini-2.5-flash"
+SENTIMENT_TEMPERATURE = 0
+SENTIMENT_MAX_TOKENS = 2048
+SENTIMENT_TIMEOUT = 10  # 초
+
+# 뉴스 크롤링 설정
+NEWS_FETCH_LIMIT = 5
+NEWS_TIMEOUT = 10  # 초
 
 # 키움 REST API (외인/기관 매매동향 등)
 KIWOOM_REST_API_KEY = os.getenv("KIWOOM_REST_API_KEY")

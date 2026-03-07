@@ -7,8 +7,8 @@ from config import WATCH_LIST, DATA_PERIOD_DAYS
 from data.fetcher import fetch_stock_data
 from data.investor import fetch_investor_trading
 from data.news import fetch_news
-from signals.strategy import analyze_detailed
 from signals.sentiment import analyze_sentiment
+from signals.strategy import analyze_detailed
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
 
