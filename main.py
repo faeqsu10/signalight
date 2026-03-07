@@ -47,14 +47,22 @@ def main():
     # 시작할 때 한 번 실행
     check_signals()
 
-    # 평일 장 마감 후 매일 체크 (16:00)
-    schedule.every().monday.at("16:00").do(check_signals)
-    schedule.every().tuesday.at("16:00").do(check_signals)
-    schedule.every().wednesday.at("16:00").do(check_signals)
-    schedule.every().thursday.at("16:00").do(check_signals)
-    schedule.every().friday.at("16:00").do(check_signals)
+    # 평일 장중 30분마다 체크 (09:30 ~ 15:30)
+    for hour in range(9, 16):
+        for minute in (0, 30):
+            if hour == 9 and minute == 0:
+                continue  # 09:00은 장 시작 직후라 스킵
+            if hour == 15 and minute > 30:
+                continue
+            t = f"{hour:02d}:{minute:02d}"
+            for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+                getattr(schedule.every(), day).at(t).do(check_signals)
 
-    print("스케줄 등록 완료 (평일 16:00)")
+    # 평일 장 마감 후 최종 체크 (16:00)
+    for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+        getattr(schedule.every(), day).at("16:00").do(check_signals)
+
+    print("스케줄 등록 완료 (평일 09:30~15:30 매 30분 + 16:00 최종)")
     print("실행 중... (Ctrl+C로 종료)\n")
 
     while True:
