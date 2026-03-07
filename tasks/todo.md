@@ -43,6 +43,13 @@
 - [ ] 파라미터 최적화 (MA 조합 탐색)
 - [ ] 백테스트 결과 웹 대시보드 표시
 
+## LLM 파이프라인 (Phase 1)
+- [x] anthropic 패키지 설치
+- [x] signals/sentiment.py 구현 (Claude Haiku 감성 분석)
+- [x] config.py에 ANTHROPIC_API_KEY 추가
+- [ ] 뉴스 크롤러 구현 (fetcher 확장)
+- [ ] 텔레그램 알림에 감성 분석 결과 통합
+
 ## Phase 3 - 운영 안정화 (예정)
 - [ ] 텔레그램 인터랙티브 (명령어로 종목 추가/백테스트 실행)
 - [ ] Docker 배포

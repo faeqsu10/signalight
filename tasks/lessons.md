@@ -30,6 +30,13 @@
 - Claude Code는 세션 시작 시 에이전트를 스캔 → 세션 중 추가한 에이전트는 다음 세션부터 인식
 - 비엔지니어 역할(UX, PM, PO, Quant Researcher)도 에이전트로 정의하면 전문 관점 활용 가능
 
+## Claude API (anthropic 패키지)
+- `anthropic.Anthropic(api_key=..., timeout=5.0)` — 생성자에 timeout 직접 지정 가능
+- `temperature=0`은 `messages.create()` 파라미터로 전달 (재현성 보장)
+- 응답 텍스트: `response.content[0].text`
+- JSON이 응답 앞뒤에 설명 텍스트와 섞일 수 있으므로 `find("{")`/`rfind("}")` 로 추출
+- API 키 없음/오류 시 예외를 전파하지 말고 `None` 반환 — 감성 분석은 선택적 기능
+
 ## Python ↔ TypeScript 지표 포팅
 - Python pandas `rolling().mean()` → TS에서 직접 for 루프로 구현
 - Python pandas `ewm(span=n).mean()` → TS에서 `alpha = 2/(span+1)` EMA 수동 구현
