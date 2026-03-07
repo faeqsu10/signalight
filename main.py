@@ -173,6 +173,15 @@ def weekly_report():
     stock_data_list = []
     weekly_signals = []  # type: List[Dict]
 
+    # VIX 1회 조회
+    vix_value = None
+    try:
+        vix_series = fetch_vix()
+        if not vix_series.empty:
+            vix_value = float(vix_series.iloc[-1])
+    except Exception:
+        pass
+
     watchlist = _get_watchlist()
     for ticker, name in watchlist:
         try:
@@ -207,7 +216,7 @@ def weekly_report():
             except Exception:
                 pass
 
-            data = analyze_detailed(df, ticker, name, investor_df=investor_df)
+            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
             data["weekly_change_pct"] = round(weekly_change, 2)
             stock_data_list.append(data)
 

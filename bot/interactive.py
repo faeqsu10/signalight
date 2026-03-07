@@ -414,14 +414,30 @@ class InteractiveBot:
         """수동 시장 스캔을 실행하고 결과를 전송한다."""
         try:
             # main.py의 check_signals와 동일한 흐름을 따른다
-            from config import WATCH_LIST, DATA_PERIOD_DAYS
-            from data.fetcher import fetch_stock_data
+            from data.fetcher import fetch_stock_data, fetch_vix
             from data.investor import fetch_investor_trading
             from signals.strategy import analyze_detailed
             from bot.formatter import format_signal_alert
+            from storage.db import get_active_watchlist
+            from config import WATCH_LIST as _CONFIG_WATCH_LIST
+
+            # DB 우선, config 폴백
+            try:
+                watchlist = get_active_watchlist() or _CONFIG_WATCH_LIST
+            except Exception:
+                watchlist = _CONFIG_WATCH_LIST
+
+            # VIX 1회 조회
+            vix_value = None
+            try:
+                vix_series = fetch_vix()
+                if not vix_series.empty:
+                    vix_value = float(vix_series.iloc[-1])
+            except Exception:
+                pass
 
             stock_data_list = []
-            for ticker, name in WATCH_LIST:
+            for ticker, name in watchlist:
                 try:
                     df = fetch_stock_data(ticker)
                     if df.empty:
@@ -431,7 +447,7 @@ class InteractiveBot:
                         investor_df = fetch_investor_trading(ticker)
                     except Exception:
                         pass
-                    data = analyze_detailed(df, ticker, name, investor_df=investor_df)
+                    data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
                     stock_data_list.append(data)
                 except Exception as e:
                     logger.error("수동 스캔 중 오류 [%s]: %s", ticker, e)
