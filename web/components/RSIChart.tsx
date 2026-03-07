@@ -1,0 +1,88 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { createChart, ColorType, LineSeries } from "lightweight-charts";
+import { OHLCVData } from "@/lib/yahoo-finance";
+
+interface Props {
+  ohlcv: OHLCVData[];
+  rsiValues: (number | null)[];
+}
+
+export default function RSIChart({ ohlcv, rsiValues }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || ohlcv.length === 0) return;
+
+    const chart = createChart(containerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: "#0f0f0f" },
+        textColor: "#d1d5db",
+      },
+      grid: {
+        vertLines: { color: "#1f2937" },
+        horzLines: { color: "#1f2937" },
+      },
+      width: containerRef.current.clientWidth,
+      height: 200,
+      rightPriceScale: {
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+    });
+
+    const rsiSeries = chart.addSeries(LineSeries, {
+      color: "#22d3ee",
+      lineWidth: 2,
+      title: "RSI",
+    });
+
+    rsiSeries.setData(
+      ohlcv
+        .map((d, i) =>
+          rsiValues[i] !== null
+            ? { time: d.date, value: rsiValues[i] as number }
+            : null
+        )
+        .filter(Boolean) as { time: string; value: number }[]
+    );
+
+    const dates = ohlcv
+      .filter((_, i) => rsiValues[i] !== null)
+      .map((d) => d.date);
+
+    if (dates.length > 0) {
+      const obSeries = chart.addSeries(LineSeries, {
+        color: "#ef444480",
+        lineWidth: 1,
+        lineStyle: 2,
+      });
+      obSeries.setData(dates.map((d) => ({ time: d, value: 70 })));
+
+      const osSeries = chart.addSeries(LineSeries, {
+        color: "#3b82f680",
+        lineWidth: 1,
+        lineStyle: 2,
+      });
+      osSeries.setData(dates.map((d) => ({ time: d, value: 30 })));
+    }
+
+    chart.timeScale().fitContent();
+
+    const handleResize = () => {
+      if (containerRef.current) {
+        chart.applyOptions({ width: containerRef.current.clientWidth });
+      }
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
+  }, [ohlcv, rsiValues]);
+
+  return (
+    <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />
+  );
+}

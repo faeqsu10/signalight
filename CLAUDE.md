@@ -1,35 +1,87 @@
 # Signalight - Claude Code 프로젝트 가이드
 
 ## 프로젝트 개요
-한국 주식 매매 시그널(매수/매도 타이밍) 텔레그램 알림 봇
-- **언어**: Python 3.8+
-- **데이터**: pykrx (KRX 한국거래소)
-- **알림**: 텔레그램 봇 (python-telegram-bot)
-- **전략**: 이동평균 크로스, RSI, MACD
+한국 주식 매매 시그널(매수/매도 타이밍) 분석 시스템
+- **텔레그램 봇**: Python 기반, 평일 자동 알림
+- **웹 대시보드**: Next.js 기반, 실시간 차트 + 시그널 표시
 
-## 프로젝트 구조
+## 아키텍처
+
 ```
 signalight/
-├── config.py           # 설정 (종목 리스트, 지표 파라미터, 환경변수)
-├── main.py             # 진입점 + 스케줄러 (평일 16:00 실행)
-├── data/
-│   └── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
-├── signals/
-│   ├── indicators.py   # 기술적 지표 계산 (MA, RSI, MACD)
-│   └── strategy.py     # 시그널 판단 로직
-└── bot/
-    └── telegram.py     # 텔레그램 메시지 전송
+├── [Python 백엔드] 텔레그램 알림 봇
+│   ├── config.py           # 설정 (종목, 지표 파라미터, 환경변수)
+│   ├── main.py             # 진입점 + 스케줄러 (평일 장중 30분 간격)
+│   ├── data/
+│   │   └── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
+│   ├── signals/
+│   │   ├── indicators.py   # 기술적 지표 (MA, RSI, MACD)
+│   │   └── strategy.py     # 시그널 판단 로직
+│   └── bot/
+│       └── telegram.py     # 텔레그램 메시지 전송
+│
+├── [Next.js 프론트엔드] 웹 대시보드
+│   └── web/
+│       ├── app/
+│       │   ├── page.tsx                    # 메인 대시보드 (SWR 60초 갱신)
+│       │   ├── layout.tsx                  # 레이아웃 (다크모드)
+│       │   └── api/stock/[ticker]/route.ts # API Route (데이터+지표+시그널)
+│       ├── components/
+│       │   ├── CandleChart.tsx             # 캔들차트 + MA 오버레이
+│       │   ├── RSIChart.tsx                # RSI 라인 + 30/70 기준선
+│       │   ├── MACDChart.tsx               # MACD/Signal + 히스토그램
+│       │   ├── SignalPanel.tsx             # 시그널 현황 패널
+│       │   └── PriceInfo.tsx               # 현재가, 등락률, 종합 시그널
+│       └── lib/
+│           ├── constants.ts                # config.py 포팅
+│           ├── indicators.ts               # indicators.py 포팅
+│           ├── strategy.ts                 # strategy.py 포팅
+│           └── yahoo-finance.ts            # Yahoo Finance OHLCV fetch
+│
+└── tasks/
+    ├── todo.md             # 작업 체크리스트
+    ├── lessons.md          # 학습 기록
+    └── improvements.md     # 개선사항 추적
 ```
+
+## 기술 스택
+
+### Python 백엔드
+- Python 3.8+ (typing import 필수)
+- pykrx (KRX 한국거래소 데이터)
+- python-telegram-bot (알림)
+- schedule (스케줄러)
+
+### Next.js 프론트엔드
+- Next.js 14 (App Router) + TypeScript
+- Tailwind CSS (다크모드 기본)
+- lightweight-charts v5 (TradingView 캔들차트)
+- SWR (데이터 자동 갱신 60초)
+- Yahoo Finance API (한국 주식: `{ticker}.KS`)
+- Python 서버 불필요 — 지표 계산을 TS로 포팅
 
 ## 핵심 규칙
 - `.env` 파일은 절대 커밋하지 않는다 (토큰, chat_id 포함)
 - pykrx 컬럼명은 한글이다: `시가`, `고가`, `저가`, `종가`, `거래량`
 - Python 3.8 호환 필수: `list[str]` 대신 `List[str]` (typing import)
-- 종목 추가/수정은 `config.py`의 `WATCH_LIST`에서만 한다
+- 종목 추가/수정은 Python은 `config.py`, 웹은 `web/lib/constants.ts`의 `WATCH_LIST`
+- lightweight-charts v5 API: `chart.addSeries(CandlestickSeries, opts)` (v4의 `addCandlestickSeries()` 아님)
+- 한국 주식 색상 관례: 상승=빨강(#ef4444), 하락=파랑(#3b82f6)
 
-## 향후 계획
-- 미국 주식 지원 추가 예정
-- 텔레그램 봇 설정 아직 미완료
+## 파일 간 관계 (Python ↔ TypeScript 포팅 매핑)
+| Python | TypeScript | 설명 |
+|--------|-----------|------|
+| `config.py` (WATCH_LIST, 파라미터) | `web/lib/constants.ts` | 종목 리스트, MA/RSI/MACD 설정값 |
+| `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD 계산 로직 |
+| `signals/strategy.py` | `web/lib/strategy.ts` | 시그널 판단 (골든크로스, 과매도 등) |
+
+**중요**: 지표 로직을 수정하면 Python과 TypeScript 양쪽 모두 반영해야 한다.
+
+## 문서 관리
+- `tasks/todo.md` — 작업 체크리스트 (완료되면 체크)
+- `tasks/lessons.md` — 개발 중 배운 교훈 기록
+- `tasks/improvements.md` — 개선사항 추적 (우선순위별)
+- `CLAUDE.md` (이 파일) — 프로젝트 가이드 (구조 변경 시 업데이트)
 
 ---
 
@@ -73,9 +125,11 @@ signalight/
 4. 각 단계마다 변경사항 요약
 5. 결과를 `tasks/todo.md`에 기록
 6. 수정 받으면 `tasks/lessons.md` 업데이트
+7. 개선 아이디어는 `tasks/improvements.md`에 기록
 
 ## Core Principles
 
 - **단순함 우선**: 변경은 최대한 간결하게. 영향 범위 최소화.
 - **근본 원인 해결**: 임시 수정 금지. 시니어 개발자 기준.
 - **최소 영향**: 필요한 부분만 수정. 버그 유입 방지.
+- **양쪽 동기화**: Python/TS 지표 로직 변경 시 반드시 양쪽 반영.

@@ -8,3 +8,5 @@ dist/
 build/
 .claude/
 test.html
+web/node_modules/
+web/.next/
