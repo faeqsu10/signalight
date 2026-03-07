@@ -21,31 +21,31 @@ export default function PriceInfo({ name, ticker, ohlcv, signals }: Props) {
   const hasSell = signals.some((s) => s.type === "sell");
   const overallSignal = hasBuy ? "매수" : hasSell ? "매도" : "대기";
   const overallColor = hasBuy
-    ? "text-red-400"
+    ? "text-red-500"
     : hasSell
-    ? "text-blue-400"
-    : "text-gray-500";
+    ? "text-blue-500"
+    : "text-[var(--muted)]";
   const overallDot = hasBuy
-    ? "bg-red-400"
+    ? "bg-red-500"
     : hasSell
-    ? "bg-blue-400"
-    : "bg-gray-500";
+    ? "bg-blue-500"
+    : "bg-gray-400";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
       <div>
-        <div className="text-gray-400 text-sm">
+        <div className="text-[var(--muted)] text-sm">
           {name} {ticker}
         </div>
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold text-white">
+          <span className="text-3xl font-bold">
             {latest.close.toLocaleString("ko-KR", {
               style: "currency",
               currency: "KRW",
               maximumFractionDigits: 0,
             })}
           </span>
-          <span className={`text-lg ${isUp ? "text-red-400" : "text-blue-400"}`}>
+          <span className={`text-lg ${isUp ? "text-red-500" : "text-blue-500"}`}>
             {isUp ? "+" : ""}
             {change.toLocaleString("ko-KR")} ({changePercent >= 0 ? "+" : ""}
             {changePercent.toFixed(2)}%)
