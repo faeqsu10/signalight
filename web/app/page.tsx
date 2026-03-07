@@ -270,6 +270,8 @@ export default function Home() {
                 ohlcv={data.ohlcv}
                 shortMA={data.shortMA}
                 longMA={data.longMA}
+                bollingerUpper={data.bollingerUpper}
+                bollingerLower={data.bollingerLower}
               />
             </div>
 

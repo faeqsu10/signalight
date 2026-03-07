@@ -15,9 +15,11 @@ interface Props {
   ohlcv: OHLCVData[];
   shortMA: (number | null)[];
   longMA: (number | null)[];
+  bollingerUpper?: (number | null)[];
+  bollingerLower?: (number | null)[];
 }
 
-export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
+export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bollingerLower }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
@@ -91,6 +93,41 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
         .filter(Boolean) as { time: string; value: number }[]
     );
 
+    // Bollinger Bands overlay
+    if (bollingerUpper && bollingerLower) {
+      const bbUpperSeries = chart.addSeries(LineSeries, {
+        color: isDark ? "rgba(156,163,175,0.5)" : "rgba(107,114,128,0.5)",
+        lineWidth: 1,
+        lineStyle: 2, // Dashed
+        title: "BB Upper",
+      });
+      bbUpperSeries.setData(
+        ohlcv
+          .map((d, i) =>
+            bollingerUpper[i] !== null
+              ? { time: d.date, value: bollingerUpper[i] as number }
+              : null
+          )
+          .filter(Boolean) as { time: string; value: number }[]
+      );
+
+      const bbLowerSeries = chart.addSeries(LineSeries, {
+        color: isDark ? "rgba(156,163,175,0.5)" : "rgba(107,114,128,0.5)",
+        lineWidth: 1,
+        lineStyle: 2, // Dashed
+        title: "BB Lower",
+      });
+      bbLowerSeries.setData(
+        ohlcv
+          .map((d, i) =>
+            bollingerLower[i] !== null
+              ? { time: d.date, value: bollingerLower[i] as number }
+              : null
+          )
+          .filter(Boolean) as { time: string; value: number }[]
+      );
+    }
+
     // Volume histogram
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
@@ -125,7 +162,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA }: Props) {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [ohlcv, shortMA, longMA, theme]);
+  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, theme]);
 
   return (
     <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />

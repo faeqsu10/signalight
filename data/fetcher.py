@@ -12,6 +12,7 @@ def fetch_stock_data(
     ticker: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    timeout: int = 30,
 ) -> pd.DataFrame:
     """종목코드로 OHLCV 데이터를 가져온다.
 
@@ -19,7 +20,10 @@ def fetch_stock_data(
         ticker: 종목코드 (예: "005930")
         start_date: 조회 시작일 "YYYYMMDD" 형식. None이면 오늘 기준 DATA_PERIOD_DAYS일 전.
         end_date: 조회 종료일 "YYYYMMDD" 형식. None이면 오늘.
+        timeout: 최대 대기 시간 (초). 기본 30초.
     """
+    import concurrent.futures
+
     if end_date is None:
         end_dt = datetime.today()
         end_str = end_dt.strftime("%Y%m%d")
@@ -32,7 +36,9 @@ def fetch_stock_data(
     else:
         start_str = start_date
 
-    df = stock.get_market_ohlcv(start_str, end_str, ticker)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(stock.get_market_ohlcv, start_str, end_str, ticker)
+        df = future.result(timeout=timeout)
 
     if df.empty:
         return df
