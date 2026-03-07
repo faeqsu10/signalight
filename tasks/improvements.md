@@ -6,12 +6,13 @@
 
 > 상세 로드맵: `tasks/llm-pipeline-roadmap.md`
 
-### Phase 1: 뉴스 감성 분석 (진행 중)
+### Phase 1: 뉴스 감성 분석 (완료)
 - [x] `signals/sentiment.py` 구현 — Claude Haiku `claude-haiku-4-5-20251001` 호출
 - [x] `config.py`에 `ANTHROPIC_API_KEY` 추가
-- [ ] 네이버 금융 뉴스 크롤러 구현 (fetcher 확장)
-- [ ] 텔레그램 알림에 [뉴스 감성] 블록 추가
-- 비용: 월 ~400원 | 기간: 1-2주
+- [x] `data/news.py` 구현 — 네이버 금융 종목별 뉴스 크롤러
+- [x] `bot/formatter.py` — [뉴스 감성] 블록 (감성+신뢰도+요약+방향 불일치 경고)
+- [x] `main.py` — 뉴스+감성 통합 (try/except 격리)
+- 비용: 월 ~400원
 
 ### Phase 2: LLM 종합 판단 + DB (예정)
 - 상충 시그널 시 Claude에게 종합 판단 위임

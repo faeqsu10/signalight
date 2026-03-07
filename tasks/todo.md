@@ -43,12 +43,14 @@
 - [ ] 파라미터 최적화 (MA 조합 탐색)
 - [ ] 백테스트 결과 웹 대시보드 표시
 
-## LLM 파이프라인 (Phase 1)
+## LLM 파이프라인 (Phase 1 - 완료)
 - [x] anthropic 패키지 설치
 - [x] signals/sentiment.py 구현 (Claude Haiku 감성 분석)
 - [x] config.py에 ANTHROPIC_API_KEY 추가
-- [ ] 뉴스 크롤러 구현 (fetcher 확장)
-- [ ] 텔레그램 알림에 감성 분석 결과 통합
+- [x] data/news.py 구현 (네이버 금융 뉴스 크롤러)
+- [x] bot/formatter.py에 [뉴스 감성] 블록 추가 (감성+신뢰도+요약+불일치 경고)
+- [x] main.py에 뉴스+감성 통합 (실패 격리, 기존 기능 영향 없음)
+- [x] systemd 서비스 재시작 확인
 
 ## Phase 3 - 운영 안정화 (예정)
 - [ ] 텔레그램 인터랙티브 (명령어로 종목 추가/백테스트 실행)

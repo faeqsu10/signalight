@@ -13,7 +13,8 @@ signalight/
 │   ├── config.py           # 설정 (종목, 지표 파라미터, 환경변수)
 │   ├── main.py             # 진입점 + 스케줄러 (평일 장중 30분 간격)
 │   ├── data/
-│   │   └── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
+│   │   ├── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
+│   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤러
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, RSI, MACD)
 │   │   ├── strategy.py     # 시그널 판단 로직

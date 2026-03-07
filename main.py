@@ -6,7 +6,9 @@ from typing import List, Dict
 from config import WATCH_LIST, DATA_PERIOD_DAYS
 from data.fetcher import fetch_stock_data
 from data.investor import fetch_investor_trading
+from data.news import fetch_news
 from signals.strategy import analyze_detailed
+from signals.sentiment import analyze_sentiment
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
 
@@ -29,6 +31,20 @@ def _collect_stock_data() -> List[Dict]:
                 print(f"  {name}({ticker}) 외인/기관 데이터 조회 실패: {e}")
 
             data = analyze_detailed(df, ticker, name, investor_df=investor_df)
+
+            # 뉴스 감성 분석 (실패해도 기존 알림에 영향 없음)
+            try:
+                headlines_data = fetch_news(ticker, limit=5)
+                if headlines_data:
+                    headlines = [h["title"] for h in headlines_data]
+                    sentiment_result = analyze_sentiment(headlines, name)
+                    data["news_sentiment"] = sentiment_result
+                else:
+                    data["news_sentiment"] = None
+            except Exception as e:
+                print(f"  {name}({ticker}) 뉴스 감성 분석 실패: {e}")
+                data["news_sentiment"] = None
+
             stock_data_list.append(data)
         except Exception as e:
             print(f"  {name}({ticker}) 에러: {e}")

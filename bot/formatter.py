@@ -238,6 +238,33 @@ def _build_signal_block(stock: dict) -> str:
 
         lines.append("")
 
+    # 뉴스 감성
+    news_sentiment = stock.get("news_sentiment")
+    if news_sentiment is not None:
+        sentiment = news_sentiment.get("sentiment", "중립")
+        confidence = news_sentiment.get("confidence", 0.0)
+        summary = news_sentiment.get("summary", "")
+        conf_pct = int(confidence * 100)
+
+        if sentiment == "긍정":
+            sent_emoji = "🟢"
+        elif sentiment == "부정":
+            sent_emoji = "🔴"
+        else:
+            sent_emoji = "⬜"
+
+        lines.append(f"[뉴스 감성] {sent_emoji} {sentiment} (신뢰도 {conf_pct}%)")
+        if summary:
+            lines.append(f" • {summary}")
+
+        # 감성과 시그널 방향 불일치 경고
+        if signals:
+            primary_type = signals[0]["type"]
+            if (primary_type == "buy" and sentiment == "부정") or \
+               (primary_type == "sell" and sentiment == "긍정"):
+                lines.append(" ⚠️ 주의: 뉴스 감성과 시그널 방향 불일치")
+        lines.append("")
+
     # 합류 점수
     if total_indicators > 0:
         direction = stock.get("confluence_direction", "buy")
@@ -275,9 +302,21 @@ def _build_briefing_row(stock: dict) -> str:
 
     score_str = f"{confluence_score}/{total_indicators}" if total_indicators > 0 else "-"
 
+    # 뉴스 감성 한줄 요약
+    news_sentiment = stock.get("news_sentiment")
+    news_str = ""
+    if news_sentiment is not None:
+        sentiment = news_sentiment.get("sentiment", "중립")
+        if sentiment == "긍정":
+            news_str = " | 뉴스 🟢"
+        elif sentiment == "부정":
+            news_str = " | 뉴스 🔴"
+        else:
+            news_str = " | 뉴스 ⬜"
+
     return (
         f"<b>{name}</b> ({ticker})\n"
-        f"  {emoji} {price_str}원 ({change_str}) | {signal_str} | 합류 {score_str}"
+        f"  {emoji} {price_str}원 ({change_str}) | {signal_str} | 합류 {score_str}{news_str}"
     )
 
 

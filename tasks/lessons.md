@@ -37,6 +37,18 @@
 - JSON이 응답 앞뒤에 설명 텍스트와 섞일 수 있으므로 `find("{")`/`rfind("}")` 로 추출
 - API 키 없음/오류 시 예외를 전파하지 말고 `None` 반환 — 감성 분석은 선택적 기능
 
+## 네이버 금융 크롤링 패턴
+- URL: `https://finance.naver.com/item/news_news.nhn?code={ticker}`
+- 인코딩: euc-kr (requests에서 `response.encoding = "euc-kr"` 설정 필요)
+- 파싱: lxml + XPath, 뉴스 제목은 `<a>` 태그 text로 추출
+- data/investor.py와 data/news.py가 동일 패턴 사용
+
+## 감성 분석 통합 설계
+- 감성 분석은 선택적 부가 기능 — 실패해도 기존 시그널 알림에 영향 없어야 함
+- `_collect_stock_data()` 내에서 try/except으로 완전 격리
+- `news_sentiment` 키가 None이면 포맷터에서 블록 생략
+- 시그널 방향과 뉴스 감성 불일치 시 ⚠️ 경고 표시 (매수+부정, 매도+긍정)
+
 ## Python ↔ TypeScript 지표 포팅
 - Python pandas `rolling().mean()` → TS에서 직접 for 루프로 구현
 - Python pandas `ewm(span=n).mean()` → TS에서 `alpha = 2/(span+1)` EMA 수동 구현
