@@ -82,8 +82,18 @@
 - [x] 매일 09:00 헬스체크 메시지 추가
 - [x] ATR(14) 지표 추가 + 손절가 표시 (현재가-2*ATR)
 
-## Phase 3 - 운영 안정화 (예정)
-- [ ] 텔레그램 인터랙티브 (명령어로 종목 추가/백테스트 실행)
+## Phase 3 - 자동매매 + 인터랙티브 (완료)
+- [x] trading/ 패키지 (Order/TradingConfig dataclass)
+- [x] trading/kiwoom_client.py (키움 REST API 래퍼, OAuth, 조회, 주문)
+- [x] trading/executor.py (주문 실행 + 안전장치: dry-run, 일일손실3%, 종목비중30%)
+- [x] trading/portfolio.py (포트폴리오 비중 관리)
+- [x] bot/interactive.py (텔레그램 인터랙티브: /stop, /status, /scan, 인라인 키보드)
+- [x] scanner/market_scanner.py (KRX 종목 스캐너: 골든크로스, RSI과매도, 거래량급증)
+- [x] Vercel 배포 설정 (web/vercel.json)
+- [x] main.py 통합 (executor + interactive bot)
+- [x] Gemini 2.5 Flash thinking 모델 JSON 파싱 수정 (sentiment.py, llm_analyzer.py)
+
+## Phase 4 - 운영 고도화 (예정)
 - [ ] Docker 배포
 - [ ] 모바일 최적화
 

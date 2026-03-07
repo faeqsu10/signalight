@@ -38,7 +38,14 @@ signalight/
 │   └── sentiment.py       # Google Gemini 뉴스 감성 분석
 ├── bot/
 │   ├── telegram.py        # 텔레그램 메시지 전송
-│   └── formatter.py       # 메시지 포맷터 (시그널, 브리핑, 리포트)
+│   ├── formatter.py       # 메시지 포맷터 (시그널, 브리핑, 리포트)
+│   └── interactive.py     # 텔레그램 인터랙티브 (/stop, /status, /scan)
+├── trading/
+│   ├── kiwoom_client.py   # 키움 REST API 래퍼
+│   ├── executor.py        # 주문 실행 + 안전장치 (dry-run 기본)
+│   └── portfolio.py       # 포트폴리오 비중 관리
+├── scanner/
+│   └── market_scanner.py  # KRX 종목 스캐너 (골든크로스, RSI, 거래량)
 ├── backtest/
 │   ├── engine.py          # 백테스트 엔진
 │   ├── report.py          # 리포트 생성
@@ -70,6 +77,12 @@ TELEGRAM_CHAT_ID=your_chat_id
 
 # 뉴스 감성 분석 (선택 — 없으면 감성 분석 건너뜀)
 GOOGLE_API_KEY=your_google_api_key
+
+# 키움 REST API (선택 — 자동매매 기능)
+TRADING_ENV=mock
+KIWOOM_REST_API_KEY=your_kiwoom_key
+KIWOOM_REST_API_SECRET=your_kiwoom_secret
+KIWOOM_ACCOUNT_NO=5012345678
 ```
 
 ## 실행
@@ -84,6 +97,32 @@ python3 -m backtest.runner 005930 삼성전자 --days 365
 # 웹 대시보드
 cd web && npm run dev
 ```
+
+## 텔레그램 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `/help` | 사용 가능한 명령어 목록 |
+| `/status` | 현재 거래 상태 및 대기 주문 요약 |
+| `/scan` | 수동 시장 스캔 트리거 |
+| `/stop` | 긴급 정지 (거래 비활성화) |
+| `/start` | 거래 재개 |
+
+## 자동매매 (키움 모의투자)
+
+키움증권 REST API를 통한 자동매매 기능 (기본값: dry-run 모드).
+
+- **dry-run 모드** (기본): 실제 주문 없이 시뮬레이션만 수행
+- **모의투자**: `TRADING_ENV=mock`으로 키움 모의투자 연동
+- **안전장치**: 일일 손실 한도 3%, 단일 종목 비중 30% 제한
+- **인라인 키보드**: 매매 시그널 발생 시 텔레그램에서 확인/거부 선택
+
+## 종목 스캐너
+
+KRX 전체 종목 중 조건 충족 종목을 자동 탐지:
+- **골든크로스**: MA10이 MA50을 상향 돌파한 종목
+- **RSI 과매도**: RSI < 30 종목
+- **거래량 급증**: 20일 평균 대비 3배 이상 거래량
 
 ## systemd 서비스 (자동 실행)
 

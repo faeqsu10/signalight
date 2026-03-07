@@ -19,9 +19,11 @@ SENTIMENT_TIMEOUT = 10  # 초
 NEWS_FETCH_LIMIT = 5
 NEWS_TIMEOUT = 10  # 초
 
-# 키움 REST API (외인/기관 매매동향 등)
+# 키움 REST API
 KIWOOM_REST_API_KEY = os.getenv("KIWOOM_REST_API_KEY")
 KIWOOM_REST_API_SECRET = os.getenv("KIWOOM_REST_API_SECRET")
+KIWOOM_ACCOUNT_NO = os.getenv("KIWOOM_ACCOUNT_NO", "")
+TRADING_ENV = os.getenv("TRADING_ENV", "mock")  # "mock" or "prod"
 
 # 감시할 종목 리스트 (종목코드, 종목명)
 WATCH_LIST = [

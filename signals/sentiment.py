@@ -86,7 +86,19 @@ def analyze_sentiment(
         resp.raise_for_status()
 
         result = resp.json()
-        raw_text = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        # Gemini 2.5 Flash thinking 모델은 여러 parts를 반환할 수 있음
+        # thought=True인 파트를 건너뛰고 실제 응답 텍스트를 찾는다
+        parts = result["candidates"][0]["content"]["parts"]
+        raw_text = ""
+        for part in parts:
+            if part.get("thought"):
+                continue
+            raw_text = part.get("text", "").strip()
+            if raw_text:
+                break
+        if not raw_text:
+            # fallback: 마지막 파트 사용
+            raw_text = parts[-1].get("text", "").strip()
 
         # 마크다운 코드블록 제거 (```json ... ```)
         if raw_text.startswith("```"):

@@ -81,7 +81,17 @@ def analyze_comprehensive(stock_data: Dict) -> Optional[Dict]:
             return None
 
         data = resp.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        # Gemini 2.5 Flash thinking 모델: thought=True 파트 건너뛰기
+        parts = data["candidates"][0]["content"]["parts"]
+        text = ""
+        for part in parts:
+            if part.get("thought"):
+                continue
+            text = part.get("text", "").strip()
+            if text:
+                break
+        if not text:
+            text = parts[-1].get("text", "").strip()
 
         # JSON 추출 (마크다운 코드블록 제거)
         lines = text.split("\n")

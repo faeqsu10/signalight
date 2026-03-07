@@ -24,9 +24,18 @@ signalight/
 │   │   └── db.py           # SQLite (시그널 이력, 감성, LLM 판단)
 │   ├── infra/
 │   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
-│   └── bot/
-│       ├── telegram.py     # 텔레그램 메시지 전송
-│       └── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
+│   ├── bot/
+│   │   ├── telegram.py     # 텔레그램 메시지 전송
+│   │   ├── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
+│   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, 인라인 키보드)
+│   ├── trading/
+│   │   ├── __init__.py     # Order, TradingConfig dataclass
+│   │   ├── kiwoom_client.py # 키움 REST API 래퍼 (OAuth, 조회, 주문)
+│   │   ├── executor.py     # 주문 실행 + 안전장치 (dry-run, 손실한도, 비중한도)
+│   │   └── portfolio.py    # 포트폴리오 비중 관리
+│   └── scanner/
+│       ├── __init__.py
+│       └── market_scanner.py # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
 │
 ├── [Next.js 프론트엔드] 웹 대시보드
 │   └── web/

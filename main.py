@@ -13,12 +13,20 @@ from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
 from signals.llm_analyzer import analyze_comprehensive, should_call_llm
 from storage.db import init_db, save_signals, save_sentiment, save_llm_analysis
+from bot.interactive import InteractiveBot, set_emergency_stop_callback
+from trading import TradingConfig
+from trading.executor import TradeExecutor
 from infra.logging_config import setup_logging
 
 logger = setup_logging()
 
 # DB 초기화
 init_db()
+
+# 자동매매 (dry_run=True 기본, 실제 주문 없이 시뮬레이션)
+_trading_config = TradingConfig(dry_run=True, use_mock=True)
+_executor = TradeExecutor(config=_trading_config)
+_interactive_bot = InteractiveBot()
 
 
 def _collect_stock_data() -> List[Dict]:
@@ -72,6 +80,26 @@ def _collect_stock_data() -> List[Dict]:
                                     llm_result.get("confidence", 0) * 100)
             except Exception as e:
                 logger.warning("%s(%s) LLM 분석 실패: %s", name, ticker, e)
+
+            # 자동매매 시뮬레이션 (dry_run 모드)
+            try:
+                trade_data = {
+                    "ticker": ticker,
+                    "name": name,
+                    "signal": data.get("confluence_direction", "hold"),
+                    "confluence_score": data.get("confluence_score", 0),
+                    "current_price": data.get("price", 0),
+                }
+                order = _executor.execute_signal(trade_data)
+                if order:
+                    data["trade_order"] = {
+                        "side": order.side,
+                        "quantity": order.quantity,
+                        "price": order.price,
+                        "status": order.status,
+                    }
+            except Exception as e:
+                logger.warning("%s(%s) 자동매매 시뮬레이션 실패: %s", name, ticker, e)
 
             stock_data_list.append(data)
         except Exception as e:
@@ -193,6 +221,11 @@ def healthcheck():
 def main():
     logger.info("=== Signalight 시작 ===")
     logger.info("감시 종목: %s", ", ".join(name for _, name in WATCH_LIST))
+
+    # 텔레그램 인터랙티브 봇 시작 (백그라운드 스레드)
+    set_emergency_stop_callback(_executor.emergency_stop)
+    _interactive_bot.start()
+    logger.info("텔레그램 인터랙티브 봇 활성화 (/help, /stop, /status, /scan)")
 
     # 시작할 때 한 번 실행
     check_signals()
