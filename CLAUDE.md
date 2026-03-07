@@ -61,12 +61,32 @@ signalight/
 - Python 서버 불필요 — 지표 계산을 TS로 포팅
 
 ## 핵심 규칙
-- `.env` 파일은 절대 커밋하지 않는다 (토큰, chat_id 포함)
 - pykrx 컬럼명은 한글이다: `시가`, `고가`, `저가`, `종가`, `거래량`
 - Python 3.8 호환 필수: `list[str]` 대신 `List[str]` (typing import)
 - 종목 추가/수정은 Python은 `config.py`, 웹은 `web/lib/constants.ts`의 `WATCH_LIST`
 - lightweight-charts v5 API: `chart.addSeries(CandlestickSeries, opts)` (v4의 `addCandlestickSeries()` 아님)
 - 한국 주식 색상 관례: 상승=빨강(#ef4444), 하락=파랑(#3b82f6)
+
+## 커밋 보안 규칙
+**커밋 금지 파일** (`.gitignore`에 등록됨):
+- `.env`, `.env.*` — API 토큰, chat_id 등 민감 정보
+- `.claude/` — Claude Code 세션/에이전트 데이터
+- `.omc/state/`, `.omc/project-memory.json` — 플러그인 상태 파일
+- `*.png`, `*.jpg` — 스크린샷/이미지 파일
+- `node_modules/`, `__pycache__/`, `.next/` — 빌드 산출물
+
+**커밋 OK**:
+- `.omc/plans/` — 로드맵/계획 문서
+
+**커밋 전 체크**: `git status`로 민감 파일 미포함 확인 필수
+
+## 자동 수행 규칙 (유저가 말하지 않아도 항상)
+1. **작업 완료 시 커밋** — 의미 있는 단위로 커밋, 보안 파일 제외 확인
+2. **문서 업데이트** — 구조/기능 변경 시 `tasks/todo.md`, `lessons.md`, `improvements.md` 갱신
+3. **CLAUDE.md 동기화** — 프로젝트 구조 변경 시 아키텍처 섹션 업데이트
+4. **Python ↔ TS 동기화** — 지표 로직 변경 시 양쪽 반영
+5. **테스트 검증** — 코드 작성 후 import/실행 테스트로 동작 확인
+6. **교훈 기록** — 실수나 새로운 발견은 `tasks/lessons.md`에 기록
 
 ## 파일 간 관계 (Python ↔ TypeScript 포팅 매핑)
 | Python | TypeScript | 설명 |
