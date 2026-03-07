@@ -93,11 +93,21 @@
 - [x] main.py 통합 (executor + interactive bot)
 - [x] Gemini 2.5 Flash thinking 모델 JSON 파싱 수정 (sentiment.py, llm_analyzer.py)
 
-## Phase 4 - 운영 고도화 (예정)
+## Phase 4 - 종목 확장 + 아키텍처 개선 (완료)
+- [x] VIX 중복 호출 제거 (main.py에서 1회 호출 후 전달)
+- [x] 텔레그램 메시지 4096자 자동 분할
+- [x] WATCH_LIST 10종목 확장 (5+ 섹터 분산, Python + TS 동기화)
+- [x] DB 기반 동적 종목 관리 (storage/db.py watch_list 테이블)
+- [x] 텔레그램 /add, /remove, /list 명령어
+- [x] 웹 대시보드 종목 검색 + 자동완성
+- [x] 웹 스크리너 섹션 (골든크로스/RSI과매도/거래량급증)
+- [x] 면책 조항 추가
+- [x] main.py DB 우선 워치리스트 (config.py 폴백)
+
+## Phase 5 - 운영 고도화 (예정)
 - [ ] Docker 배포
 - [ ] 모바일 최적화
 
 ## Backlog
 - [ ] 미국 주식 지원 추가
-- [ ] 감시 종목 동적 관리 (텔레그램 명령어로 추가/삭제)
 - 개선사항은 `tasks/improvements.md` 참고

@@ -10,24 +10,25 @@
 ```
 signalight/
 ├── [Python 백엔드] 텔레그램 알림 봇
-│   ├── config.py           # 설정 (종목, 지표 파라미터, 환경변수)
-│   ├── main.py             # 진입점 + 스케줄러 (평일 장중 30분 간격)
+│   ├── config.py           # 설정 (10종목 5+섹터, 지표 파라미터, 환경변수)
+│   ├── main.py             # 진입점 + 스케줄러 (DB 우선 워치리스트, VIX 1회 조회)
 │   ├── data/
-│   │   ├── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
-│   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤러
+│   │   ├── fetcher.py      # pykrx KRX OHLCV + Yahoo VIX 데이터 수집
+│   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
+│   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, 거래량)
-│   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수
+│   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수 (VIX 외부 전달)
 │   │   ├── sentiment.py    # Google Gemini 뉴스 감성 분석
 │   │   └── llm_analyzer.py # Gemini 종합 판단 (상충 시그널 해석)
 │   ├── storage/
-│   │   └── db.py           # SQLite (시그널 이력, 감성, LLM 판단)
+│   │   └── db.py           # SQLite (시그널 이력, 감성, LLM 판단, watch_list)
 │   ├── infra/
 │   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
 │   ├── bot/
-│   │   ├── telegram.py     # 텔레그램 메시지 전송
+│   │   ├── telegram.py     # 텔레그램 메시지 전송 (4096자 자동 분할)
 │   │   ├── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
-│   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, 인라인 키보드)
+│   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, /add, /remove, /list)
 │   ├── trading/
 │   │   ├── __init__.py     # Order, TradingConfig dataclass
 │   │   ├── kiwoom_client.py # 키움 REST API 래퍼 (OAuth, 조회, 주문)
@@ -40,9 +41,12 @@ signalight/
 ├── [Next.js 프론트엔드] 웹 대시보드
 │   └── web/
 │       ├── app/
-│       │   ├── page.tsx                    # 메인 대시보드 (SWR 60초 갱신)
+│       │   ├── page.tsx                    # 메인 대시보드 (검색+스크리너+면책조항)
 │       │   ├── layout.tsx                  # 레이아웃 (다크모드)
-│       │   └── api/stock/[ticker]/route.ts # API Route (데이터+지표+시그널)
+│       │   └── api/
+│       │       ├── stock/[ticker]/route.ts # 종목 데이터+지표+시그널
+│       │       ├── watchlist/route.ts      # 감시 종목 목록 API
+│       │       └── scanner/route.ts        # 스크리너 API (골든크로스/RSI/거래량)
 │       ├── components/
 │       │   ├── CandleChart.tsx             # 캔들차트 + MA 오버레이
 │       │   ├── RSIChart.tsx                # RSI 라인 + 30/70 기준선

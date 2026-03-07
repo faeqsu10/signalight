@@ -3,8 +3,8 @@ import time
 from datetime import datetime, timedelta
 from typing import List, Dict
 
-from config import WATCH_LIST, DATA_PERIOD_DAYS
-from data.fetcher import fetch_stock_data
+from config import WATCH_LIST as _CONFIG_WATCH_LIST, DATA_PERIOD_DAYS
+from data.fetcher import fetch_stock_data, fetch_vix
 from data.investor import fetch_investor_trading
 from data.news import fetch_news
 from signals.sentiment import analyze_sentiment
@@ -12,7 +12,7 @@ from signals.strategy import analyze_detailed
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
 from signals.llm_analyzer import analyze_comprehensive, should_call_llm
-from storage.db import init_db, save_signals, save_sentiment, save_llm_analysis
+from storage.db import init_db, save_signals, save_sentiment, save_llm_analysis, get_active_watchlist
 from bot.interactive import InteractiveBot, set_emergency_stop_callback
 from trading import TradingConfig
 from trading.executor import TradeExecutor
@@ -22,6 +22,17 @@ logger = setup_logging()
 
 # DB 초기화
 init_db()
+
+
+def _get_watchlist():
+    """DB 우선, config.py 폴백으로 감시 종목 리스트를 반환한다."""
+    try:
+        wl = get_active_watchlist()
+        if wl:
+            return wl
+    except Exception as e:
+        logger.warning("DB 워치리스트 조회 실패, config 폴백: %s", e)
+    return _CONFIG_WATCH_LIST
 
 # 자동매매 (dry_run=True 기본, 실제 주문 없이 시뮬레이션)
 _trading_config = TradingConfig(dry_run=True, use_mock=True)
@@ -33,7 +44,18 @@ def _collect_stock_data() -> List[Dict]:
     """모든 감시 종목의 구조화된 데이터를 수집한다."""
     stock_data_list = []
 
-    for ticker, name in WATCH_LIST:
+    # VIX 1회 조회 후 전 종목에 전달 (중복 호출 방지)
+    vix_value = None
+    try:
+        vix_series = fetch_vix()
+        if not vix_series.empty:
+            vix_value = float(vix_series.iloc[-1])
+            logger.info("VIX 공포지수: %.1f", vix_value)
+    except Exception as e:
+        logger.warning("VIX 조회 실패: %s", e)
+
+    watchlist = _get_watchlist()
+    for ticker, name in watchlist:
         try:
             df = fetch_stock_data(ticker)
             if df.empty:
@@ -46,7 +68,7 @@ def _collect_stock_data() -> List[Dict]:
             except Exception as e:
                 logger.warning("%s(%s) 외인/기관 데이터 조회 실패: %s", name, ticker, e)
 
-            data = analyze_detailed(df, ticker, name, investor_df=investor_df)
+            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
 
             # 뉴스 감성 분석 (실패해도 기존 알림에 영향 없음)
             try:
@@ -151,7 +173,8 @@ def weekly_report():
     stock_data_list = []
     weekly_signals = []  # type: List[Dict]
 
-    for ticker, name in WATCH_LIST:
+    watchlist = _get_watchlist()
+    for ticker, name in watchlist:
         try:
             # 주간 데이터: 최근 10일 (약 2주 거래일)
             end_dt = datetime.today()
@@ -220,7 +243,8 @@ def healthcheck():
 
 def main():
     logger.info("=== Signalight 시작 ===")
-    logger.info("감시 종목: %s", ", ".join(name for _, name in WATCH_LIST))
+    watchlist = _get_watchlist()
+    logger.info("감시 종목: %s", ", ".join(name for _, name in watchlist))
 
     # 텔레그램 인터랙티브 봇 시작 (백그라운드 스레드)
     set_emergency_stop_callback(_executor.emergency_stop)

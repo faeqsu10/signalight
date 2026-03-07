@@ -13,7 +13,16 @@ export const VIX_EXTREME_GREED = 12;
 // 외인/기관 연속 매수/매도 판단 기준 일수
 export const INVESTOR_CONSEC_DAYS = 3;
 
+// 10종목, 5+ 섹터 분산
 export const WATCH_LIST = [
-  { ticker: "005930", name: "삼성전자" },
-  { ticker: "000660", name: "SK하이닉스" },
+  { ticker: "005930", name: "삼성전자" },       // 반도체
+  { ticker: "000660", name: "SK하이닉스" },     // 반도체
+  { ticker: "373220", name: "LG에너지솔루션" },  // 2차전지
+  { ticker: "006400", name: "삼성SDI" },        // 2차전지
+  { ticker: "207940", name: "삼성바이오로직스" },  // 바이오
+  { ticker: "068270", name: "셀트리온" },        // 바이오
+  { ticker: "105560", name: "KB금융" },          // 금융
+  { ticker: "005380", name: "현대차" },          // 자동차
+  { ticker: "035420", name: "NAVER" },          // IT/플랫폼
+  { ticker: "035720", name: "카카오" },          // IT/플랫폼
 ] as const;

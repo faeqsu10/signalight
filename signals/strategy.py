@@ -7,7 +7,7 @@ from config import (
     SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT,
     VIX_EXTREME_FEAR, VIX_FEAR, VIX_EXTREME_GREED, INVESTOR_CONSEC_DAYS,
 )
-from data.fetcher import fetch_vix
+
 from backtest import Signal, SignalType
 
 
@@ -33,6 +33,7 @@ def analyze_detailed(
     ticker: str,
     name: str,
     investor_df: Optional[pd.DataFrame] = None,
+    vix_value: Optional[float] = None,
 ) -> Dict:
     """주어진 OHLCV 데이터를 분석하여 구조화된 시그널 데이터를 반환한다.
 
@@ -155,39 +156,33 @@ def analyze_detailed(
             })
             sell_score += 1.0
 
-    # 4. VIX 공포지수
-    vix_value = None
-    try:
-        vix_series = fetch_vix(30)
-        if not vix_series.empty:
-            vix_value = float(vix_series.iloc[-1])
-            result["indicators"]["vix"] = vix_value
-            if vix_value >= VIX_EXTREME_FEAR:
-                signals.append({
-                    "trigger": "VIX 공포",
-                    "type": "buy",
-                    "source": "VIX",
-                    "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
-                })
-                buy_score += 1.0
-            elif vix_value >= VIX_FEAR:
-                signals.append({
-                    "trigger": "VIX 주의",
-                    "type": "buy",
-                    "source": "VIX",
-                    "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
-                })
-                buy_score += 1.0
-            elif vix_value <= VIX_EXTREME_GREED:
-                signals.append({
-                    "trigger": "VIX 과열",
-                    "type": "sell",
-                    "source": "VIX",
-                    "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
-                })
-                sell_score += 1.0
-    except Exception:
-        pass
+    # 4. VIX 공포지수 (외부에서 전달받음 — 종목마다 중복 호출 방지)
+    if vix_value is not None:
+        result["indicators"]["vix"] = vix_value
+        if vix_value >= VIX_EXTREME_FEAR:
+            signals.append({
+                "trigger": "VIX 공포",
+                "type": "buy",
+                "source": "VIX",
+                "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
+            })
+            buy_score += 1.0
+        elif vix_value >= VIX_FEAR:
+            signals.append({
+                "trigger": "VIX 주의",
+                "type": "buy",
+                "source": "VIX",
+                "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
+            })
+            buy_score += 1.0
+        elif vix_value <= VIX_EXTREME_GREED:
+            signals.append({
+                "trigger": "VIX 과열",
+                "type": "sell",
+                "source": "VIX",
+                "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
+            })
+            sell_score += 1.0
 
     # 5. 외인/기관 매매동향
     if investor_df is not None and len(investor_df) >= INVESTOR_CONSEC_DAYS:

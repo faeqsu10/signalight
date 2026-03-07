@@ -272,6 +272,15 @@ class InteractiveBot:
         elif command == "scan":
             self._cmd_scan(chat_id)
 
+        elif command == "add":
+            self._cmd_add(chat_id, text)
+
+        elif command == "remove":
+            self._cmd_remove(chat_id, text)
+
+        elif command == "list":
+            self._cmd_list(chat_id)
+
         elif command == "stop":
             with _trading_lock:
                 _trading_enabled = False
@@ -311,10 +320,59 @@ class InteractiveBot:
             "/help — 이 도움말\n"
             "/status — 현재 거래 상태 및 대기 주문 요약\n"
             "/scan — 수동 시장 스캔 트리거\n"
+            "/list — 감시 종목 목록 표시\n"
+            "/add [종목코드] [종목명] — 감시 종목 추가\n"
+            "/remove [종목코드] — 감시 종목 제거\n"
             "/stop — 긴급 정지 (거래 비활성화)\n"
             "/start — 거래 재개 (정지 해제)\n"
         )
         send_message(text)
+
+    def _cmd_add(self, chat_id: str, text: str) -> None:
+        """/add 종목코드 종목명 — 감시 종목 추가."""
+        from storage.db import add_to_watchlist
+
+        parts = text.strip().split(maxsplit=1)
+        if len(parts) < 2:
+            send_message("사용법: /add [종목코드] [종목명]\n예: /add 005930 삼성전자")
+            return
+
+        ticker, name = parts[0], parts[1]
+        if add_to_watchlist(ticker, name):
+            send_message(f"감시 종목 추가: <b>{name}</b> ({ticker})")
+            logger.info("종목 추가: %s (%s)", name, ticker)
+        else:
+            send_message(f"이미 감시 중인 종목입니다: <b>{name}</b> ({ticker})")
+
+    def _cmd_remove(self, chat_id: str, text: str) -> None:
+        """/remove 종목코드 — 감시 종목 제거."""
+        from storage.db import remove_from_watchlist
+
+        ticker = text.strip()
+        if not ticker:
+            send_message("사용법: /remove [종목코드]\n예: /remove 005930")
+            return
+
+        if remove_from_watchlist(ticker):
+            send_message(f"감시 종목 제거: ({ticker})")
+            logger.info("종목 제거: %s", ticker)
+        else:
+            send_message(f"감시 목록에 없는 종목입니다: ({ticker})")
+
+    def _cmd_list(self, chat_id: str) -> None:
+        """/list — 현재 감시 종목 목록 표시."""
+        from storage.db import get_active_watchlist
+
+        watchlist = get_active_watchlist()
+        if not watchlist:
+            send_message("감시 중인 종목이 없습니다.")
+            return
+
+        lines = ["<b>[감시 종목 목록]</b>", ""]
+        for i, (ticker, name) in enumerate(watchlist, 1):
+            lines.append(f"{i}. {name} ({ticker})")
+        lines.append(f"\n총 {len(watchlist)}개 종목")
+        send_message("\n".join(lines))
 
     def _cmd_status(self, chat_id: str) -> None:
         """/status 명령 처리."""

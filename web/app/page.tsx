@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { WATCH_LIST } from "@/lib/constants";
 import CandleChart from "@/components/CandleChart";
@@ -12,6 +12,13 @@ import Tooltip from "@/components/Tooltip";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+interface ScanResult {
+  ticker: string;
+  name: string;
+  price: number;
+  reason: string;
+}
 
 function VIXGauge({ vix }: { vix: number }) {
   let bg = "bg-gray-200 dark:bg-gray-800";
@@ -61,15 +68,66 @@ function VIXGauge({ vix }: { vix: number }) {
   );
 }
 
+function ScannerCategory({
+  title,
+  items,
+  emptyText,
+}: {
+  title: string;
+  items: ScanResult[];
+  emptyText: string;
+}) {
+  return (
+    <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)] transition-colors">
+      <h4 className="text-sm font-semibold text-[var(--muted)] mb-3">{title}</h4>
+      {items.length === 0 ? (
+        <p className="text-xs text-[var(--muted)]">{emptyText}</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((item) => (
+            <li key={item.ticker} className="flex items-center justify-between text-sm">
+              <div>
+                <span className="font-medium">{item.name}</span>
+                <span className="text-[var(--muted)] ml-1 text-xs">({item.ticker})</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-[var(--muted)]">{item.reason}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const selected = WATCH_LIST[selectedIdx];
+
+  const filteredList = useMemo(() => {
+    if (!searchQuery.trim()) return WATCH_LIST.map((item, i) => ({ ...item, idx: i }));
+    const q = searchQuery.toLowerCase();
+    return WATCH_LIST
+      .map((item, i) => ({ ...item, idx: i }))
+      .filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.ticker.includes(q)
+      );
+  }, [searchQuery]);
 
   const { data, error, isLoading } = useSWR(
     `/api/stock/${selected.ticker}`,
     fetcher,
     { refreshInterval: 60000 }
   );
+
+  const { data: scannerData } = useSWR("/api/scanner", fetcher, {
+    refreshInterval: 300000, // 5분 간격
+  });
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
@@ -84,17 +142,44 @@ export default function Home() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <select
-            value={selectedIdx}
-            onChange={(e) => setSelectedIdx(Number(e.target.value))}
-            className="bg-[var(--select-bg)] border border-[var(--select-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors"
-          >
-            {WATCH_LIST.map((item, i) => (
-              <option key={item.ticker} value={i}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="종목 검색..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearch(true);
+              }}
+              onFocus={() => setShowSearch(true)}
+              className="bg-[var(--select-bg)] border border-[var(--select-border)] rounded-lg px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors w-36 sm:w-48"
+            />
+            {showSearch && filteredList.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--card-border)] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {filteredList.map((item) => (
+                  <button
+                    key={item.ticker}
+                    onClick={() => {
+                      setSelectedIdx(item.idx);
+                      setSearchQuery("");
+                      setShowSearch(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex justify-between"
+                  >
+                    <span>{item.name}</span>
+                    <span className="text-[var(--muted)] text-xs">{item.ticker}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Backdrop to close search */}
+            {showSearch && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowSearch(false)}
+              />
+            )}
+          </div>
           <ThemeToggle />
         </div>
       </header>
@@ -240,6 +325,33 @@ export default function Home() {
 
         {data?.error && (
           <div className="text-center py-20 text-red-500">{data.error}</div>
+        )}
+
+        {/* Screener Section */}
+        {scannerData && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-bold">종목 스크리너</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ScannerCategory
+                title="골든크로스"
+                items={scannerData.goldenCross ?? []}
+                emptyText="해당 종목 없음"
+              />
+              <ScannerCategory
+                title="RSI 과매도"
+                items={scannerData.rsiOversold ?? []}
+                emptyText="해당 종목 없음"
+              />
+              <ScannerCategory
+                title="거래량 급증"
+                items={scannerData.volumeSurge ?? []}
+                emptyText="해당 종목 없음"
+              />
+            </div>
+            <p className="text-xs text-[var(--muted)] text-center mt-2">
+              본 정보는 기술적 지표 기반 스크리닝 결과이며, 투자 추천이 아닙니다.
+            </p>
+          </section>
         )}
       </main>
     </div>
