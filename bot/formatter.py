@@ -94,15 +94,16 @@ def _signal_emoji(signal_type: str) -> str:
     return "⬜ 관망"
 
 
-def _confluence_label(score: int, total: int) -> str:
+def _confluence_label(score: int, total: int, direction: str = "buy") -> str:
     """합류 점수를 텍스트로 변환한다."""
     if total == 0:
         return "데이터 없음"
     ratio = score / total
+    is_buy = direction == "buy"
     if ratio >= 0.8:
-        return "강한 매수" if score > 0 else "강한 매도"
+        return "강한 매수" if is_buy else "강한 매도"
     elif ratio >= 0.6:
-        return "매수 우세" if score > 0 else "매도 우세"
+        return "매수 우세" if is_buy else "매도 우세"
     elif ratio >= 0.4:
         return "중립"
     return "혼재"
@@ -239,7 +240,8 @@ def _build_signal_block(stock: dict) -> str:
 
     # 합류 점수
     if total_indicators > 0:
-        label = _confluence_label(confluence_score, total_indicators)
+        direction = stock.get("confluence_direction", "buy")
+        label = _confluence_label(confluence_score, total_indicators, direction)
         lines.append(f"[합류 점수] {confluence_score}/{total_indicators} ({label})")
 
     return "\n".join(lines)

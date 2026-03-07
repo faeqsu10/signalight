@@ -18,7 +18,8 @@ export async function GET(
     ]);
 
     const closes = ohlcv.map((d) => d.close);
-    const analysis = analyze(closes, vixData, investorData);
+    const volumes = ohlcv.map((d) => d.volume);
+    const analysis = analyze(closes, vixData, investorData, volumes);
 
     return NextResponse.json({
       ticker,

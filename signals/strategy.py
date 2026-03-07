@@ -218,6 +218,7 @@ def analyze_detailed(
 
     result["signals"] = signals
     result["confluence_score"] = max(buy_count, sell_count)
+    result["confluence_direction"] = "buy" if buy_count >= sell_count else "sell"
 
     return result
 
