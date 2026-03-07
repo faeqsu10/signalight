@@ -5,6 +5,10 @@ import {
   RSI_PERIOD,
   RSI_OVERSOLD,
   RSI_OVERBOUGHT,
+  VIX_EXTREME_FEAR,
+  VIX_FEAR,
+  VIX_EXTREME_GREED,
+  INVESTOR_CONSEC_DAYS,
 } from "./constants";
 
 export type SignalType = "buy" | "sell" | "neutral";
@@ -18,6 +22,7 @@ export interface Signal {
 export interface AnalysisResult {
   signals: Signal[];
   currentRSI: number | null;
+  currentVIX: number | null;
   shortMA: (number | null)[];
   longMA: (number | null)[];
   macdLine: (number | null)[];
@@ -26,7 +31,11 @@ export interface AnalysisResult {
   rsiValues: (number | null)[];
 }
 
-export function analyze(closes: number[]): AnalysisResult {
+export function analyze(
+  closes: number[],
+  vixData?: { date: string; close: number }[] | null,
+  investorData?: { date: string; foreignNet: number; institutionalNet: number }[] | null,
+): AnalysisResult {
   const shortMA = calcMovingAverage(closes, SHORT_MA);
   const longMA = calcMovingAverage(closes, LONG_MA);
   const rsiValues = calcRSI(closes, RSI_PERIOD);
@@ -35,10 +44,17 @@ export function analyze(closes: number[]): AnalysisResult {
   const signals: Signal[] = [];
   const n = closes.length;
 
+  // VIX 현재값 추출
+  const currentVIX =
+    vixData && vixData.length > 0
+      ? vixData[vixData.length - 1].close
+      : null;
+
   if (n < LONG_MA) {
     return {
       signals,
       currentRSI: null,
+      currentVIX,
       shortMA,
       longMA,
       macdLine,
@@ -141,9 +157,83 @@ export function analyze(closes: number[]): AnalysisResult {
     }
   }
 
+  // 4. VIX (공포지수)
+  if (currentVIX !== null) {
+    if (currentVIX >= VIX_EXTREME_FEAR) {
+      signals.push({
+        type: "buy",
+        label: "VIX",
+        detail: `${currentVIX.toFixed(1)} - 극단적 공포 (${VIX_EXTREME_FEAR} 이상, 역발상 매수)`,
+      });
+    } else if (currentVIX >= VIX_FEAR) {
+      signals.push({
+        type: "buy",
+        label: "VIX",
+        detail: `${currentVIX.toFixed(1)} - 공포 구간 (${VIX_FEAR} 이상)`,
+      });
+    } else if (currentVIX <= VIX_EXTREME_GREED) {
+      signals.push({
+        type: "sell",
+        label: "VIX",
+        detail: `${currentVIX.toFixed(1)} - 극단적 탐욕 (${VIX_EXTREME_GREED} 이하, 과열 주의)`,
+      });
+    } else {
+      signals.push({
+        type: "neutral",
+        label: "VIX",
+        detail: `${currentVIX.toFixed(1)} - 보통`,
+      });
+    }
+  }
+
+  // 5. 외인/기관 매매동향
+  if (investorData && investorData.length >= INVESTOR_CONSEC_DAYS) {
+    const recent = investorData.slice(0, INVESTOR_CONSEC_DAYS);
+
+    const allForeignBuy = recent.every((d) => d.foreignNet > 0);
+    const allInstitutionalBuy = recent.every((d) => d.institutionalNet > 0);
+    const allForeignSell = recent.every((d) => d.foreignNet < 0);
+    const allInstitutionalSell = recent.every((d) => d.institutionalNet < 0);
+
+    if (allForeignBuy && allInstitutionalBuy) {
+      signals.push({
+        type: "buy",
+        label: "수급",
+        detail: `외인+기관 ${INVESTOR_CONSEC_DAYS}일 연속 순매수`,
+      });
+    } else if (allForeignSell && allInstitutionalSell) {
+      signals.push({
+        type: "sell",
+        label: "수급",
+        detail: `외인+기관 ${INVESTOR_CONSEC_DAYS}일 연속 순매도`,
+      });
+    } else if (allForeignBuy || allInstitutionalBuy) {
+      const who = allForeignBuy ? "외국인" : "기관";
+      signals.push({
+        type: "neutral",
+        label: "수급",
+        detail: `${who} ${INVESTOR_CONSEC_DAYS}일 연속 순매수`,
+      });
+    } else if (allForeignSell || allInstitutionalSell) {
+      const who = allForeignSell ? "외국인" : "기관";
+      signals.push({
+        type: "neutral",
+        label: "수급",
+        detail: `${who} ${INVESTOR_CONSEC_DAYS}일 연속 순매도`,
+      });
+    } else {
+      signals.push({
+        type: "neutral",
+        label: "수급",
+        detail: "뚜렷한 수급 패턴 없음",
+      });
+    }
+  }
+
   return {
     signals,
     currentRSI,
+    currentVIX,
     shortMA,
     longMA,
     macdLine,

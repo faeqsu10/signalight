@@ -11,6 +11,36 @@ import PriceInfo from "@/components/PriceInfo";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+function VIXGauge({ vix }: { vix: number }) {
+  let bg = "bg-gray-800";
+  let text = "text-gray-400";
+  let label = "보통";
+
+  if (vix >= 30) {
+    bg = "bg-red-900/60";
+    text = "text-red-400";
+    label = "극단적 공포";
+  } else if (vix >= 25) {
+    bg = "bg-yellow-900/60";
+    text = "text-yellow-400";
+    label = "공포";
+  } else if (vix <= 12) {
+    bg = "bg-green-900/60";
+    text = "text-green-400";
+    label = "극단적 탐욕";
+  }
+
+  return (
+    <div
+      className={`${bg} rounded-lg px-4 py-2 border border-gray-700 flex flex-col items-center min-w-[120px]`}
+    >
+      <span className="text-xs text-gray-500 mb-1">VIX 공포지수</span>
+      <span className={`text-2xl font-bold ${text}`}>{vix.toFixed(1)}</span>
+      <span className={`text-xs ${text}`}>{label}</span>
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const selected = WATCH_LIST[selectedIdx];
@@ -54,13 +84,20 @@ export default function Home() {
 
         {data && !data.error && (
           <>
-            {/* Price Info */}
-            <PriceInfo
-              name={selected.name}
-              ticker={selected.ticker}
-              ohlcv={data.ohlcv}
-              signals={data.signals}
-            />
+            {/* Price Info + VIX */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex-1">
+                <PriceInfo
+                  name={selected.name}
+                  ticker={selected.ticker}
+                  ohlcv={data.ohlcv}
+                  signals={data.signals}
+                />
+              </div>
+              {data.currentVIX != null && (
+                <VIXGauge vix={data.currentVIX} />
+              )}
+            </div>
 
             {/* Candle Chart */}
             <div className="bg-[#141414] rounded-lg p-4 border border-gray-800">

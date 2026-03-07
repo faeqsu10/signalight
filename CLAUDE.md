@@ -33,10 +33,11 @@ signalight/
 │       │   ├── SignalPanel.tsx             # 시그널 현황 패널
 │       │   └── PriceInfo.tsx               # 현재가, 등락률, 종합 시그널
 │       └── lib/
-│           ├── constants.ts                # config.py 포팅
+│           ├── constants.ts                # config.py 포팅 + VIX/수급 설정값
 │           ├── indicators.ts               # indicators.py 포팅
-│           ├── strategy.ts                 # strategy.py 포팅
-│           └── yahoo-finance.ts            # Yahoo Finance OHLCV fetch
+│           ├── investor.ts                 # 네이버 금융 외인/기관 순매수 fetch
+│           ├── strategy.ts                 # strategy.py 포팅 + VIX/수급 시그널
+│           └── yahoo-finance.ts            # Yahoo Finance OHLCV + VIX fetch
 │
 └── tasks/
     ├── todo.md             # 작업 체크리스트
