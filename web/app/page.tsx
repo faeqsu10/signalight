@@ -8,6 +8,7 @@ import RSIChart from "@/components/RSIChart";
 import MACDChart from "@/components/MACDChart";
 import SignalPanel from "@/components/SignalPanel";
 import PriceInfo from "@/components/PriceInfo";
+import Tooltip from "@/components/Tooltip";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -34,7 +35,25 @@ function VIXGauge({ vix }: { vix: number }) {
     <div
       className={`${bg} rounded-lg px-4 py-2 border border-gray-700 flex flex-col items-center min-w-[120px]`}
     >
-      <span className="text-xs text-gray-500 mb-1">VIX 공포지수</span>
+      <span className="text-xs text-gray-500 mb-1 flex items-center">
+        VIX 공포지수
+        <Tooltip
+          content={
+            <div>
+              <p className="font-semibold text-gray-200 mb-1">VIX (공포지수)</p>
+              <p className="mb-2">시장 참여자들의 공포/탐욕 수준을 나타내는 지수입니다.</p>
+              <table className="w-full text-[10px]">
+                <tbody>
+                  <tr><td className="text-red-400 pr-2">30+</td><td>극단적 공포 (역발상 매수 기회)</td></tr>
+                  <tr><td className="text-yellow-400 pr-2">25~30</td><td>공포 구간 (주의 필요)</td></tr>
+                  <tr><td className="text-gray-400 pr-2">12~25</td><td>정상 범위</td></tr>
+                  <tr><td className="text-green-400 pr-2">~12</td><td>극단적 탐욕 (과열 경고)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          }
+        />
+      </span>
       <span className={`text-2xl font-bold ${text}`}>{vix.toFixed(1)}</span>
       <span className={`text-xs ${text}`}>{label}</span>
     </div>
@@ -101,6 +120,25 @@ export default function Home() {
 
             {/* Candle Chart */}
             <div className="bg-[#141414] rounded-lg p-4 border border-gray-800">
+              <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center">
+                캔들차트
+                <Tooltip
+                  content={
+                    <div>
+                      <p className="font-semibold text-gray-200 mb-1">캔들차트 + 이동평균선</p>
+                      <table className="w-full text-[10px]">
+                        <tbody>
+                          <tr><td className="text-red-400 pr-2">빨간 봉</td><td>상승일 (시가 &lt; 종가)</td></tr>
+                          <tr><td className="text-blue-400 pr-2">파란 봉</td><td>하락일 (시가 &gt; 종가)</td></tr>
+                          <tr><td className="text-yellow-400 pr-2">빠른 선</td><td>5일 이동평균</td></tr>
+                          <tr><td className="text-orange-400 pr-2">느린 선</td><td>20일 이동평균</td></tr>
+                          <tr><td className="text-gray-400 pr-2">교차</td><td>골든크로스(매수) / 데드크로스(매도)</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                />
+              </h3>
               <CandleChart
                 ohlcv={data.ohlcv}
                 shortMA={data.shortMA}
@@ -111,14 +149,44 @@ export default function Home() {
             {/* RSI + MACD */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#141414] rounded-lg p-4 border border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-400 mb-2">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center">
                   RSI ({data.currentRSI?.toFixed(1) ?? "-"})
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold text-gray-200 mb-1">RSI (상대강도지수)</p>
+                        <p className="mb-2">주가가 과매수/과매도 상태인지 0~100으로 나타냅니다.</p>
+                        <table className="w-full text-[10px]">
+                          <tbody>
+                            <tr><td className="text-blue-400 pr-2">70+</td><td>과매수 (너무 올랐음, 매도 고려)</td></tr>
+                            <tr><td className="text-gray-400 pr-2">30~70</td><td>중립 구간</td></tr>
+                            <tr><td className="text-red-400 pr-2">~30</td><td>과매도 (너무 떨어짐, 매수 기회)</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  />
                 </h3>
                 <RSIChart ohlcv={data.ohlcv} rsiValues={data.rsiValues} />
               </div>
               <div className="bg-[#141414] rounded-lg p-4 border border-gray-800">
-                <h3 className="text-sm font-semibold text-gray-400 mb-2">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2 flex items-center">
                   MACD
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold text-gray-200 mb-1">MACD (이동평균수렴확산)</p>
+                        <p className="mb-2">단기/장기 추세의 힘 차이로 전환점을 포착합니다.</p>
+                        <table className="w-full text-[10px]">
+                          <tbody>
+                            <tr><td className="text-red-400 pr-2">상향돌파</td><td>MACD가 시그널선 위로 → 매수</td></tr>
+                            <tr><td className="text-blue-400 pr-2">하향돌파</td><td>MACD가 시그널선 아래로 → 매도</td></tr>
+                            <tr><td className="text-gray-400 pr-2">히스토그램</td><td>두 선의 차이 (막대그래프)</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  />
                 </h3>
                 <MACDChart
                   ohlcv={data.ohlcv}
