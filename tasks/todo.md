@@ -30,7 +30,9 @@
 - [x] CLI 러너 구현 (backtest/runner.py)
   - `python3 -m backtest.runner [종목코드] [종목명] [--days N] [--capital N]`
 
-## Phase 2 - 전략 고도화
+## Phase 2 - 전략 고도화 (진행 중) + 인프라 안정화
+
+### 전략 고도화
 - [x] VIX(공포지수) + 외인/기관 매매동향 지표 추가 (웹 대시보드)
 - [x] 거래량 비율 지표 추가 (Python + TS 동기화)
 - [x] 시그널 구조화 (문자열 → 구조화된 dict, 합류 점수)
@@ -42,6 +44,15 @@
 - [ ] 복합 전략 프레임워크 (멀티 시그널 조합)
 - [ ] 파라미터 최적화 (MA 조합 탐색)
 - [ ] 백테스트 결과 웹 대시보드 표시
+
+### 인프라 안정화 (Phase 2 신규)
+- [ ] systemd 재시작 정책 확인 및 설정
+- [ ] 구조화 로깅 구현 (`infra/logging_config.py`)
+- [ ] Python 봇 timeout + 재시도 로직
+- [ ] 헬스체크 메시지 추가 (매일 09:00)
+- [ ] Vercel 배포 및 API 캐싱
+- [ ] 네이버 금융 크롤링 캐시 + OpenDART 시범
+- 참고: `DEVOPS_ANALYSIS.md`
 
 ## LLM 파이프라인 (Phase 1 - 완료)
 - [x] anthropic 패키지 설치

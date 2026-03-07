@@ -65,6 +65,49 @@
 - 터치 제스처 지원 확인
 - RSI/MACD 차트 모바일에서 세로 배치 확인
 
+## P0 - 인프라 안정성 (Phase 2 우선)
+
+### Python 봇 안정성 강화
+- [ ] systemd 서비스 재시작 정책 확인 (`Restart=on-failure`, `RestartSec=60`)
+- [ ] 구조화 로깅 추가: `infra/logging_config.py` (일별 로테이션, 10MB)
+- [ ] 각 fetch 함수에 timeout 설정 (pykrx, requests)
+- [ ] `send_message()` 재시도 로직 (exponential backoff)
+- [ ] 헬스체크 메시지 (매일 09:00)
+- 참고: `DEVOPS_ANALYSIS.md` 섹션 4.1~4.3
+
+### 네이버 금융 크롤링 안정성
+- [ ] in-memory 캐시 도입 (24시간 → 매일 1회만 fetch)
+- [ ] XPath 파싱 실패 시 graceful degradation
+- [ ] OpenDART API 시범 도입 (외인/기관 데이터, 공식)
+- [ ] Terms of Service 법적 검토 (뉴스, 외인/기관)
+- 참고: `DEVOPS_ANALYSIS.md` 부록
+
+### 웹 대시보드 배포
+- [ ] Vercel 연결 (GitHub Actions, root directory: `web/`)
+- [ ] API Route in-memory 캐시 추가 (5분)
+- [ ] 에러 메시지 구체화 (어느 데이터 소스 실패인지)
+- [ ] 환경변수 설정 (API 키)
+- 참고: `DEVOPS_ANALYSIS.md` 섹션 4.4
+
+## P1 - 모니터링 기초
+
+### 봇 헬스체크
+- [ ] 일일 헬스체크 메시지 (09:00 "봇 상태 확인")
+- [ ] 24시간 타임아웃 감시 (봇 다운 감지)
+- [ ] 텔레그램 수신 확인
+
+### API 로깅 강화
+- [ ] Next.js API 요청/응답 시간 기록
+- [ ] 데이터 소스별 성공/실패율 추적
+- [ ] Vercel Functions Logs 활용
+
+## P2 - 데이터 캐싱 프레임워크
+
+### 캐싱 레이어
+- [ ] SQLite 또는 in-memory 캐시
+- [ ] OHLCV, VIX, 외인/기관, 뉴스: 최소 4시간 캐시
+- [ ] 캐시 miss 시 real-time fetch
+
 ## P2 - 기술 품질
 
 ### RSI 계산 방식 개선
@@ -77,11 +120,6 @@
 - Yahoo Finance API 요청 제한(rate limit) 대응
 - 장 마감/공휴일 시 빈 데이터 처리
 - API 실패 시 캐시된 데이터 표시
-
-### 데이터 캐싱
-- 현재: 매 요청마다 Yahoo Finance API 호출
-- 개선: Next.js API Route에서 in-memory 캐시 (5분)
-- Vercel 배포 시 Edge Cache 활용 가능
 
 ## P3 - 향후 확장
 
