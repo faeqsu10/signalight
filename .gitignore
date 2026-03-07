@@ -9,7 +9,9 @@ dist/
 build/
 .claude/
 .omc/state/
+.omc/sessions/
 .omc/project-memory.json
+web/.omc/
 test.html
 web/node_modules/
 web/.next/
