@@ -80,6 +80,39 @@ export function calcMACD(
   return { macdLine, signalLine, histogram };
 }
 
+export function calcATR(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number = 14,
+): (number | null)[] {
+  const result: (number | null)[] = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return result;
+
+  // True Range
+  const tr: number[] = [highs[0] - lows[0]];
+  for (let i = 1; i < closes.length; i++) {
+    const tr1 = highs[i] - lows[i];
+    const tr2 = Math.abs(highs[i] - closes[i - 1]);
+    const tr3 = Math.abs(lows[i] - closes[i - 1]);
+    tr.push(Math.max(tr1, tr2, tr3));
+  }
+
+  // Seed: SMA of first `period` TR values (starting from index 1)
+  let atr = 0;
+  for (let i = 1; i <= period; i++) atr += tr[i];
+  atr /= period;
+  result[period] = atr;
+
+  // Wilder's smoothing
+  for (let i = period + 1; i < closes.length; i++) {
+    atr = (atr * (period - 1) + tr[i]) / period;
+    result[i] = atr;
+  }
+
+  return result;
+}
+
 export function calcVolumeRatio(volumes: number[], period: number = 20): number {
   if (volumes.length < period) return 1.0;
   const window = volumes.slice(-period);

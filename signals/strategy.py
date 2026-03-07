@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from signals.indicators import calc_moving_average, calc_rsi, calc_macd, calc_volume_ratio
+from signals.indicators import calc_moving_average, calc_rsi, calc_macd, calc_volume_ratio, calc_atr
 from config import (
     SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT,
     VIX_EXTREME_FEAR, VIX_FEAR, VIX_EXTREME_GREED, INVESTOR_CONSEC_DAYS,
@@ -74,9 +74,14 @@ def analyze_detailed(
     rsi = calc_rsi(closes, RSI_PERIOD)
     macd_line, signal_line, histogram = calc_macd(closes)
     volume_ratio = calc_volume_ratio(volumes)
+    atr = calc_atr(df["고가"], df["저가"], closes, period=14)
 
     current_rsi = float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else None
     current_histogram = float(histogram.iloc[-1]) if not pd.isna(histogram.iloc[-1]) else None
+    current_atr = float(atr.iloc[-1]) if not pd.isna(atr.iloc[-1]) else None
+
+    # ATR 기반 손절가 (현재가 - 2 * ATR)
+    atr_stop_loss = int(current_price - 2 * current_atr) if current_atr else None
 
     result["indicators"] = {
         "rsi": current_rsi,
@@ -84,6 +89,8 @@ def analyze_detailed(
         "short_ma": float(short_ma.iloc[-1]) if not pd.isna(short_ma.iloc[-1]) else None,
         "long_ma": float(long_ma.iloc[-1]) if not pd.isna(long_ma.iloc[-1]) else None,
         "volume_ratio": round(volume_ratio, 2),
+        "atr": round(current_atr, 0) if current_atr else None,
+        "atr_stop_loss": atr_stop_loss,
     }
 
     # 1. 이동평균선 크로스

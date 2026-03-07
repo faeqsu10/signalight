@@ -240,6 +240,13 @@ def _build_signal_block(stock: dict) -> str:
 
         lines.append("")
 
+    # ATR 손절가
+    atr = indicators.get("atr")
+    atr_stop_loss = indicators.get("atr_stop_loss")
+    if atr is not None and atr_stop_loss is not None:
+        lines.append(f"[손절 기준] ATR({int(atr)}) 기반: {atr_stop_loss:,}원")
+        lines.append("")
+
     # 뉴스 감성
     news_sentiment = stock.get("news_sentiment")
     if news_sentiment is not None:

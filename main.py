@@ -11,6 +11,9 @@ from signals.sentiment import analyze_sentiment
 from signals.strategy import analyze_detailed
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
+from infra.logging_config import setup_logging
+
+logger = setup_logging()
 
 
 def _collect_stock_data() -> List[Dict]:
@@ -21,14 +24,14 @@ def _collect_stock_data() -> List[Dict]:
         try:
             df = fetch_stock_data(ticker)
             if df.empty:
-                print(f"  {name}({ticker}): 데이터 없음")
+                logger.warning("%s(%s): 데이터 없음", name, ticker)
                 continue
 
             investor_df = None
             try:
                 investor_df = fetch_investor_trading(ticker)
             except Exception as e:
-                print(f"  {name}({ticker}) 외인/기관 데이터 조회 실패: {e}")
+                logger.warning("%s(%s) 외인/기관 데이터 조회 실패: %s", name, ticker, e)
 
             data = analyze_detailed(df, ticker, name, investor_df=investor_df)
 
@@ -42,19 +45,19 @@ def _collect_stock_data() -> List[Dict]:
                 else:
                     data["news_sentiment"] = None
             except Exception as e:
-                print(f"  {name}({ticker}) 뉴스 감성 분석 실패: {e}")
+                logger.warning("%s(%s) 뉴스 감성 분석 실패: %s", name, ticker, e)
                 data["news_sentiment"] = None
 
             stock_data_list.append(data)
         except Exception as e:
-            print(f"  {name}({ticker}) 에러: {e}")
+            logger.error("%s(%s) 에러: %s", name, ticker, e)
 
     return stock_data_list
 
 
 def check_signals():
     """감시 종목들의 시그널을 확인하고 알림을 보낸다."""
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 시그널 체크 시작...")
+    logger.info("시그널 체크 시작...")
 
     stock_data_list = _collect_stock_data()
 
@@ -64,33 +67,33 @@ def check_signals():
     if signal_stocks:
         for s in signal_stocks:
             for sig in s["signals"]:
-                print(f"  >> [{sig['trigger']}] {s['name']} - {sig['detail']}")
+                logger.info("[%s] %s - %s", sig["trigger"], s["name"], sig["detail"])
 
         message = format_signal_alert(stock_data_list)
         send_message(message)
         total = sum(len(s["signals"]) for s in signal_stocks)
-        print(f"\n  총 {total}개 시그널 전송 완료!")
+        logger.info("총 %d개 시그널 전송 완료", total)
     else:
-        print("\n  시그널 없음. 알림 미전송.")
+        logger.info("시그널 없음. 알림 미전송.")
 
 
 def daily_briefing():
     """장마감 후 전 종목 일일 요약 브리핑을 전송한다."""
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 일일 브리핑 시작...")
+    logger.info("일일 브리핑 시작...")
 
     stock_data_list = _collect_stock_data()
 
     if stock_data_list:
         message = format_daily_briefing(stock_data_list)
         send_message(message)
-        print(f"  일일 브리핑 전송 완료! ({len(stock_data_list)}개 종목)")
+        logger.info("일일 브리핑 전송 완료 (%d개 종목)", len(stock_data_list))
     else:
-        print("  데이터 수집 실패. 브리핑 미전송.")
+        logger.warning("데이터 수집 실패. 브리핑 미전송.")
 
 
 def weekly_report():
     """주간 리포트를 전송한다 (금요일 장마감 후)."""
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 주간 리포트 시작...")
+    logger.info("주간 리포트 시작...")
 
     stock_data_list = []
     weekly_signals = []  # type: List[Dict]
@@ -142,19 +145,29 @@ def weekly_report():
                     "type": sig["type"],
                 })
         except Exception as e:
-            print(f"  {name}({ticker}) 에러: {e}")
+            logger.error("%s(%s) 에러: %s", name, ticker, e)
 
     if stock_data_list:
         message = format_weekly_report(stock_data_list, weekly_signals)
         send_message(message)
-        print(f"  주간 리포트 전송 완료! ({len(stock_data_list)}개 종목)")
+        logger.info("주간 리포트 전송 완료 (%d개 종목)", len(stock_data_list))
     else:
-        print("  데이터 수집 실패. 주간 리포트 미전송.")
+        logger.warning("데이터 수집 실패. 주간 리포트 미전송.")
+
+
+def healthcheck():
+    """매일 09:00 헬스체크 메시지를 전송한다."""
+    msg = f"[헬스체크] Signalight 정상 동작 중 ({datetime.now().strftime('%Y-%m-%d %H:%M')})"
+    try:
+        send_message(msg)
+        logger.info("헬스체크 전송 완료")
+    except Exception as e:
+        logger.error("헬스체크 전송 실패: %s", e)
 
 
 def main():
-    print("=== Signalight 시작 ===")
-    print(f"감시 종목: {', '.join(name for _, name in WATCH_LIST)}")
+    logger.info("=== Signalight 시작 ===")
+    logger.info("감시 종목: %s", ", ".join(name for _, name in WATCH_LIST))
 
     # 시작할 때 한 번 실행
     check_signals()
@@ -177,11 +190,16 @@ def main():
     # 주간 리포트 (매주 금요일 16:30)
     schedule.every().friday.at("16:30").do(weekly_report)
 
-    print("스케줄 등록 완료:")
-    print("  - 평일 09:30~15:30 매 30분: 시그널 체크")
-    print("  - 평일 16:00: 일일 브리핑")
-    print("  - 금요일 16:30: 주간 리포트")
-    print("실행 중... (Ctrl+C로 종료)\n")
+    # 매일 09:00 헬스체크
+    for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+        getattr(schedule.every(), day).at("09:00").do(healthcheck)
+
+    logger.info("스케줄 등록 완료:")
+    logger.info("  - 평일 09:00: 헬스체크")
+    logger.info("  - 평일 09:30~15:30 매 30분: 시그널 체크")
+    logger.info("  - 평일 16:00: 일일 브리핑")
+    logger.info("  - 금요일 16:30: 주간 리포트")
+    logger.info("실행 중... (Ctrl+C로 종료)")
 
     while True:
         schedule.run_pending()

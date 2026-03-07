@@ -51,6 +51,33 @@ def calc_macd(closes: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
     return macd_line, signal_line, histogram
 
 
+def calc_atr(highs: pd.Series, lows: pd.Series, closes: pd.Series, period: int = 14) -> pd.Series:
+    """ATR(Average True Range) 계산 — Wilder's Smoothing 방식."""
+    prev_close = closes.shift(1)
+    tr1 = highs - lows
+    tr2 = (highs - prev_close).abs()
+    tr3 = (lows - prev_close).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    atr = pd.Series([float('nan')] * len(closes), index=closes.index)
+
+    tr_vals = tr.dropna().values
+    if len(tr_vals) < period:
+        return atr
+
+    # Seed: SMA of first `period` TR values
+    atr_val = sum(tr_vals[:period]) / period
+    offset = len(closes) - len(tr_vals)
+    atr.iloc[offset + period - 1] = atr_val
+
+    # Wilder's smoothing
+    for i in range(period, len(tr_vals)):
+        atr_val = (atr_val * (period - 1) + tr_vals[i]) / period
+        atr.iloc[offset + i] = atr_val
+
+    return atr
+
+
 def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
     """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
     if len(volumes) < period:
