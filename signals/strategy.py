@@ -1,14 +1,24 @@
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
 from signals.indicators import calc_moving_average, calc_rsi, calc_macd
-from config import SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT
+from config import (
+    SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT,
+    VIX_EXTREME_FEAR, VIX_FEAR, VIX_EXTREME_GREED, INVESTOR_CONSEC_DAYS,
+)
+from data.fetcher import fetch_vix
 from backtest import Signal, SignalType
 
 
-def analyze(df: pd.DataFrame, name: str) -> List[str]:
-    """주어진 OHLCV 데이터를 분석하여 시그널 메시지 리스트를 반환한다."""
+def analyze(df: pd.DataFrame, name: str, investor_df: Optional[pd.DataFrame] = None) -> List[str]:
+    """주어진 OHLCV 데이터를 분석하여 시그널 메시지 리스트를 반환한다.
+
+    Args:
+        df: OHLCV DataFrame (종가 컬럼 필수)
+        name: 종목명
+        investor_df: 외인/기관 순매수 DataFrame (columns: 외인순매수, 기관순매수). None이면 스킵.
+    """
     if len(df) < LONG_MA:
         return []
 
@@ -41,6 +51,37 @@ def analyze(df: pd.DataFrame, name: str) -> List[str]:
         signals.append(f"[MACD 매수] {name} - MACD 라인이 시그널 라인을 상향 돌파!")
     elif macd_line.iloc[-2] >= signal_line.iloc[-2] and macd_line.iloc[-1] < signal_line.iloc[-1]:
         signals.append(f"[MACD 매도] {name} - MACD 라인이 시그널 라인을 하향 돌파!")
+
+    # 4. VIX 공포지수
+    try:
+        vix_series = fetch_vix(30)
+        if not vix_series.empty:
+            vix = vix_series.iloc[-1]
+            if vix >= VIX_EXTREME_FEAR:
+                signals.append(f"[VIX 공포] 시장 공포지수 {vix:.1f} - 극단적 공포 구간! 역발상 매수 기회")
+            elif vix >= VIX_FEAR:
+                signals.append(f"[VIX 주의] 시장 공포지수 {vix:.1f} - 공포 구간, 주의 필요")
+            elif vix <= VIX_EXTREME_GREED:
+                signals.append(f"[VIX 과열] 시장 공포지수 {vix:.1f} - 극단적 낙관 구간, 과열 경고")
+    except Exception:
+        pass
+
+    # 5. 외인/기관 매매동향
+    if investor_df is not None and len(investor_df) >= INVESTOR_CONSEC_DAYS:
+        recent = investor_df.tail(INVESTOR_CONSEC_DAYS)
+        frgn = recent["외인순매수"]
+        inst = recent["기관순매수"]
+
+        # 외인+기관 동시 순매수 N일 연속
+        if (frgn > 0).all() and (inst > 0).all():
+            signals.append(
+                f"[외인/기관 매수] {name} - 외인+기관 {INVESTOR_CONSEC_DAYS}일 연속 순매수 중! 매수 시그널"
+            )
+        # 외인+기관 동시 순매도 N일 연속
+        elif (frgn < 0).all() and (inst < 0).all():
+            signals.append(
+                f"[외인/기관 매도] {name} - 외인+기관 {INVESTOR_CONSEC_DAYS}일 연속 순매도 중! 매도 시그널"
+            )
 
     return signals
 

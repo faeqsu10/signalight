@@ -4,6 +4,7 @@ from datetime import datetime
 
 from config import WATCH_LIST
 from data.fetcher import fetch_stock_data
+from data.investor import fetch_investor_trading
 from signals.strategy import analyze
 from bot.telegram import send_message
 
@@ -21,7 +22,14 @@ def check_signals():
                 print(f"  {name}({ticker}): 데이터 없음")
                 continue
 
-            signals = analyze(df, name)
+            # 외인/기관 매매동향 조회
+            investor_df = None
+            try:
+                investor_df = fetch_investor_trading(ticker)
+            except Exception as e:
+                print(f"  {name}({ticker}) 외인/기관 데이터 조회 실패: {e}")
+
+            signals = analyze(df, name, investor_df=investor_df)
             if signals:
                 all_signals.extend(signals)
                 for s in signals:

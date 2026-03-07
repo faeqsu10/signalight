@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 from pykrx import stock
 import pandas as pd
+import urllib.request
+import json
 
 from config import DATA_PERIOD_DAYS
 
@@ -37,3 +39,25 @@ def fetch_stock_data(
 
     df.index.name = "날짜"
     return df
+
+
+def fetch_vix(days: int = 120) -> pd.Series:
+    """Yahoo Finance에서 VIX(공포지수) 데이터를 가져온다. 종가 Series 반환."""
+    now = int(datetime.now().timestamp())
+    from_ts = int((datetime.now() - timedelta(days=days)).timestamp())
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX"
+        f"?period1={from_ts}&period2={now}&interval=1d"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read().decode())
+
+    result = data["chart"]["result"][0]
+    timestamps = result["timestamp"]
+    closes = result["indicators"]["quote"][0]["close"]
+
+    dates = pd.to_datetime(timestamps, unit="s").normalize()
+    series = pd.Series(closes, index=dates, name="VIX", dtype=float)
+    series = series.dropna()
+    return series
