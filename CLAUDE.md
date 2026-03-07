@@ -16,9 +16,14 @@ signalight/
 │   │   ├── fetcher.py      # pykrx로 KRX OHLCV 데이터 수집
 │   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤러
 │   ├── signals/
-│   │   ├── indicators.py   # 기술적 지표 (MA, RSI, MACD)
-│   │   ├── strategy.py     # 시그널 판단 로직
-│   │   └── sentiment.py    # Google Gemini 뉴스 감성 분석
+│   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, 거래량)
+│   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수
+│   │   ├── sentiment.py    # Google Gemini 뉴스 감성 분석
+│   │   └── llm_analyzer.py # Gemini 종합 판단 (상충 시그널 해석)
+│   ├── storage/
+│   │   └── db.py           # SQLite (시그널 이력, 감성, LLM 판단)
+│   ├── infra/
+│   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
 │   └── bot/
 │       ├── telegram.py     # 텔레그램 메시지 전송
 │       └── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)

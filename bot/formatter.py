@@ -280,6 +280,28 @@ def _build_signal_block(stock: dict) -> str:
         label = _confluence_label(confluence_score, total_indicators, direction)
         lines.append(f"[합류 점수] {confluence_score}/{total_indicators} ({label})")
 
+    # LLM 종합 판단
+    llm = stock.get("llm_analysis")
+    if llm:
+        verdict = llm.get("verdict", "")
+        conf = int(llm.get("confidence", 0) * 100)
+        reasoning = llm.get("reasoning", "")
+        risk_factors = llm.get("risk_factors", [])
+
+        if verdict == "매수":
+            v_emoji = "🟢"
+        elif verdict == "매도":
+            v_emoji = "🔴"
+        else:
+            v_emoji = "⬜"
+
+        lines.append("")
+        lines.append(f"[AI 종합 판단] {v_emoji} {verdict} (신뢰도 {conf}%)")
+        if reasoning:
+            lines.append(f" • {reasoning}")
+        if risk_factors:
+            lines.append(f" ⚠️ {', '.join(risk_factors)}")
+
     return "\n".join(lines)
 
 

@@ -11,9 +11,14 @@ from signals.sentiment import analyze_sentiment
 from signals.strategy import analyze_detailed
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
+from signals.llm_analyzer import analyze_comprehensive, should_call_llm
+from storage.db import init_db, save_signals, save_sentiment, save_llm_analysis
 from infra.logging_config import setup_logging
 
 logger = setup_logging()
+
+# DB 초기화
+init_db()
 
 
 def _collect_stock_data() -> List[Dict]:
@@ -47,6 +52,26 @@ def _collect_stock_data() -> List[Dict]:
             except Exception as e:
                 logger.warning("%s(%s) 뉴스 감성 분석 실패: %s", name, ticker, e)
                 data["news_sentiment"] = None
+
+            # DB 저장 (시그널 + 감성)
+            try:
+                save_signals(data)
+                save_sentiment(ticker, name, data.get("news_sentiment"))
+            except Exception as e:
+                logger.warning("%s(%s) DB 저장 실패: %s", name, ticker, e)
+
+            # LLM 종합 판단 (상충 시그널 또는 합류 점수 >= 2)
+            try:
+                if should_call_llm(data):
+                    llm_result = analyze_comprehensive(data)
+                    if llm_result:
+                        data["llm_analysis"] = llm_result
+                        save_llm_analysis(ticker, name, llm_result, "gemini-2.5-flash")
+                        logger.info("%s(%s) LLM 판단: %s (신뢰도 %.0f%%)",
+                                    name, ticker, llm_result.get("verdict", ""),
+                                    llm_result.get("confidence", 0) * 100)
+            except Exception as e:
+                logger.warning("%s(%s) LLM 분석 실패: %s", name, ticker, e)
 
             stock_data_list.append(data)
         except Exception as e:

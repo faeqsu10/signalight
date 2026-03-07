@@ -70,6 +70,18 @@
 - [x] main.py에 뉴스+감성 통합 (실패 격리, 기존 기능 영향 없음)
 - [x] systemd 서비스 재시작 확인
 
+## LLM 파이프라인 (Phase 2 - 완료)
+- [x] storage/db.py 구현 (SQLite — signal_history, news_sentiment, llm_analysis)
+- [x] signals/llm_analyzer.py 구현 (Gemini 종합 판단, 상충 시그널/합류>=2 시 호출)
+- [x] main.py 통합 (DB 저장 + LLM 판단 호출)
+- [x] bot/formatter.py에 [AI 종합 판단] 블록 추가
+
+## 인프라 안정화 (완료)
+- [x] infra/logging_config.py 구조화 로깅 (콘솔+파일, 10MB 로테이션)
+- [x] main.py print→logger 전환
+- [x] 매일 09:00 헬스체크 메시지 추가
+- [x] ATR(14) 지표 추가 + 손절가 표시 (현재가-2*ATR)
+
 ## Phase 3 - 운영 안정화 (예정)
 - [ ] 텔레그램 인터랙티브 (명령어로 종목 추가/백테스트 실행)
 - [ ] Docker 배포
