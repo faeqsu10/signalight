@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    container_name: signalight-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data/signalight.db:/app/data/signalight.db
+    environment:
+      - TZ=Asia/Seoul

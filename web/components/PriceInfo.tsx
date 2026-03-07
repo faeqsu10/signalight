@@ -6,9 +6,10 @@ interface Props {
   ticker: string;
   ohlcv: OHLCVData[];
   signals: Signal[];
+  market?: "KR" | "US";
 }
 
-export default function PriceInfo({ name, ticker, ohlcv, signals }: Props) {
+export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" }: Props) {
   if (ohlcv.length < 2) return null;
 
   const latest = ohlcv[ohlcv.length - 1];
@@ -39,11 +40,17 @@ export default function PriceInfo({ name, ticker, ohlcv, signals }: Props) {
         </div>
         <div className="flex items-baseline gap-3">
           <span className="text-3xl font-bold">
-            {latest.close.toLocaleString("ko-KR", {
-              style: "currency",
-              currency: "KRW",
-              maximumFractionDigits: 0,
-            })}
+            {market === "US"
+              ? latest.close.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  minimumFractionDigits: 2,
+                })
+              : latest.close.toLocaleString("ko-KR", {
+                  style: "currency",
+                  currency: "KRW",
+                  maximumFractionDigits: 0,
+                })}
           </span>
           <span className={`text-lg ${isUp ? "text-red-500" : "text-blue-500"}`}>
             {isUp ? "+" : ""}

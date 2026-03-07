@@ -26,3 +26,26 @@ export const WATCH_LIST = [
   { ticker: "035420", name: "NAVER" },          // IT/플랫폼
   { ticker: "035720", name: "카카오" },          // IT/플랫폼
 ] as const;
+
+// 미국 주식
+export const US_WATCH_LIST = [
+  { ticker: "AAPL", name: "Apple" },
+  { ticker: "NVDA", name: "NVIDIA" },
+  { ticker: "TSLA", name: "Tesla" },
+  { ticker: "MSFT", name: "Microsoft" },
+  { ticker: "AMZN", name: "Amazon" },
+] as const;
+
+// 전체 종목 (한국 + 미국)
+export type MarketType = "KR" | "US";
+
+export interface StockItem {
+  ticker: string;
+  name: string;
+  market: MarketType;
+}
+
+export const ALL_WATCH_LIST: StockItem[] = [
+  ...WATCH_LIST.map((s) => ({ ticker: s.ticker, name: s.name, market: "KR" as MarketType })),
+  ...US_WATCH_LIST.map((s) => ({ ticker: s.ticker, name: s.name, market: "US" as MarketType })),
+];

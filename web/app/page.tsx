@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import useSWR from "swr";
-import { WATCH_LIST } from "@/lib/constants";
+import { ALL_WATCH_LIST } from "@/lib/constants";
 import CandleChart from "@/components/CandleChart";
 import RSIChart from "@/components/RSIChart";
 import MACDChart from "@/components/MACDChart";
@@ -105,17 +105,17 @@ export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const selected = WATCH_LIST[selectedIdx];
+  const selected = ALL_WATCH_LIST[selectedIdx];
 
   const filteredList = useMemo(() => {
-    if (!searchQuery.trim()) return WATCH_LIST.map((item, i) => ({ ...item, idx: i }));
+    if (!searchQuery.trim()) return ALL_WATCH_LIST.map((item, i) => ({ ...item, idx: i }));
     const q = searchQuery.toLowerCase();
-    return WATCH_LIST
+    return ALL_WATCH_LIST
       .map((item, i) => ({ ...item, idx: i }))
       .filter(
         (item) =>
           item.name.toLowerCase().includes(q) ||
-          item.ticker.includes(q)
+          item.ticker.toLowerCase().includes(q)
       );
   }, [searchQuery]);
 
@@ -170,9 +170,14 @@ export default function Home() {
                       setSearchQuery("");
                       setShowSearch(false);
                     }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex justify-between"
+                    className="w-full text-left px-3 py-2.5 min-h-[44px] text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
                   >
-                    <span>{item.name}</span>
+                    <span>
+                      <span className={`text-[10px] mr-1 px-1 py-0.5 rounded ${item.market === "KR" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"}`}>
+                        {item.market}
+                      </span>
+                      {item.name}
+                    </span>
                     <span className="text-[var(--muted)] text-xs">{item.ticker}</span>
                   </button>
                 ))}
@@ -238,6 +243,7 @@ export default function Home() {
                   ticker={selected.ticker}
                   ohlcv={data.ohlcv}
                   signals={data.signals}
+                  market={selected.market}
                 />
               </div>
               {data.currentVIX != null && (
@@ -339,7 +345,7 @@ export default function Home() {
         {backtestData && !backtestData.error && (
           <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)] transition-colors">
             <h3 className="text-sm font-semibold text-[var(--muted)] mb-3">백테스트 (최근 1년)</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-center">
               <div>
                 <div className={`text-lg font-bold ${backtestData.totalReturnPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
                   {backtestData.totalReturnPct >= 0 ? "+" : ""}{backtestData.totalReturnPct}%

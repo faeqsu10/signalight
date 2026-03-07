@@ -46,6 +46,19 @@
 - 개선: 최근 30일 시그널 이력을 타임라인으로 표시
 - 차트에 시그널 발생 시점 마커 추가
 
+### 미국 주식 지원 (완료)
+- [x] Yahoo Finance 티커 자동 분기 (한국: `.KS`, 미국: 그대로)
+- [x] US_WATCH_LIST 5종목 (AAPL, NVDA, TSLA, MSFT, AMZN)
+- [x] 통화 분기 (₩ / $), 마켓 배지 (KR/US)
+
+### 복합 전략 프레임워크 (완료)
+- [x] 가중 점수 기반 신호 강도 5단계 (strong_buy/buy/neutral/sell/strong_sell)
+- [x] Python + TS 양쪽 동기화
+
+### Docker 배포 (완료)
+- [x] Multi-stage Dockerfile + docker-compose.yml
+- [x] .dockerignore 설정
+
 ## P2 - UX 개선
 
 ### 종목 즐겨찾기

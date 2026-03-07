@@ -39,6 +39,15 @@ WATCH_LIST = [
     ("035720", "카카오"),          # IT/플랫폼
 ]
 
+# 미국 주식 감시 리스트
+US_WATCH_LIST = [
+    ("AAPL", "Apple"),
+    ("NVDA", "NVIDIA"),
+    ("TSLA", "Tesla"),
+    ("MSFT", "Microsoft"),
+    ("AMZN", "Amazon"),
+]
+
 # 시그널 설정
 SHORT_MA = 10      # 단기 이동평균 (10일)
 LONG_MA = 50       # 장기 이동평균 (50일)

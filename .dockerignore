@@ -1,0 +1,16 @@
+web/
+.next/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+.git/
+.claude/
+.omc/
+*.png
+*.jpg
+*.md
+tasks/
+idea.txt
+scripts/

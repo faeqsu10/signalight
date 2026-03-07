@@ -19,12 +19,15 @@ export interface Signal {
   detail: string;
 }
 
+export type SignalStrength = "strong_buy" | "buy" | "neutral" | "sell" | "strong_sell";
+
 export interface AnalysisResult {
   signals: Signal[];
   currentRSI: number | null;
   currentVIX: number | null;
   volumeRatio: number;
   confluenceScore: number;
+  signalStrength: SignalStrength;
   shortMA: (number | null)[];
   longMA: (number | null)[];
   macdLine: (number | null)[];
@@ -66,6 +69,7 @@ export function analyze(
       currentVIX,
       volumeRatio,
       confluenceScore: 0,
+      signalStrength: "neutral" as SignalStrength,
       shortMA,
       longMA,
       macdLine,
@@ -288,12 +292,24 @@ export function analyze(
     }
   }
 
+  const confluenceScore = (buyScore > 0 && buyScore === sellScore) ? 0 : Math.max(buyScore, sellScore);
+
+  // 신호 강도 분류 (가중 점수 기반)
+  const netScore = buyScore - sellScore;
+  let signalStrength: SignalStrength;
+  if (netScore >= 3.0) signalStrength = "strong_buy";
+  else if (netScore >= 1.5) signalStrength = "buy";
+  else if (netScore <= -3.0) signalStrength = "strong_sell";
+  else if (netScore <= -1.5) signalStrength = "sell";
+  else signalStrength = "neutral";
+
   return {
     signals,
     currentRSI,
     currentVIX,
     volumeRatio,
-    confluenceScore: (buyScore > 0 && buyScore === sellScore) ? 0 : Math.max(buyScore, sellScore),
+    confluenceScore,
+    signalStrength,
     shortMA,
     longMA,
     macdLine,

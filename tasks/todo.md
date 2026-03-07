@@ -51,7 +51,7 @@
 - [x] 신규 지표 추가 (볼린저밴드, OBV) + TS 동기화
 - [x] 볼린저밴드/OBV 시그널 전략 통합 + 웹 차트 표시
 - [x] 백테스트 결과 웹 대시보드 표시 (API + 요약 카드)
-- [ ] 복합 전략 프레임워크 (멀티 시그널 조합)
+- [x] 복합 전략 프레임워크 (가중 점수 + 신호 강도 분류)
 
 ### 인프라 안정화 (Phase 2 신규)
 - [x] systemd 재시작 정책 확인 (Restart=always, RestartSec=10)
@@ -106,10 +106,14 @@
 - [x] 면책 조항 추가
 - [x] main.py DB 우선 워치리스트 (config.py 폴백)
 
-## Phase 5 - 운영 고도화 (예정)
-- [ ] Docker 배포
-- [ ] 모바일 최적화
+## Phase 6 - 미국 주식 + 복합 전략 + 인프라 (완료)
+- [x] 미국 주식 지원 (US_WATCH_LIST 5종목, 통화/마켓 분기)
+- [x] 복합 전략 프레임워크 (가중 점수 + signal_strength 5단계)
+- [x] Docker 배포 설정 (Dockerfile + docker-compose.yml)
+- [x] 모바일 최적화 (터치 타겟 44px, 반응형 그리드)
 
 ## Backlog
-- [ ] 미국 주식 지원 추가
+- [ ] Vercel 배포 + API 캐싱
+- [ ] OpenDART 시범 도입
+- [ ] 모바일/PC 브라우저 접속 테스트
 - 개선사항은 `tasks/improvements.md` 참고

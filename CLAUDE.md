@@ -10,7 +10,7 @@
 ```
 signalight/
 ├── [Python 백엔드] 텔레그램 알림 봇
-│   ├── config.py           # 설정 (10종목 5+섹터, 지표 파라미터, 환경변수)
+│   ├── config.py           # 설정 (KR 10종목 + US 5종목, 지표 파라미터, 환경변수)
 │   ├── main.py             # 진입점 + 스케줄러 (DB 우선 워치리스트, VIX 1회 조회)
 │   ├── data/
 │   │   ├── fetcher.py      # pykrx KRX OHLCV + Yahoo VIX 데이터 수집
@@ -120,7 +120,7 @@ signalight/
 | Python | TypeScript | 설명 |
 |--------|-----------|------|
 | `config.py` (WATCH_LIST, 파라미터) | `web/lib/constants.ts` | 종목 리스트, MA/RSI/MACD 설정값 |
-| `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD, BB, OBV 계산 로직 |
+| `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD, BB, OBV 계산 로직 + 신호 강도 |
 | `signals/strategy.py` | `web/lib/strategy.ts` | 시그널 판단 (골든크로스, 과매도 등) |
 | `bot/formatter.py` | (텔레그램 전용) | 메시지 포맷 (시그널 알림, 일일 브리핑, 주간 리포트) |
 

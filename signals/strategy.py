@@ -256,12 +256,27 @@ def analyze_detailed(
             sell_score += 1.5  # 수급 시그널 가중치
 
     result["signals"] = signals
+
+    # 합류 점수 계산 (방향별 가중 합산)
     if buy_score > 0 and buy_score == sell_score:
         result["confluence_score"] = 0
         result["confluence_direction"] = "mixed"
     else:
         result["confluence_score"] = round(max(buy_score, sell_score), 1)
         result["confluence_direction"] = "buy" if buy_score > sell_score else "sell"
+
+    # 신호 강도 분류 (가중 점수 기반)
+    net_score = buy_score - sell_score
+    if net_score >= 3.0:
+        result["signal_strength"] = "strong_buy"
+    elif net_score >= 1.5:
+        result["signal_strength"] = "buy"
+    elif net_score <= -3.0:
+        result["signal_strength"] = "strong_sell"
+    elif net_score <= -1.5:
+        result["signal_strength"] = "sell"
+    else:
+        result["signal_strength"] = "neutral"
 
     return result
 

@@ -7,15 +7,27 @@ export interface OHLCVData {
   volume: number;
 }
 
+/**
+ * 한국 종목코드(6자리 숫자)인지 판별한다.
+ * 한국 종목은 .KS 접미사를 붙여 Yahoo Finance에서 조회.
+ */
+function toYahooTicker(ticker: string): string {
+  return /^\d{6}$/.test(ticker) ? `${ticker}.KS` : ticker;
+}
+
+export function isKoreanTicker(ticker: string): boolean {
+  return /^\d{6}$/.test(ticker);
+}
+
 export async function fetchOHLCV(
   ticker: string,
   days: number = 120
 ): Promise<OHLCVData[]> {
-  const ksTicker = `${ticker}.KS`;
+  const yahooTicker = toYahooTicker(ticker);
   const now = Math.floor(Date.now() / 1000);
   const from = now - days * 24 * 60 * 60;
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ksTicker}?period1=${from}&period2=${now}&interval=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}?period1=${from}&period2=${now}&interval=1d`;
 
   const res = await fetch(url, {
     headers: {
