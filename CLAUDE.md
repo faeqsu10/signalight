@@ -135,26 +135,21 @@ signalight/
 ## DevOps & 배포
 
 ### 현재 상태
-- **Python 봇**: systemd user service로 운영 (자동 시작/재시작)
-- **웹 대시보드**: 로컬 개발 서버만 (미배포)
+- **Python 봇**: systemd user service로 운영 (Restart=always, RestartSec=10)
+- **웹 대시보드**: Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
 - **데이터 소스**: pykrx, Yahoo Finance, 네이버 금융 크롤링, Google Gemini API
-- **로깅**: stdout/stderr만 (파일 로깅 없음) — Phase 2에서 개선
+- **로깅**: 구조화 로깅 (콘솔+파일, 10MB 로테이션 × 5백업) — `infra/logging_config.py`
+- **DB**: SQLite WAL 모드 (시그널 이력, 감성, LLM 판단, watch_list)
+- **Docker**: Multi-stage Dockerfile + docker-compose.yml 구성 완료
+- **캐싱**: Python in-memory 4시간 TTL + 웹 API in-memory 5분 TTL
 
-### Phase 2 우선순위
-1. **Python 봇 안정성**: systemd 재시작 정책 확인, 로깅 추가, timeout/재시도 로직
-2. **웹 배포**: Vercel (root directory: `web/`)
-3. **크롤링 안정성**: 캐시 도입, OpenDART 시범, Terms of Service 검토
-4. **모니터링**: 헬스체크 메시지, API 로깅
-
-### Phase 3 예정
-- Docker 도입 (Python 3.11-slim, Node 20-alpine)
-- 종합 모니터링 (24h 감시, Circuit breaker)
-- 캐싱 프레임워크 (SQLite 또는 Redis)
-
-**상세 분석**: `DEVOPS_ANALYSIS.md` 참고
+### 알려진 제한
+- 네이버 금융 크롤링이 Vercel(해외 서버)에서 IP 차단됨 → investorData null (graceful degradation 동작)
+- Vercel 서버리스 in-memory 캐시는 cold start마다 초기화됨
 
 ## 문서 관리
 - `tasks/todo.md` — 작업 체크리스트 (완료되면 체크)
+- `tasks/devlog.md` — 전체 개발 항목 추적 (Phase별 테이블)
 - `tasks/lessons.md` — 개발 중 배운 교훈 기록
 - `tasks/improvements.md` — 개선사항 추적 (우선순위별)
 - `CLAUDE.md` (이 파일) — 프로젝트 가이드 (구조 변경 시 업데이트)
