@@ -19,6 +19,7 @@ signalight/
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, 거래량)
 │   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수 (VIX 외부 전달)
+│   │   ├── recovery.py     # 회복 시그널 분석 (6항목 체크리스트 + 포지션 진단)
 │   │   ├── sentiment.py    # Google Gemini 뉴스 감성 분석
 │   │   └── llm_analyzer.py # Gemini 종합 판단 (상충 시그널 해석)
 │   ├── storage/
@@ -47,17 +48,21 @@ signalight/
 │       │       ├── stock/[ticker]/route.ts # 종목 데이터+지표+시그널
 │       │       ├── watchlist/route.ts      # 감시 종목 목록 API
 │       │       ├── scanner/route.ts        # 스크리너 API (골든크로스/RSI/거래량)
-│       │       └── backtest/[ticker]/route.ts # 백테스트 API (1년 수익률/MDD/승률)
+│       │       ├── backtest/[ticker]/route.ts # 백테스트 API (1년 수익률/MDD/승률)
+│       │       └── stock/[ticker]/recovery/route.ts # 회복 분석 API
 │       ├── components/
 │       │   ├── CandleChart.tsx             # 캔들차트 + MA 오버레이
 │       │   ├── RSIChart.tsx                # RSI 라인 + 30/70 기준선
 │       │   ├── MACDChart.tsx               # MACD/Signal + 히스토그램
 │       │   ├── SignalPanel.tsx             # 시그널 현황 패널
-│       │   └── PriceInfo.tsx               # 현재가, 등락률, 종합 시그널
+│       │   ├── PriceInfo.tsx               # 현재가, 등락률, 종합 시그널
+│       │   ├── RecoveryPanel.tsx           # 회복 시그널 체크리스트 + 점수
+│       │   └── PositionCard.tsx            # 내 포지션 진단 (매수가 입력)
 │       └── lib/
 │           ├── constants.ts                # config.py 포팅 + VIX/수급 설정값
 │           ├── indicators.ts               # indicators.py 포팅
 │           ├── investor.ts                 # 네이버 금융 외인/기관 순매수 fetch
+│           ├── recovery.ts                 # recovery.py 포팅 (회복 분석 + 포지션 진단)
 │           ├── strategy.ts                 # strategy.py 포팅 + VIX/수급 시그널
 │           └── yahoo-finance.ts            # Yahoo Finance OHLCV + VIX fetch
 │
@@ -122,6 +127,7 @@ signalight/
 | `config.py` (WATCH_LIST, 파라미터) | `web/lib/constants.ts` | 종목 리스트, MA/RSI/MACD 설정값 |
 | `signals/indicators.py` | `web/lib/indicators.ts` | MA, RSI, MACD, BB, OBV 계산 로직 + 신호 강도 |
 | `signals/strategy.py` | `web/lib/strategy.ts` | 시그널 판단 (골든크로스, 과매도 등) |
+| `signals/recovery.py` | `web/lib/recovery.ts` | 회복 분석 (체크리스트, 포지션 진단, 맥락 분류) |
 | `bot/formatter.py` | (텔레그램 전용) | 메시지 포맷 (시그널 알림, 일일 브리핑, 주간 리포트) |
 
 **중요**: 지표 로직을 수정하면 Python과 TypeScript 양쪽 모두 반영해야 한다.

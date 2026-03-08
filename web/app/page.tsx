@@ -10,6 +10,8 @@ import SignalPanel from "@/components/SignalPanel";
 import PriceInfo from "@/components/PriceInfo";
 import Tooltip from "@/components/Tooltip";
 import ThemeToggle from "@/components/ThemeToggle";
+import RecoveryPanel from "@/components/RecoveryPanel";
+import PositionCard from "@/components/PositionCard";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -133,6 +135,12 @@ export default function Home() {
     `/api/backtest/${selected.ticker}`,
     fetcher,
     { refreshInterval: 600000 } // 10분 간격
+  );
+
+  const { data: recoveryData, isLoading: recoveryLoading } = useSWR(
+    `/api/stock/${selected.ticker}/recovery`,
+    fetcher,
+    { refreshInterval: 60000 }
   );
 
   return (
@@ -334,6 +342,19 @@ export default function Home() {
 
             {/* Signal Panel */}
             <SignalPanel signals={data.signals} />
+
+            {/* Recovery Analysis + Position Card */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <RecoveryPanel
+                recovery={recoveryData?.recovery ?? null}
+                loading={recoveryLoading}
+              />
+              <PositionCard
+                ticker={selected.ticker}
+                currentPrice={data.ohlcv?.[data.ohlcv.length - 1]?.close ?? 0}
+                market={selected.market}
+              />
+            </div>
           </>
         )}
 

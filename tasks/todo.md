@@ -112,6 +112,16 @@
 - [x] Docker 배포 설정 (Dockerfile + docker-compose.yml)
 - [x] 모바일 최적화 (터치 타겟 44px, 반응형 그리드)
 
+## Phase 7 - 회복 분석 기능 (완료)
+- [x] signals/recovery.py 구현 (6항목 체크리스트, 가중 점수 0-10)
+- [x] signals/indicators.py에 detect_volume_spike, detect_obv_divergence 추가
+- [x] config.py에 RECOVERY_RSI_EXTREME, RECOVERY_VOLUME_SPIKE, RECOVERY_LOOKBACK_DAYS 추가
+- [x] web/lib/recovery.ts 포팅 (analyzeRecovery, getPositionAction, classifyDrawdownContext)
+- [x] web/app/api/stock/[ticker]/recovery/route.ts API 라우트
+- [x] web/components/RecoveryPanel.tsx (체크리스트 + 점수 게이지)
+- [x] web/components/PositionCard.tsx (매수가 입력 + 손익 + 액션 가이드)
+- [x] page.tsx 통합 + Next.js 빌드 성공
+
 ## Backlog
 - [ ] Vercel 배포 + API 캐싱
 - [ ] OpenDART 시범 도입

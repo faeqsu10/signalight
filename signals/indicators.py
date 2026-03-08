@@ -100,6 +100,35 @@ def calc_obv(closes: pd.Series, volumes: pd.Series) -> pd.Series:
     return obv
 
 
+def detect_volume_spike(volumes: pd.Series, threshold: float = 3.0, period: int = 20) -> bool:
+    """현재 거래량이 평균 대비 threshold배 이상인지 판단 (투매/급등 감지)."""
+    if len(volumes) < period + 1:
+        return False
+    avg = volumes.iloc[-(period + 1):-1].mean()
+    if avg == 0:
+        return False
+    return float(volumes.iloc[-1] / avg) >= threshold
+
+
+def detect_obv_divergence(closes: pd.Series, obv: pd.Series, lookback: int = 20) -> bool:
+    """OBV 상승 다이버전스 감지: 주가는 하락하지만 OBV는 상승하는 패턴.
+    최근 lookback 기간 동안 가격 저점이 하락하면서 OBV 저점이 상승하면 True."""
+    if len(closes) < lookback or len(obv) < lookback:
+        return False
+
+    recent_closes = closes.iloc[-lookback:]
+    recent_obv = obv.iloc[-lookback:]
+
+    half = lookback // 2
+    first_half_close_min = recent_closes.iloc[:half].min()
+    second_half_close_min = recent_closes.iloc[half:].min()
+    first_half_obv_min = recent_obv.iloc[:half].min()
+    second_half_obv_min = recent_obv.iloc[half:].min()
+
+    # 가격은 더 낮은 저점, OBV는 더 높은 저점 → 상승 다이버전스
+    return second_half_close_min < first_half_close_min and second_half_obv_min > first_half_obv_min
+
+
 def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
     """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
     if len(volumes) < period:
