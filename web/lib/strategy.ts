@@ -21,6 +21,12 @@ export interface Signal {
 
 export type SignalStrength = "strong_buy" | "buy" | "neutral" | "sell" | "strong_sell";
 
+export interface SignalHistoryEntry {
+  index: number;
+  type: "buy" | "sell";
+  name: string;
+}
+
 export interface AnalysisResult {
   signals: Signal[];
   currentRSI: number | null;
@@ -36,6 +42,7 @@ export interface AnalysisResult {
   rsiValues: (number | null)[];
   bollingerUpper: (number | null)[];
   bollingerLower: (number | null)[];
+  signalHistory: SignalHistoryEntry[];
 }
 
 export function analyze(
@@ -78,6 +85,7 @@ export function analyze(
       rsiValues,
       bollingerUpper,
       bollingerLower,
+      signalHistory: [],
     };
   }
 
@@ -292,6 +300,33 @@ export function analyze(
     }
   }
 
+  // Build signal history by scanning all data points for MA cross and MACD cross
+  const signalHistory: SignalHistoryEntry[] = [];
+  for (let i = 1; i < n; i++) {
+    const pShort = shortMA[i - 1];
+    const pLong = longMA[i - 1];
+    const cShort = shortMA[i];
+    const cLong = longMA[i];
+    if (pShort !== null && pLong !== null && cShort !== null && cLong !== null) {
+      if (pShort <= pLong && cShort > cLong) {
+        signalHistory.push({ index: i, type: "buy", name: "골든크로스" });
+      } else if (pShort >= pLong && cShort < cLong) {
+        signalHistory.push({ index: i, type: "sell", name: "데드크로스" });
+      }
+    }
+    const pMACD = macdLine[i - 1];
+    const pSig = signalLine[i - 1];
+    const cMACD = macdLine[i];
+    const cSig = signalLine[i];
+    if (pMACD !== null && pSig !== null && cMACD !== null && cSig !== null) {
+      if (pMACD <= pSig && cMACD > cSig) {
+        signalHistory.push({ index: i, type: "buy", name: "MACD" });
+      } else if (pMACD >= pSig && cMACD < cSig) {
+        signalHistory.push({ index: i, type: "sell", name: "MACD" });
+      }
+    }
+  }
+
   const confluenceScore = (buyScore > 0 && buyScore === sellScore) ? 0 : Math.max(buyScore, sellScore);
 
   // 신호 강도 분류 (가중 점수 기반)
@@ -318,5 +353,6 @@ export function analyze(
     rsiValues,
     bollingerUpper,
     bollingerLower,
+    signalHistory,
   };
 }

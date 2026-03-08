@@ -5,11 +5,13 @@ import { analyze } from "@/lib/strategy";
 import { analyzeRecovery, getPositionAction, classifyDrawdownContext } from "@/lib/recovery";
 import { isKoreanTicker } from "@/lib/yahoo-finance";
 import { getCached, setCache } from "@/lib/cache";
+import { logApiRequest } from "@/lib/api-logger";
 
 export async function GET(
   request: Request,
   { params }: { params: { ticker: string } },
 ) {
+  const start = Date.now();
   try {
     const { ticker } = params;
     const url = new URL(request.url);
@@ -20,6 +22,7 @@ export async function GET(
 
     const cached = getCached<object>(cacheKey);
     if (cached) {
+      logApiRequest("GET", `/api/stock/${ticker}/recovery`, 200, Date.now() - start);
       return NextResponse.json(cached);
     }
 
@@ -69,8 +72,11 @@ export async function GET(
     };
     setCache(cacheKey, result);
 
+    logApiRequest("GET", `/api/stock/${ticker}/recovery`, 200, Date.now() - start);
     return NextResponse.json(result);
   } catch (error) {
+    const { ticker } = params;
+    logApiRequest("GET", `/api/stock/${ticker}/recovery`, 500, Date.now() - start);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

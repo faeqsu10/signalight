@@ -61,9 +61,11 @@ signalight/
 │       │   ├── PositionCard.tsx            # 내 포지션 진단 (매수가 입력)
 │       │   └── DisclosurePanel.tsx         # OpenDART 최근 공시 목록
 │       └── lib/
+│           ├── api-logger.ts               # API 요청/응답 시간 로깅
 │           ├── constants.ts                # config.py 포팅 + VIX/수급 설정값
 │           ├── indicators.ts               # indicators.py 포팅
 │           ├── investor.ts                 # 네이버 금융 외인/기관 순매수 fetch
+│           ├── metrics.ts                  # 데이터 소스별 성공/실패율 추적
 │           ├── opendart.ts                 # OpenDART API (공시 조회 + corp_code 매핑)
 │           ├── recovery.ts                 # recovery.py 포팅 (회복 분석 + 포지션 진단)
 │           ├── strategy.ts                 # strategy.py 포팅 + VIX/수급 시그널

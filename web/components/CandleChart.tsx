@@ -7,9 +7,16 @@ import {
   CandlestickSeries,
   LineSeries,
   HistogramSeries,
+  createSeriesMarkers,
 } from "lightweight-charts";
 import { OHLCVData } from "@/lib/yahoo-finance";
 import { useTheme } from "./ThemeProvider";
+
+interface SignalHistoryEntry {
+  index: number;
+  type: "buy" | "sell";
+  name: string;
+}
 
 interface Props {
   ohlcv: OHLCVData[];
@@ -17,9 +24,10 @@ interface Props {
   longMA: (number | null)[];
   bollingerUpper?: (number | null)[];
   bollingerLower?: (number | null)[];
+  signalHistory?: SignalHistoryEntry[];
 }
 
-export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bollingerLower }: Props) {
+export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
@@ -62,6 +70,20 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
         close: d.close,
       }))
     );
+
+    if (signalHistory && signalHistory.length > 0) {
+      const markers = signalHistory
+        .filter((e) => e.index < ohlcv.length)
+        .map((e) => ({
+          time: ohlcv[e.index].date as string,
+          position: e.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
+          color: e.type === "buy" ? "#ef4444" : "#3b82f6",
+          shape: e.type === "buy" ? ("arrowUp" as const) : ("arrowDown" as const),
+          text: e.type === "buy" ? "매수" : "매도",
+        }))
+        .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+      createSeriesMarkers(candleSeries, markers);
+    }
 
     const shortMASeries = chart.addSeries(LineSeries, {
       color: "#facc15",
@@ -162,7 +184,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, theme]);
+  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory, theme]);
 
   return (
     <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />

@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import { getCorpCode, fetchDisclosures } from "@/lib/opendart";
 import { getCached, setCache } from "@/lib/cache";
+import { logApiRequest } from "@/lib/api-logger";
 
 export async function GET(
   _request: Request,
   { params }: { params: { ticker: string } }
 ) {
+  const start = Date.now();
   try {
     const { ticker } = params;
     const cacheKey = `disclosure-${ticker}`;
 
     const cached = getCached<object>(cacheKey);
     if (cached) {
+      logApiRequest("GET", `/api/stock/${ticker}/disclosure`, 200, Date.now() - start);
       return NextResponse.json(cached);
     }
 
@@ -20,6 +23,7 @@ export async function GET(
       // 미국 주식이거나 매핑 없는 종목
       const result = { ticker, disclosures: [], message: "공시 데이터 미지원 종목" };
       setCache(cacheKey, result);
+      logApiRequest("GET", `/api/stock/${ticker}/disclosure`, 200, Date.now() - start);
       return NextResponse.json(result);
     }
 
@@ -27,8 +31,11 @@ export async function GET(
     const result = { ticker, disclosures };
     setCache(cacheKey, result);
 
+    logApiRequest("GET", `/api/stock/${ticker}/disclosure`, 200, Date.now() - start);
     return NextResponse.json(result);
   } catch (error) {
+    const { ticker } = params;
+    logApiRequest("GET", `/api/stock/${ticker}/disclosure`, 500, Date.now() - start);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

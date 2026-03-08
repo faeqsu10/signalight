@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { WATCH_LIST } from "@/lib/constants";
+import { getMetrics } from "@/lib/metrics";
 
 export async function GET() {
   // constants.ts의 WATCH_LIST를 반환 (향후 DB 연동 시 교체 가능)
@@ -8,5 +9,5 @@ export async function GET() {
     name: item.name,
   }));
 
-  return NextResponse.json({ watchlist });
+  return NextResponse.json({ watchlist, metrics: getMetrics() });
 }

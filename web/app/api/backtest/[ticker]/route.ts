@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchOHLCV } from "@/lib/yahoo-finance";
 import { calcMovingAverage, calcRSI, calcMACD } from "@/lib/indicators";
 import { SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT } from "@/lib/constants";
+import { logApiRequest } from "@/lib/api-logger";
 
 interface Trade {
   date: string;
@@ -14,11 +15,13 @@ export async function GET(
   _request: Request,
   { params }: { params: { ticker: string } }
 ) {
+  const start = Date.now();
   try {
     const { ticker } = params;
     const ohlcv = await fetchOHLCV(ticker, 365);
 
     if (ohlcv.length < LONG_MA + 1) {
+      logApiRequest("GET", `/api/backtest/${ticker}`, 400, Date.now() - start);
       return NextResponse.json({ error: "데이터 부족" }, { status: 400 });
     }
 
@@ -120,6 +123,7 @@ export async function GET(
     const totalReturnPct = ((capital - initialCapital) / initialCapital) * 100;
     const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
 
+    logApiRequest("GET", `/api/backtest/${ticker}`, 200, Date.now() - start);
     return NextResponse.json({
       ticker,
       period: "1Y",
@@ -134,6 +138,8 @@ export async function GET(
       trades: trades.slice(-10), // 최근 10건만
     });
   } catch (error) {
+    const { ticker } = params;
+    logApiRequest("GET", `/api/backtest/${ticker}`, 500, Date.now() - start);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

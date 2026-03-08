@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { ALL_WATCH_LIST } from "@/lib/constants";
 import CandleChart from "@/components/CandleChart";
@@ -124,7 +124,26 @@ export default function Home() {
   const [period, setPeriod] = useState(120);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [signalCache, setSignalCache] = useState<Record<string, string>>({});
+  const [compareIdx, setCompareIdx] = useState<number | null>(null);
+  const [showComparePicker, setShowComparePicker] = useState(false);
   const selected = ALL_WATCH_LIST[selectedIdx];
+  const compareStock = compareIdx !== null ? ALL_WATCH_LIST[compareIdx] : null;
+
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  async function requestNotifPermission() {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+  }
+
+  const prevSignalsRef = useRef<string>("");
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -170,7 +189,7 @@ export default function Home() {
     });
   }, [searchQuery, favorites]);
 
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR(
     `/api/stock/${selected.ticker}?period=${period}`,
     fetcher,
     { refreshInterval: 60000 }
@@ -196,6 +215,30 @@ export default function Home() {
     }
   }, [data, selected.ticker]);
 
+  // Signal change detection + browser notification
+  useEffect(() => {
+    if (!data || data.error || notifPermission !== "granted") return;
+
+    const buyCount = (data.signals as { type: string }[]).filter(s => s.type === "BUY").length;
+    const sellCount = (data.signals as { type: string }[]).filter(s => s.type === "SELL").length;
+    const currentKey = `${selected.ticker}-buy${buyCount}-sell${sellCount}`;
+
+    if (prevSignalsRef.current && prevSignalsRef.current !== currentKey) {
+      if (buyCount > 0) {
+        new Notification(`${selected.name} 매수 시그널`, {
+          body: `매수 시그널 ${buyCount}개 활성`,
+          icon: "/favicon.ico",
+        });
+      } else if (sellCount > 0) {
+        new Notification(`${selected.name} 매도 시그널`, {
+          body: `매도 시그널 ${sellCount}개 활성`,
+          icon: "/favicon.ico",
+        });
+      }
+    }
+    prevSignalsRef.current = currentKey;
+  }, [data, selected.ticker, selected.name, notifPermission]);
+
   const { data: scannerData } = useSWR("/api/scanner", fetcher, {
     refreshInterval: 300000, // 5분 간격
   });
@@ -216,6 +259,12 @@ export default function Home() {
     selected.market === "KR" ? `/api/stock/${selected.ticker}/disclosure` : null,
     fetcher,
     { refreshInterval: 300000 } // 5분
+  );
+
+  const { data: compareData } = useSWR(
+    compareStock ? `/api/stock/${compareStock.ticker}?period=${period}` : null,
+    fetcher,
+    { refreshInterval: 60000 }
   );
 
   const isFavorite = favorites.includes(selected.ticker);
@@ -240,6 +289,54 @@ export default function Home() {
           >
             {isFavorite ? "★" : "☆"}
           </button>
+          {/* Compare button + picker */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (compareIdx !== null) {
+                  setCompareIdx(null);
+                  setShowComparePicker(false);
+                } else {
+                  setShowComparePicker((v) => !v);
+                }
+              }}
+              className={`text-sm px-2 py-1 rounded border transition-colors ${
+                compareIdx !== null
+                  ? "bg-purple-500/20 border-purple-500/40 text-purple-600 dark:text-purple-400"
+                  : "border-[var(--card-border)] hover:bg-gray-100 dark:hover:bg-zinc-800 text-[var(--muted)]"
+              }`}
+            >
+              {compareIdx !== null ? "비교 해제" : "비교"}
+            </button>
+            {showComparePicker && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowComparePicker(false)}
+                />
+                <div className="absolute top-full left-0 mt-1 bg-[var(--card)] border border-[var(--card-border)] rounded-lg shadow-lg z-50 w-48 max-h-60 overflow-y-auto">
+                  {ALL_WATCH_LIST
+                    .map((item, i) => ({ ...item, idx: i }))
+                    .filter((item) => item.idx !== selectedIdx)
+                    .map((item) => (
+                      <button
+                        key={item.ticker}
+                        onClick={() => {
+                          setCompareIdx(item.idx);
+                          setShowComparePicker(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1"
+                      >
+                        <span className={`text-[10px] px-1 py-0.5 rounded flex-shrink-0 ${item.market === "KR" ? "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400"}`}>
+                          {item.market}
+                        </span>
+                        <span className="truncate">{item.name}</span>
+                      </button>
+                    ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -293,20 +390,66 @@ export default function Home() {
               />
             )}
           </div>
+          {typeof window !== "undefined" && "Notification" in window && (
+            <button
+              onClick={requestNotifPermission}
+              title={
+                notifPermission === "granted"
+                  ? "알림 활성"
+                  : notifPermission === "denied"
+                  ? "알림 차단됨"
+                  : "알림 설정"
+              }
+              className="text-lg leading-none hover:opacity-70 transition-opacity"
+            >
+              {notifPermission === "granted" ? "🔔" : "🔕"}
+            </button>
+          )}
           <ThemeToggle />
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {isLoading && (
-          <div className="text-center py-20 text-[var(--muted)]">
-            데이터 로딩 중...
+          <div className="space-y-6 animate-pulse">
+            {/* Skeleton: Signal Banner */}
+            <div className="h-10 bg-gray-200 dark:bg-zinc-700 rounded-lg" />
+            {/* Skeleton: Price Info + VIX */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-32 bg-gray-200 dark:bg-zinc-700 rounded" />
+                <div className="h-8 w-48 bg-gray-200 dark:bg-zinc-700 rounded" />
+              </div>
+              <div className="h-16 w-28 bg-gray-200 dark:bg-zinc-700 rounded-lg" />
+            </div>
+            {/* Skeleton: Candle Chart */}
+            <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
+              <div className="h-4 w-20 bg-gray-200 dark:bg-zinc-700 rounded mb-2" />
+              <div className="h-[300px] bg-gray-200 dark:bg-zinc-700 rounded" />
+            </div>
+            {/* Skeleton: RSI + MACD */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-zinc-700 rounded mb-2" />
+                <div className="h-[150px] bg-gray-200 dark:bg-zinc-700 rounded" />
+              </div>
+              <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
+                <div className="h-4 w-16 bg-gray-200 dark:bg-zinc-700 rounded mb-2" />
+                <div className="h-[150px] bg-gray-200 dark:bg-zinc-700 rounded" />
+              </div>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="text-center py-20 text-red-500">
-            데이터를 불러올 수 없습니다.
+          <div className="text-center py-20">
+            <p className="text-red-500 mb-4">데이터를 불러올 수 없습니다.</p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+            >
+              재시도
+            </button>
           </div>
         )}
 
@@ -333,6 +476,74 @@ export default function Home() {
               return (
                 <div className="w-full rounded-lg px-4 py-3 bg-gray-500/10 border border-gray-500/20 text-[var(--muted)] text-center font-semibold text-sm">
                   시그널 없음
+                </div>
+              );
+            })()}
+
+            {/* Comparison Panel */}
+            {compareStock && compareData && !compareData.error && (() => {
+              const selClose = data.ohlcv?.[data.ohlcv.length - 1]?.close ?? 0;
+              const selPrev = data.ohlcv?.[data.ohlcv.length - 2]?.close ?? selClose;
+              const selChange = selPrev ? ((selClose - selPrev) / selPrev) * 100 : 0;
+              const selBuy = (data.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
+              const selSell = (data.signals as { type: string }[]).filter((s) => s.type === "SELL").length;
+              const selStrength = selBuy >= 2 ? "강력매수" : selBuy === 1 ? "매수" : selSell >= 2 ? "강력매도" : selSell === 1 ? "매도" : "중립";
+              const selStrengthColor = selBuy > 0 ? "text-red-500" : selSell > 0 ? "text-blue-500" : "text-[var(--muted)]";
+
+              const cmpClose = compareData.ohlcv?.[compareData.ohlcv.length - 1]?.close ?? 0;
+              const cmpPrev = compareData.ohlcv?.[compareData.ohlcv.length - 2]?.close ?? cmpClose;
+              const cmpChange = cmpPrev ? ((cmpClose - cmpPrev) / cmpPrev) * 100 : 0;
+              const cmpBuy = (compareData.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
+              const cmpSell = (compareData.signals as { type: string }[]).filter((s) => s.type === "SELL").length;
+              const cmpStrength = cmpBuy >= 2 ? "강력매수" : cmpBuy === 1 ? "매수" : cmpSell >= 2 ? "강력매도" : cmpSell === 1 ? "매도" : "중립";
+              const cmpStrengthColor = cmpBuy > 0 ? "text-red-500" : cmpSell > 0 ? "text-blue-500" : "text-[var(--muted)]";
+
+              const fmtPrice = (price: number, market: string) =>
+                market === "KR"
+                  ? price.toLocaleString("ko-KR") + "원"
+                  : "$" + price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+              return (
+                <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-[var(--muted)]">
+                      종목 비교: {selected.name} vs {compareStock.name}
+                    </h3>
+                    <button
+                      onClick={() => setCompareIdx(null)}
+                      className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                    {/* Left: selected stock */}
+                    <div className="space-y-1">
+                      <div className="font-semibold truncate">{selected.name}</div>
+                      <div className="text-xs text-[var(--muted)]">{selected.ticker}</div>
+                      <div className="text-2xl font-bold">{fmtPrice(selClose, selected.market)}</div>
+                      <div className={`text-sm font-medium ${selChange >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {selChange >= 0 ? "+" : ""}{selChange.toFixed(2)}%
+                      </div>
+                      <div className="text-xs text-[var(--muted)]">
+                        매수 {selBuy} / 매도 {selSell}
+                      </div>
+                      <span className={`text-xs font-semibold ${selStrengthColor}`}>{selStrength}</span>
+                    </div>
+                    {/* Right: compare stock */}
+                    <div className="space-y-1">
+                      <div className="font-semibold truncate">{compareStock.name}</div>
+                      <div className="text-xs text-[var(--muted)]">{compareStock.ticker}</div>
+                      <div className="text-2xl font-bold">{fmtPrice(cmpClose, compareStock.market)}</div>
+                      <div className={`text-sm font-medium ${cmpChange >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {cmpChange >= 0 ? "+" : ""}{cmpChange.toFixed(2)}%
+                      </div>
+                      <div className="text-xs text-[var(--muted)]">
+                        매수 {cmpBuy} / 매도 {cmpSell}
+                      </div>
+                      <span className={`text-xs font-semibold ${cmpStrengthColor}`}>{cmpStrength}</span>
+                    </div>
+                  </div>
                 </div>
               );
             })()}
@@ -400,6 +611,7 @@ export default function Home() {
                 longMA={data.longMA}
                 bollingerUpper={data.bollingerUpper}
                 bollingerLower={data.bollingerLower}
+                signalHistory={data.signalHistory ?? []}
               />
             </div>
 
@@ -490,7 +702,15 @@ export default function Home() {
         )}
 
         {data?.error && (
-          <div className="text-center py-20 text-red-500">{data.error}</div>
+          <div className="text-center py-20">
+            <p className="text-red-500 mb-4">{data.error}</p>
+            <button
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+            >
+              재시도
+            </button>
+          </div>
         )}
 
         {/* Backtest Summary */}
