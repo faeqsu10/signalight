@@ -122,8 +122,16 @@
 - [x] web/components/PositionCard.tsx (매수가 입력 + 손익 + 액션 가이드)
 - [x] page.tsx 통합 + Next.js 빌드 성공
 
+## Phase 8 - API 캐시 + UX 개선 (완료)
+- [x] API Route in-memory 캐시 (web/lib/cache.ts, 5분 TTL)
+- [x] 차트 기간 선택 버튼 (1M/3M/6M/1Y)
+- [x] Yahoo Finance 에러 핸들링 강화 (429 재시도, 빈 데이터)
+- [x] investor.ts 파싱 실패 graceful degradation
+
 ## Backlog
-- [ ] Vercel 배포 + API 캐싱
+- [ ] Vercel 배포
 - [ ] OpenDART 시범 도입
 - [ ] 모바일/PC 브라우저 접속 테스트
+- [ ] 종목 즐겨찾기 (localStorage)
+- [ ] 시그널 히스토리 타임라인
 - 개선사항은 `tasks/improvements.md` 참고

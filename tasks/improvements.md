@@ -65,9 +65,8 @@
 - localStorage로 사용자별 관심 종목 저장
 - 드롭다운에 즐겨찾기 종목 우선 표시
 
-### 차트 기간 선택
-- 현재: 120일 고정
-- 개선: 1개월 / 3개월 / 6개월 / 1년 선택 버튼
+### 차트 기간 선택 (완료)
+- [x] 1M / 3M / 6M / 1Y 선택 버튼 추가
 
 ### 로딩/에러 UX
 - 현재: 텍스트만 표시 ("데이터 로딩 중...")
@@ -96,7 +95,7 @@
 
 ### 웹 대시보드 배포
 - [ ] Vercel 연결 (GitHub Actions, root directory: `web/`)
-- [ ] API Route in-memory 캐시 추가 (5분)
+- [x] API Route in-memory 캐시 추가 (5분, web/lib/cache.ts)
 - [ ] 에러 메시지 구체화 (어느 데이터 소스 실패인지)
 - [ ] 환경변수 설정 (API 키)
 - 참고: `DEVOPS_ANALYSIS.md` 섹션 4.4
