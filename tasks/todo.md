@@ -15,7 +15,7 @@
 - [x] 차트 컴포넌트 구현 (CandleChart, RSIChart, MACDChart)
 - [x] 대시보드 페이지 조립 (page.tsx + PriceInfo + SignalPanel)
 - [x] 빌드 성공 확인 + API 실데이터 테스트 (삼성전자 005930)
-- [ ] Vercel 배포 (Root Directory: web)
+- [x] Vercel 배포 (https://web-iota-ten-60.vercel.app)
 - [ ] 모바일/PC 브라우저 접속 테스트
 
 ## 백테스팅 엔진 (Phase 1 - 완료)
@@ -127,11 +127,12 @@
 - [x] 차트 기간 선택 버튼 (1M/3M/6M/1Y)
 - [x] Yahoo Finance 에러 핸들링 강화 (429 재시도, 빈 데이터)
 - [x] investor.ts 파싱 실패 graceful degradation
+- [x] 종목 즐겨찾기 (localStorage, ★ 토글, 드롭다운 상단 정렬)
+- [x] 시그널 강도 배지 (드롭다운에 컬러 dot 표시)
 
 ## Backlog
 - [ ] Vercel 배포
 - [ ] OpenDART 시범 도입
 - [ ] 모바일/PC 브라우저 접속 테스트
-- [ ] 종목 즐겨찾기 (localStorage)
-- [ ] 시그널 히스토리 타임라인
+- [ ] 시그널 히스토리 타임라인 (최근 30일)
 - 개선사항은 `tasks/improvements.md` 참고
