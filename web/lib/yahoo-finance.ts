@@ -19,6 +19,24 @@ export function isKoreanTicker(ticker: string): boolean {
   return /^\d{6}$/.test(ticker);
 }
 
+/** Yahoo Finance API 호출 (429 rate limit 시 1초 대기 후 1회 재시도) */
+async function fetchWithRetry(url: string): Promise<Response> {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    next: { revalidate: 60 },
+  });
+
+  if (res.status === 429) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      next: { revalidate: 60 },
+    });
+  }
+
+  return res;
+}
+
 export async function fetchOHLCV(
   ticker: string,
   days: number = 120
@@ -29,24 +47,28 @@ export async function fetchOHLCV(
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooTicker}?period1=${from}&period2=${now}&interval=1d`;
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-    },
-    next: { revalidate: 60 },
-  });
+  const res = await fetchWithRetry(url);
 
   if (!res.ok) {
-    throw new Error(`Yahoo Finance API error: ${res.status}`);
+    throw new Error(
+      `Yahoo Finance OHLCV 조회 실패: ticker=${ticker}, status=${res.status}`
+    );
   }
 
   const json = await res.json();
   const result = json.chart?.result?.[0];
-  if (!result) throw new Error("No data returned");
+  if (!result) {
+    // 장 마감/휴장 등으로 데이터가 없는 경우 빈 배열 반환
+    console.warn(`Yahoo Finance OHLCV 데이터 없음 (장 마감/휴장 가능성): ticker=${ticker}`);
+    return [];
+  }
 
   const timestamps: number[] = result.timestamp || [];
   const quote = result.indicators?.quote?.[0];
-  if (!quote) throw new Error("No quote data");
+  if (!quote) {
+    console.warn(`Yahoo Finance OHLCV quote 데이터 없음: ticker=${ticker}`);
+    return [];
+  }
 
   const data: OHLCVData[] = [];
   for (let i = 0; i < timestamps.length; i++) {
@@ -79,24 +101,26 @@ export async function fetchVIX(
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?period1=${from}&period2=${now}&interval=1d`;
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-    },
-    next: { revalidate: 60 },
-  });
+  const res = await fetchWithRetry(url);
 
   if (!res.ok) {
-    throw new Error(`Yahoo Finance VIX API error: ${res.status}`);
+    throw new Error(`Yahoo Finance VIX 조회 실패: status=${res.status}`);
   }
 
   const json = await res.json();
   const result = json.chart?.result?.[0];
-  if (!result) throw new Error("No VIX data returned");
+  if (!result) {
+    // VIX 데이터 없는 경우 빈 배열 반환 (장 마감/휴장)
+    console.warn("Yahoo Finance VIX 데이터 없음 (장 마감/휴장 가능성)");
+    return [];
+  }
 
   const timestamps: number[] = result.timestamp || [];
   const quote = result.indicators?.quote?.[0];
-  if (!quote) throw new Error("No VIX quote data");
+  if (!quote) {
+    console.warn("Yahoo Finance VIX quote 데이터 없음");
+    return [];
+  }
 
   const data: { date: string; close: number }[] = [];
   for (let i = 0; i < timestamps.length; i++) {

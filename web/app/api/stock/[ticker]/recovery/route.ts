@@ -4,6 +4,7 @@ import { fetchInvestorData } from "@/lib/investor";
 import { analyze } from "@/lib/strategy";
 import { analyzeRecovery, getPositionAction, classifyDrawdownContext } from "@/lib/recovery";
 import { isKoreanTicker } from "@/lib/yahoo-finance";
+import { getCached, setCache } from "@/lib/cache";
 
 export async function GET(
   request: Request,
@@ -14,11 +15,18 @@ export async function GET(
     const url = new URL(request.url);
     const buyPriceStr = url.searchParams.get("buyPrice");
     const buyPrice = buyPriceStr ? parseFloat(buyPriceStr) : null;
+    const period = parseInt(url.searchParams.get("period") ?? "120", 10) || 120;
+    const cacheKey = `recovery-${ticker}-${buyPriceStr ?? "null"}-${period}`;
 
-    // 데이터 병렬 fetch (120일 + VIX + 수급)
+    const cached = getCached<object>(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
+    // 데이터 병렬 fetch (period일 + VIX + 수급)
     const [ohlcv, vixData, investorData] = await Promise.all([
-      fetchOHLCV(ticker, 120),
-      fetchVIX(120).catch(() => null),
+      fetchOHLCV(ticker, period),
+      fetchVIX(period).catch(() => null),
       isKoreanTicker(ticker) ? fetchInvestorData(ticker).catch(() => null) : Promise.resolve(null),
     ]);
 
@@ -51,14 +59,17 @@ export async function GET(
       drawdownContext = classifyDrawdownContext(stockChange, marketChange);
     }
 
-    return NextResponse.json({
+    const result = {
       ticker,
       recovery,
       positionAction,
       pnlPct: pnlPct !== null ? Math.round(pnlPct * 100) / 100 : null,
       drawdownContext,
       signalStrength: analysis.signalStrength,
-    });
+    };
+    setCache(cacheKey, result);
+
+    return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

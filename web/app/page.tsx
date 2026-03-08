@@ -107,6 +107,7 @@ export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [period, setPeriod] = useState(120);
   const selected = ALL_WATCH_LIST[selectedIdx];
 
   const filteredList = useMemo(() => {
@@ -122,7 +123,7 @@ export default function Home() {
   }, [searchQuery]);
 
   const { data, error, isLoading } = useSWR(
-    `/api/stock/${selected.ticker}`,
+    `/api/stock/${selected.ticker}?period=${period}`,
     fetcher,
     { refreshInterval: 60000 }
   );
@@ -138,7 +139,7 @@ export default function Home() {
   );
 
   const { data: recoveryData, isLoading: recoveryLoading } = useSWR(
-    `/api/stock/${selected.ticker}/recovery`,
+    `/api/stock/${selected.ticker}/recovery?period=${period}`,
     fetcher,
     { refreshInterval: 60000 }
   );
@@ -261,6 +262,26 @@ export default function Home() {
 
             {/* Candle Chart */}
             <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)] transition-colors">
+              <div className="flex gap-2 mb-2">
+                {[
+                  { label: "1M", days: 30 },
+                  { label: "3M", days: 90 },
+                  { label: "6M", days: 180 },
+                  { label: "1Y", days: 365 },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => setPeriod(p.days)}
+                    className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                      period === p.days
+                        ? "bg-zinc-600 border-zinc-500 text-white"
+                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
               <h3 className="text-sm font-semibold text-[var(--muted)] mb-2 flex items-center">
                 캔들차트
                 <Tooltip

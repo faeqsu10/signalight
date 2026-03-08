@@ -29,8 +29,16 @@ export async function fetchInvestorData(
     }
 
     const html = await res.text();
-    const rows = parseInvestorTable(html);
-    results.push(...rows);
+    try {
+      const rows = parseInvestorTable(html);
+      results.push(...rows);
+    } catch (e) {
+      console.warn(
+        `네이버 금융 HTML 파싱 실패 (페이지 구조 변경 가능성): ticker=${ticker}, page=${page}`,
+        e
+      );
+      return results;
+    }
   }
 
   return results;
