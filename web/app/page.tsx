@@ -130,8 +130,10 @@ export default function Home() {
   const compareStock = compareIdx !== null ? ALL_WATCH_LIST[compareIdx] : null;
 
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined" && "Notification" in window) {
       setNotifPermission(Notification.permission);
     }
@@ -390,7 +392,7 @@ export default function Home() {
               />
             )}
           </div>
-          {typeof window !== "undefined" && "Notification" in window && (
+          {mounted && "Notification" in window && (
             <button
               onClick={requestNotifPermission}
               title={

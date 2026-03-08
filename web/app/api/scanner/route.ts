@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { WATCH_LIST, SHORT_MA, LONG_MA, RSI_OVERSOLD } from "@/lib/constants";
 import { fetchOHLCV } from "@/lib/yahoo-finance";
 import { calcMovingAverage, calcRSI, calcVolumeRatio } from "@/lib/indicators";
+import { logApiRequest } from "@/lib/api-logger";
 
 interface ScanResult {
   ticker: string;
@@ -11,6 +12,7 @@ interface ScanResult {
 }
 
 export async function GET() {
+  const start = Date.now();
   const goldenCross: ScanResult[] = [];
   const rsiOversold: ScanResult[] = [];
   const volumeSurge: ScanResult[] = [];
@@ -80,6 +82,7 @@ export async function GET() {
     }
   }
 
+  logApiRequest("GET", "/api/scanner", 200, Date.now() - start);
   return NextResponse.json({
     goldenCross: goldenCross.slice(0, 5),
     rsiOversold: rsiOversold.slice(0, 5),
