@@ -266,7 +266,7 @@ export default function Home() {
                         {isFav && (
                           <span className="text-yellow-400 text-xs leading-none">★</span>
                         )}
-                        <span className={`text-[10px] px-1 py-0.5 rounded ${item.market === "KR" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"}`}>
+                        <span className={`text-[10px] px-1 py-0.5 rounded ${item.market === "KR" ? "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400"}`}>
                           {item.market}
                         </span>
                         {item.name}
@@ -360,8 +360,8 @@ export default function Home() {
                     onClick={() => setPeriod(p.days)}
                     className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
                       period === p.days
-                        ? "bg-zinc-600 border-zinc-500 text-white"
-                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                        ? "bg-blue-500 dark:bg-zinc-600 border-blue-500 dark:border-zinc-500 text-white"
+                        : "bg-gray-100 dark:bg-zinc-800/50 border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
                     }`}
                   >
                     {p.label}

@@ -30,7 +30,7 @@ export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" 
     ? "bg-red-500"
     : hasSell
     ? "bg-blue-500"
-    : "bg-gray-400";
+    : "bg-gray-400 dark:bg-gray-500";
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
