@@ -1,7 +1,7 @@
 # Signalight 개발 리스트
 
 > 전체 개발 항목 추적. 작업 완료 시 자동 업데이트.
-> 최종 갱신: 2026-03-08 (Vercel 배포 완료)
+> 최종 갱신: 2026-03-09 (Phase 10 완료 — OpenDART 공시 + 에러 구체화)
 
 ---
 
@@ -164,6 +164,15 @@
 | 93 | 일반화 CLAUDE 템플릿 생성 | ✅ | templates/CLAUDE-TEMPLATE.md (20개 카테고리) |
 | 94 | 개발리스트 파일 생성 | ✅ | tasks/devlog.md |
 
+## Phase 10 — Data Quality + 잔여 TODO 정리 [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 95 | OpenDART 공시 정보 웹 통합 | ✅ | opendart.ts, DisclosurePanel, disclosure API route |
+| 96 | API 에러 메시지 구체화 (데이터 소스별) | ✅ | warnings 배열 반환, 부분 실패 허용 |
+| 97 | Vercel API 캐싱 완료 확인 | ✅ | cache.ts 5분 TTL 이미 존재 |
+| 98 | 문서 업데이트 (todo, devlog, improvements, CLAUDE.md) | ✅ | |
+
 ---
 
 ## Backlog — 미완료 항목
@@ -171,14 +180,14 @@
 | # | 항목 | 상태 | 우선순위 | 비고 |
 |---|------|------|----------|------|
 | B-1 | Vercel 배포 | ✅ | P1 | https://web-iota-ten-60.vercel.app |
-| B-2 | OpenDART 시범 도입 (외인/기관 공식 API) | ⬜ | P2 | 네이버 크롤링 대체 |
+| B-2 | OpenDART 시범 도입 | ✅ | P2 | 공시 정보 통합 (외인/기관 데이터는 미제공) |
 | B-3 | 모바일/PC 브라우저 접속 테스트 | ⬜ | P2 | |
 | B-4 | 시그널 히스토리 타임라인 (최근 30일) | ⬜ | P2 | 차트에 마커 추가 |
-| B-5 | XPath 파싱 실패 시 graceful degradation | ⬜ | P2 | 네이버 금융 |
+| B-5 | XPath 파싱 실패 시 graceful degradation | ✅ | P2 | investor.ts try/catch + warnings 반환 |
 | B-6 | Terms of Service 법적 검토 (뉴스, 외인/기관) | ⬜ | P3 | |
-| B-7 | 에러 메시지 구체화 (데이터 소스별) | ⬜ | P3 | |
+| B-7 | 에러 메시지 구체화 (데이터 소스별) | ✅ | P3 | API route warnings 배열 |
 | B-8 | 스켈레톤 UI + 에러 재시도 버튼 | ⬜ | P3 | |
-| B-9 | 다크/라이트 모드 토글 | ⬜ | P3 | 현재 다크모드 고정 |
+| B-9 | 다크/라이트 모드 토글 | ✅ | P3 | ThemeToggle 컴포넌트 추가됨 |
 | B-10 | 멀티 종목 비교 뷰 | ⬜ | P3 | 2~3개 나란히 |
 | B-11 | 브라우저 알림 연동 | ⬜ | P3 | 시그널 발생 시 |
 | B-12 | Next.js API 요청/응답 시간 로깅 | ⬜ | P3 | |
@@ -188,5 +197,5 @@
 
 ## 통계
 
-- **총 항목**: 106개 (완료 94 + 백로그 12)
-- **완료율**: 89%
+- **총 항목**: 111개 (완료 101 + 백로그 7)
+- **완료율**: 91%

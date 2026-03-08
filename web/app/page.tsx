@@ -12,6 +12,7 @@ import Tooltip from "@/components/Tooltip";
 import ThemeToggle from "@/components/ThemeToggle";
 import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
+import DisclosurePanel from "@/components/DisclosurePanel";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -209,6 +210,12 @@ export default function Home() {
     `/api/stock/${selected.ticker}/recovery?period=${period}`,
     fetcher,
     { refreshInterval: 60000 }
+  );
+
+  const { data: disclosureData, isLoading: disclosureLoading } = useSWR(
+    selected.market === "KR" ? `/api/stock/${selected.ticker}/disclosure` : null,
+    fetcher,
+    { refreshInterval: 300000 } // 5분
   );
 
   const isFavorite = favorites.includes(selected.ticker);
@@ -450,6 +457,15 @@ export default function Home() {
             {/* Signal Panel */}
             <SignalPanel signals={data.signals} />
 
+            {/* Warnings (partial data source failures) */}
+            {data.warnings && (data.warnings as string[]).length > 0 && (
+              <div className="rounded-lg px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 text-xs space-y-0.5">
+                {(data.warnings as string[]).map((w: string, i: number) => (
+                  <p key={i}>{w}</p>
+                ))}
+              </div>
+            )}
+
             {/* Recovery Analysis + Position Card */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RecoveryPanel
@@ -462,6 +478,14 @@ export default function Home() {
                 market={selected.market}
               />
             </div>
+
+            {/* Disclosure Panel (한국 종목만) */}
+            {selected.market === "KR" && (
+              <DisclosurePanel
+                disclosures={disclosureData?.disclosures ?? null}
+                loading={disclosureLoading}
+              />
+            )}
           </>
         )}
 

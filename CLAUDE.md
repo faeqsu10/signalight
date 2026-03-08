@@ -49,7 +49,8 @@ signalight/
 │       │       ├── watchlist/route.ts      # 감시 종목 목록 API
 │       │       ├── scanner/route.ts        # 스크리너 API (골든크로스/RSI/거래량)
 │       │       ├── backtest/[ticker]/route.ts # 백테스트 API (1년 수익률/MDD/승률)
-│       │       └── stock/[ticker]/recovery/route.ts # 회복 분석 API
+│       │       ├── stock/[ticker]/recovery/route.ts # 회복 분석 API
+│       │       └── stock/[ticker]/disclosure/route.ts # OpenDART 공시 API
 │       ├── components/
 │       │   ├── CandleChart.tsx             # 캔들차트 + MA 오버레이
 │       │   ├── RSIChart.tsx                # RSI 라인 + 30/70 기준선
@@ -57,11 +58,13 @@ signalight/
 │       │   ├── SignalPanel.tsx             # 시그널 현황 패널
 │       │   ├── PriceInfo.tsx               # 현재가, 등락률, 종합 시그널
 │       │   ├── RecoveryPanel.tsx           # 회복 시그널 체크리스트 + 점수
-│       │   └── PositionCard.tsx            # 내 포지션 진단 (매수가 입력)
+│       │   ├── PositionCard.tsx            # 내 포지션 진단 (매수가 입력)
+│       │   └── DisclosurePanel.tsx         # OpenDART 최근 공시 목록
 │       └── lib/
 │           ├── constants.ts                # config.py 포팅 + VIX/수급 설정값
 │           ├── indicators.ts               # indicators.py 포팅
 │           ├── investor.ts                 # 네이버 금융 외인/기관 순매수 fetch
+│           ├── opendart.ts                 # OpenDART API (공시 조회 + corp_code 매핑)
 │           ├── recovery.ts                 # recovery.py 포팅 (회복 분석 + 포지션 진단)
 │           ├── strategy.ts                 # strategy.py 포팅 + VIX/수급 시그널
 │           └── yahoo-finance.ts            # Yahoo Finance OHLCV + VIX fetch

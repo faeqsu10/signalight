@@ -38,6 +38,20 @@
 - `maxOutputTokens`가 너무 작으면 JSON이 잘림 — Gemini 2.5 Flash는 thinking 토큰이 포함되므로 2048 이상 권장
 - API 키 없음/오류 시 예외를 전파하지 말고 `None` 반환 — 감성 분석은 선택적 기능
 
+## OpenDART API 통합
+- OpenDART는 공시(실적, 배당, 유증), 재무제표, 대주주 데이터 제공
+- **외인/기관 일별 순매수 데이터는 미제공** — 네이버 금융 크롤링을 대체할 수 없음
+- stock_code(거래소 티커)와 corp_code(DART 고유 ID)는 다름 — 매핑 테이블 필요
+- API 키 없으면 graceful하게 빈 배열 반환 (에러가 아님)
+- 응답 status "000"이 정상, "013"은 데이터 없음
+- 일일 한도 10,000건 — 캐싱 필수 (5분+ TTL)
+
+## API 부분 실패 패턴 (Partial Failure)
+- 여러 데이터 소스를 동시 호출할 때, 하나 실패해도 나머지 데이터는 반환해야 함
+- `Promise.all`에서 개별 `.catch()`로 실패를 격리하고 `warnings` 배열에 기록
+- 프론트엔드에서 `data.warnings`가 있으면 노란색 배너로 표시
+- OHLCV(필수)만 실패 시 전체 에러, VIX/투자자(선택적)는 부분 실패 허용
+
 ## 네이버 금융 크롤링 패턴
 - URL: `https://finance.naver.com/item/news_news.nhn?code={ticker}`
 - 인코딩: euc-kr (requests에서 `response.encoding = "euc-kr"` 설정 필요)

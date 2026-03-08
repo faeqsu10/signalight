@@ -88,16 +88,16 @@
 
 ### 네이버 금융 크롤링 안정성 (일부 완료)
 - [x] in-memory 캐시 도입 (4시간 TTL, investor.py + news.py)
-- [ ] XPath 파싱 실패 시 graceful degradation
-- [ ] OpenDART API 시범 도입 (외인/기관 데이터, 공식)
+- [x] XPath 파싱 실패 시 graceful degradation (investor.ts try/catch + API warnings)
+- [x] OpenDART API 시범 도입 (공시 정보 웹 통합, 외인/기관 데이터는 미제공)
 - [ ] Terms of Service 법적 검토 (뉴스, 외인/기관)
 - 참고: `DEVOPS_ANALYSIS.md` 부록
 
 ### 웹 대시보드 배포
-- [ ] Vercel 연결 (GitHub Actions, root directory: `web/`)
+- [x] Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
 - [x] API Route in-memory 캐시 추가 (5분, web/lib/cache.ts)
-- [ ] 에러 메시지 구체화 (어느 데이터 소스 실패인지)
-- [ ] 환경변수 설정 (API 키)
+- [x] 에러 메시지 구체화 (데이터 소스별 warnings 배열 반환)
+- [x] 환경변수 설정 (DART_API_KEY — Vercel에서 설정 시 공시 정보 활성화)
 - 참고: `DEVOPS_ANALYSIS.md` 섹션 4.4
 
 ## P1 - 모니터링 기초

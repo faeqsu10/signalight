@@ -19,23 +19,36 @@ export async function GET(
       return NextResponse.json(cached);
     }
 
-    // OHLCV, VIX, 외인/기관 데이터를 병렬로 가져온다
-    const [ohlcv, vixData, investorData] = await Promise.all([
-      fetchOHLCV(ticker, period),
-      fetchVIX(period).catch(() => null),
-      fetchInvestorData(ticker).catch(() => null),
+    const warnings: string[] = [];
+
+    // OHLCV는 필수 — 실패하면 전체 에러
+    const ohlcv = await fetchOHLCV(ticker, period);
+
+    // VIX, 외인/기관은 선택적 — 실패해도 나머지 데이터 반환
+    const [vixData, investorData] = await Promise.all([
+      fetchVIX(period).catch((e) => {
+        warnings.push(`VIX 데이터 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+        return null;
+      }),
+      fetchInvestorData(ticker).catch((e) => {
+        warnings.push(`외인/기관 데이터 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+        return null;
+      }),
     ]);
 
     const closes = ohlcv.map((d) => d.close);
     const volumes = ohlcv.map((d) => d.volume);
     const analysis = analyze(closes, vixData, investorData, volumes);
 
-    const result = { ticker, ohlcv, ...analysis };
+    const result = { ticker, ohlcv, ...analysis, warnings };
     setCache(cacheKey, result);
 
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: `OHLCV 데이터 조회 실패 (${message})` },
+      { status: 500 }
+    );
   }
 }

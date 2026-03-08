@@ -59,8 +59,8 @@
 - [x] Python 봇 timeout + 재시도 로직 (send_message 3회 backoff)
 - [x] 헬스체크 메시지 추가 (매일 09:00)
 - [x] 네이버 금융 크롤링 캐시 (investor/news 4시간 in-memory)
-- [ ] Vercel 배포 및 API 캐싱
-- [ ] OpenDART 시범 도입
+- [x] Vercel 배포 및 API 캐싱 (cache.ts 5분 TTL + Vercel 배포 완료)
+- [x] OpenDART 시범 도입 (공시 정보 웹 통합, 외인/기관 데이터는 미제공)
 - 참고: `DEVOPS_ANALYSIS.md`
 
 ## LLM 파이프라인 (Phase 1 - 완료)
@@ -131,8 +131,8 @@
 - [x] 시그널 강도 배지 (드롭다운에 컬러 dot 표시)
 
 ## Backlog
-- [ ] Vercel 배포
-- [ ] OpenDART 시범 도입
+- [x] Vercel 배포
+- [x] OpenDART 시범 도입 (공시 정보, 외인/기관은 미제공)
 - [ ] 모바일/PC 브라우저 접속 테스트
 - [ ] 시그널 히스토리 타임라인 (최근 30일)
 - 개선사항은 `tasks/improvements.md` 참고
