@@ -153,6 +153,17 @@
 | 87 | 종목 즐겨찾기 (localStorage, ★ 토글, 드롭다운 상단 정렬) | ✅ | |
 | 88 | 시그널 강도 배지 (드롭다운에 컬러 dot 표시) | ✅ | |
 
+## Phase 9 — Go Live [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 89 | Vercel 프로덕션 배포 | ✅ | https://web-iota-ten-60.vercel.app |
+| 90 | 로깅 사각지대 수정 (print→logger, 반환값 확인) | ✅ | telegram.py, main.py |
+| 91 | 라이트모드 색상 수정 (4개 파일) | ✅ | PositionCard, RecoveryPanel, page.tsx, PriceInfo |
+| 92 | CLAUDE.md DevOps 섹션 현행화 | ✅ | Phase 2/3 outdated 정보 제거 |
+| 93 | 일반화 CLAUDE 템플릿 생성 | ✅ | templates/CLAUDE-TEMPLATE.md (20개 카테고리) |
+| 94 | 개발리스트 파일 생성 | ✅ | tasks/devlog.md |
+
 ---
 
 ## Backlog — 미완료 항목
@@ -177,5 +188,5 @@
 
 ## 통계
 
-- **총 항목**: 101개 (완료 89 + 백로그 12)
-- **완료율**: 88%
+- **총 항목**: 106개 (완료 94 + 백로그 12)
+- **완료율**: 89%

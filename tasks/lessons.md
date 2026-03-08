@@ -50,6 +50,24 @@
 - `news_sentiment` 키가 None이면 포맷터에서 블록 생략
 - 시그널 방향과 뉴스 감성 불일치 시 ⚠️ 경고 표시 (매수+부정, 매도+긍정)
 
+## 로깅 사각지대
+- `print()` 사용은 로그 파일에 남지 않음 — 반드시 `logger.warning()/error()` 사용
+- 외부 호출(send_message 등)의 반환값을 확인하지 않으면 실패를 알 수 없음
+- 모듈별 child logger 사용: `logging.getLogger("signalight.telegram")`
+
+## 라이트/다크 모드 대응
+- 다크모드 전용으로 만든 `bg-zinc-*`, `text-zinc-*`는 라이트모드에서 깨짐
+- 모든 색상에 `dark:` prefix 추가: `bg-white dark:bg-zinc-800/50`
+- CSS 변수(`--card`, `--muted` 등)를 적극 활용하면 유지보수 쉬움
+- 차트(lightweight-charts)는 `isDark` 분기로 색상 전환: `isDark ? "#0f0f0f" : "#ffffff"`
+- 시맨틱 색상(매수=빨강, 매도=파랑)은 양쪽 모드에서 동일하게 유지
+
+## Vercel 배포
+- 웹 앱에 `process.env` 참조 없으면 환경변수 설정 불필요 → 즉시 배포 가능
+- 네이버 금융 크롤링은 Vercel 해외 서버에서 IP 차단됨 → `.catch(() => null)` 패턴으로 graceful degradation
+- 서버리스 in-memory 캐시는 cold start마다 초기화 → 캐시 효과 제한적
+- `vercel --yes --prod` 명령으로 CLI 배포, Root Directory 설정 필요 (모노레포)
+
 ## Python ↔ TypeScript 지표 포팅
 - Python pandas `rolling().mean()` → TS에서 직접 for 루프로 구현
 - Python pandas `ewm(span=n).mean()` → TS에서 `alpha = 2/(span+1)` EMA 수동 구현

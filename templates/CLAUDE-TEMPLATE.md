@@ -273,6 +273,13 @@ def setup_logging(level=logging.INFO):
 - 외부 호출 결과(성공/실패)의 **반환값을 확인**하고 로깅
 - 중복 핸들러 방지: `if logger.handlers: return`
 
+### 라이트/다크 모드 (Tailwind CSS)
+- 다크모드 전용 색상(`bg-zinc-*`, `text-zinc-*`)은 반드시 `dark:` prefix 추가
+- 라이트모드 색상을 기본으로 정의: `bg-white dark:bg-zinc-800/50`
+- CSS 변수(`--card`, `--muted` 등)를 사용하면 모드 전환 자동 처리
+- 차트 라이브러리는 JS에서 `isDark` 분기로 색상 전환
+- 시맨틱 색상(성공=초록, 위험=빨강 등)은 양쪽 모드에서 동일 유지
+
 ## 캐싱 패턴
 
 ### Python — dict 기반 in-memory 캐시
