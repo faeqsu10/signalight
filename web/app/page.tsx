@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { ALL_WATCH_LIST } from "@/lib/constants";
 import CandleChart from "@/components/CandleChart";
@@ -14,6 +14,8 @@ import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const FAVORITES_KEY = "signalight-favorites";
 
 interface ScanResult {
   ticker: string;
@@ -103,30 +105,95 @@ function ScannerCategory({
   );
 }
 
+function SignalDot({ strength }: { strength: string | undefined }) {
+  if (!strength) return null;
+  if (strength === "strong_buy" || strength === "buy") {
+    return <span className="inline-block w-2 h-2 rounded-full bg-red-500 ml-1 flex-shrink-0" />;
+  }
+  if (strength === "strong_sell" || strength === "sell") {
+    return <span className="inline-block w-2 h-2 rounded-full bg-blue-500 ml-1 flex-shrink-0" />;
+  }
+  return <span className="inline-block w-2 h-2 rounded-full bg-gray-400 ml-1 flex-shrink-0" />;
+}
+
 export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [period, setPeriod] = useState(120);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [signalCache, setSignalCache] = useState<Record<string, string>>({});
   const selected = ALL_WATCH_LIST[selectedIdx];
 
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(FAVORITES_KEY);
+      if (stored) {
+        setFavorites(JSON.parse(stored));
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
+
+  function toggleFavorite(ticker: string) {
+    setFavorites((prev) => {
+      const next = prev.includes(ticker)
+        ? prev.filter((t) => t !== ticker)
+        : [...prev, ticker];
+      try {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }
+
   const filteredList = useMemo(() => {
-    if (!searchQuery.trim()) return ALL_WATCH_LIST.map((item, i) => ({ ...item, idx: i }));
-    const q = searchQuery.toLowerCase();
-    return ALL_WATCH_LIST
-      .map((item, i) => ({ ...item, idx: i }))
-      .filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          item.ticker.toLowerCase().includes(q)
-      );
-  }, [searchQuery]);
+    const base = !searchQuery.trim()
+      ? ALL_WATCH_LIST.map((item, i) => ({ ...item, idx: i }))
+      : ALL_WATCH_LIST
+          .map((item, i) => ({ ...item, idx: i }))
+          .filter(
+            (item) =>
+              item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              item.ticker.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+    // favorites first
+    return [...base].sort((a, b) => {
+      const aFav = favorites.includes(a.ticker) ? 0 : 1;
+      const bFav = favorites.includes(b.ticker) ? 0 : 1;
+      return aFav - bFav;
+    });
+  }, [searchQuery, favorites]);
 
   const { data, error, isLoading } = useSWR(
     `/api/stock/${selected.ticker}?period=${period}`,
     fetcher,
     { refreshInterval: 60000 }
   );
+
+  // Cache signal strength when data loads for the current stock
+  useEffect(() => {
+    if (!data || data.error) return;
+    if (data.signalStrength) {
+      setSignalCache((prev) => ({ ...prev, [selected.ticker]: data.signalStrength }));
+      return;
+    }
+    // Derive from signals array if signalStrength field is absent
+    if (Array.isArray(data.signals)) {
+      const buyCount = (data.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
+      const sellCount = (data.signals as { type: string }[]).filter((s) => s.type === "SELL").length;
+      let derived = "neutral";
+      if (buyCount >= 2) derived = "strong_buy";
+      else if (buyCount === 1) derived = "buy";
+      else if (sellCount >= 2) derived = "strong_sell";
+      else if (sellCount === 1) derived = "sell";
+      setSignalCache((prev) => ({ ...prev, [selected.ticker]: derived }));
+    }
+  }, [data, selected.ticker]);
 
   const { data: scannerData } = useSWR("/api/scanner", fetcher, {
     refreshInterval: 300000, // 5분 간격
@@ -144,6 +211,8 @@ export default function Home() {
     { refreshInterval: 60000 }
   );
 
+  const isFavorite = favorites.includes(selected.ticker);
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
       {/* Header */}
@@ -155,6 +224,15 @@ export default function Home() {
               {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준
             </span>
           )}
+          {/* Star button for current stock */}
+          <button
+            onClick={() => toggleFavorite(selected.ticker)}
+            title={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+            className="text-lg leading-none text-yellow-400 hover:text-yellow-300 transition-colors focus:outline-none"
+            aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+          >
+            {isFavorite ? "★" : "☆"}
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -171,25 +249,33 @@ export default function Home() {
             />
             {showSearch && filteredList.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--card)] border border-[var(--card-border)] rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                {filteredList.map((item) => (
-                  <button
-                    key={item.ticker}
-                    onClick={() => {
-                      setSelectedIdx(item.idx);
-                      setSearchQuery("");
-                      setShowSearch(false);
-                    }}
-                    className="w-full text-left px-3 py-2.5 min-h-[44px] text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
-                  >
-                    <span>
-                      <span className={`text-[10px] mr-1 px-1 py-0.5 rounded ${item.market === "KR" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"}`}>
-                        {item.market}
+                {filteredList.map((item) => {
+                  const isFav = favorites.includes(item.ticker);
+                  const strength = signalCache[item.ticker];
+                  return (
+                    <button
+                      key={item.ticker}
+                      onClick={() => {
+                        setSelectedIdx(item.idx);
+                        setSearchQuery("");
+                        setShowSearch(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-1">
+                        {isFav && (
+                          <span className="text-yellow-400 text-xs leading-none">★</span>
+                        )}
+                        <span className={`text-[10px] px-1 py-0.5 rounded ${item.market === "KR" ? "bg-blue-500/20 text-blue-400" : "bg-green-500/20 text-green-400"}`}>
+                          {item.market}
+                        </span>
+                        {item.name}
+                        <SignalDot strength={strength} />
                       </span>
-                      {item.name}
-                    </span>
-                    <span className="text-[var(--muted)] text-xs">{item.ticker}</span>
-                  </button>
-                ))}
+                      <span className="text-[var(--muted)] text-xs flex-shrink-0 ml-2">{item.ticker}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {/* Backdrop to close search */}
