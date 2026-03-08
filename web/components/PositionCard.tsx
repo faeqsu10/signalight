@@ -35,7 +35,7 @@ export default function PositionCard({
     }
   }, [storageKey]);
 
-  // 매수가 변경 시 손익 계산 + API 호출
+  // 매수가 변경 시 손익 계산 (즉시) + API 호출 (디바운스 300ms)
   useEffect(() => {
     const price = parseFloat(buyPrice);
     if (!buyPrice || isNaN(price) || price <= 0) {
@@ -50,15 +50,19 @@ export default function PositionCard({
     setPnlPct(pnl);
     onBuyPriceChange?.(price);
 
-    // Recovery API에서 포지션 액션 가져오기
-    fetch(`/api/stock/${ticker}/recovery?buyPrice=${price}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.positionAction) {
-          setPositionAction(data.positionAction);
-        }
-      })
-      .catch(() => {});
+    // Recovery API에서 포지션 액션 가져오기 (디바운스)
+    const timer = setTimeout(() => {
+      fetch(`/api/stock/${ticker}/recovery?buyPrice=${price}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.positionAction) {
+            setPositionAction(data.positionAction);
+          }
+        })
+        .catch(() => {});
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [buyPrice, currentPrice, ticker, storageKey, onBuyPriceChange]);
 
   const handleClear = () => {
