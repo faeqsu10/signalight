@@ -1,8 +1,11 @@
+import logging
 import time
 import requests
 from typing import List
 
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+logger = logging.getLogger("signalight.telegram")
 
 MAX_RETRIES = 3
 
@@ -57,9 +60,9 @@ def send_message(text: str) -> bool:
                 if resp.ok:
                     sent = True
                     break
-                print(f"텔레그램 전송 실패 (시도 {attempt + 1}/{MAX_RETRIES}): {resp.status_code} {resp.text}")
+                logger.warning("텔레그램 전송 실패 (시도 %d/%d): %s %s", attempt + 1, MAX_RETRIES, resp.status_code, resp.text)
             except requests.RequestException as e:
-                print(f"텔레그램 요청 오류 (시도 {attempt + 1}/{MAX_RETRIES}): {e}")
+                logger.warning("텔레그램 요청 오류 (시도 %d/%d): %s", attempt + 1, MAX_RETRIES, e)
             if attempt < MAX_RETRIES - 1:
                 time.sleep(2 ** attempt)  # exponential backoff: 1s, 2s
         if not sent:

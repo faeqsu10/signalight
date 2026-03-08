@@ -145,9 +145,11 @@ def check_signals():
                 logger.info("[%s] %s - %s", sig["trigger"], s["name"], sig["detail"])
 
         message = format_signal_alert(stock_data_list)
-        send_message(message)
-        total = sum(len(s["signals"]) for s in signal_stocks)
-        logger.info("총 %d개 시그널 전송 완료", total)
+        if send_message(message):
+            total = sum(len(s["signals"]) for s in signal_stocks)
+            logger.info("총 %d개 시그널 전송 완료", total)
+        else:
+            logger.error("시그널 알림 텔레그램 전송 실패")
     else:
         logger.info("시그널 없음. 알림 미전송.")
 
@@ -160,8 +162,10 @@ def daily_briefing():
 
     if stock_data_list:
         message = format_daily_briefing(stock_data_list)
-        send_message(message)
-        logger.info("일일 브리핑 전송 완료 (%d개 종목)", len(stock_data_list))
+        if send_message(message):
+            logger.info("일일 브리핑 전송 완료 (%d개 종목)", len(stock_data_list))
+        else:
+            logger.error("일일 브리핑 텔레그램 전송 실패")
     else:
         logger.warning("데이터 수집 실패. 브리핑 미전송.")
 
@@ -234,8 +238,10 @@ def weekly_report():
 
     if stock_data_list:
         message = format_weekly_report(stock_data_list, weekly_signals)
-        send_message(message)
-        logger.info("주간 리포트 전송 완료 (%d개 종목)", len(stock_data_list))
+        if send_message(message):
+            logger.info("주간 리포트 전송 완료 (%d개 종목)", len(stock_data_list))
+        else:
+            logger.error("주간 리포트 텔레그램 전송 실패")
     else:
         logger.warning("데이터 수집 실패. 주간 리포트 미전송.")
 
