@@ -54,6 +54,18 @@
 - [x] 가중 점수 기반 신호 강도 5단계 (strong_buy/buy/neutral/sell/strong_sell)
 - [x] Python + TS 양쪽 동기화
 
+### 합류 점수 시스템 고도화 (완료)
+- [x] 이진→연속 강도 점수 전환 (RSI/MA/MACD/BB 0.0~1.0)
+- [x] 수급 AND→OR 분리 (외인/기관 각 0.75점 독립)
+- [x] OBV 상승 다이버전스 + Stochastic RSI 편입
+- [x] 시장 레짐 기반 동적 가중치 (상승/하락/횡보)
+- [x] TypeScript 동기화 완료
+
+### 텔레그램 메시지 포맷 리디자인 (완료)
+- [x] 일일 브리핑: 시장 온도 섹션, 주목 종목 분리, compact 나머지, 한줄 코멘트
+- [x] 시그널 알림: 핵심 요약 문장, ✅/🔻/⬜ 근거 해석, 프로그레스 바(▓░)
+- [x] /score 합류점수 분해 명령어, /info FAQ 합류점수 설명
+
 ### Docker 배포 (완료)
 - [x] Multi-stage Dockerfile + docker-compose.yml
 - [x] .dockerignore 설정

@@ -137,77 +137,418 @@ def _format_change(change_pct: float) -> str:
     return f"{sign}{change_pct:.1f}%"
 
 
+def _progress_bar(score: float, total: float, width: int = 12) -> str:
+    """합류 점수를 텍스트 프로그레스 바로 변환한다."""
+    if total <= 0:
+        return ""
+    ratio = min(score / total, 1.0)
+    filled = round(ratio * width)
+    empty = width - filled
+    pct = int(ratio * 100)
+    return f"{'▓' * filled}{'░' * empty} {pct}%"
+
+
+# 시그널 트리거별 쉬운 해석
+_EASY_EXPLAIN = {
+    "골든크로스": "단기선이 장기선 위로 → 상승 전환 신호",
+    "데드크로스": "단기선이 장기선 아래로 → 하락 전환 신호",
+    "RSI 과매도": "많이 빠져서 반등 가능 구간",
+    "RSI 과매수": "많이 올라서 조정 가능 구간",
+    "MACD 매수": "추세 상승 전환 신호",
+    "MACD 매도": "추세 하락 전환 신호",
+    "볼린저밴드 하단": "평소 가격대 이탈 → 반등 가능",
+    "볼린저밴드 상단": "평소 가격대 이탈 → 과열 주의",
+    "OBV 상승 다이버전스": "주가↓ 거래량↑ → 모으는 중",
+    "StochRSI 과매도": "정밀 바닥 신호 → 반등 임박",
+    "StochRSI 과매수": "정밀 천장 신호 → 조정 임박",
+    "VIX 공포": "시장 공포 → 역발상 매수 기회",
+    "VIX 주의": "시장 불안 → 매수 기회 가능",
+    "VIX 과열": "시장 낙관 과열 → 경고",
+    "외인 연속 매수": "외국인이 계속 매수 중",
+    "외인 연속 매도": "외국인이 계속 매도 중",
+    "기관 연속 매수": "기관이 계속 매수 중",
+    "기관 연속 매도": "기관이 계속 매도 중",
+}
+
+
 DIVIDER = "━━━━━━━━━━━━━━━━━━━"
+DIVIDER_THIN = "───────────────────"
 
 
 # ──────────────────────────────────────────────
-# 내부 블록 빌더
+# 시장 온도 / 한줄 코멘트 빌더
 # ──────────────────────────────────────────────
 
-def _build_signal_block(stock: dict) -> str:
-    """단일 종목의 시그널 알림 블록을 생성한다."""
+def _build_market_temperature(stock_data_list: List[dict]) -> str:
+    """시장 전체 분위기를 요약하는 '시장 온도' 블록을 생성한다."""
+    up_count = sum(1 for s in stock_data_list if s.get("change_pct", 0) > 0)
+    down_count = sum(1 for s in stock_data_list if s.get("change_pct", 0) < 0)
+    flat_count = len(stock_data_list) - up_count - down_count
+
+    buy_signal_count = sum(
+        1 for s in stock_data_list
+        if any(sig.get("type") == "buy" for sig in s.get("signals", []))
+    )
+    sell_signal_count = sum(
+        1 for s in stock_data_list
+        if any(sig.get("type") == "sell" for sig in s.get("signals", []))
+    )
+
+    # VIX (첫 번째 종목의 indicators에서 가져옴)
+    vix = None
+    for s in stock_data_list:
+        v = s.get("indicators", {}).get("vix")
+        if v is not None:
+            vix = v
+            break
+
+    lines = []
+    lines.append("<b>━━━ 시장 온도 ━━━</b>")
+
+    # VIX 라인
+    if vix is not None:
+        vix_lbl = _vix_label(vix)
+        if vix >= 25:
+            vix_emoji = "🥶"
+        elif vix <= 12:
+            vix_emoji = "🔥"
+        else:
+            vix_emoji = "😐"
+        lines.append(f"{vix_emoji} VIX {vix:.1f} ({vix_lbl})")
+
+    # 등락 요약
+    total = len(stock_data_list)
+    lines.append(f"감시 {total}종목 | 상승 {up_count} · 하락 {down_count} · 보합 {flat_count}")
+
+    # 시그널 요약
+    sig_parts = []
+    if buy_signal_count > 0:
+        sig_parts.append(f"매수 {buy_signal_count}건")
+    if sell_signal_count > 0:
+        sig_parts.append(f"매도 {sell_signal_count}건")
+    if sig_parts:
+        lines.append(f"오늘 시그널: {' · '.join(sig_parts)}")
+    else:
+        lines.append("오늘 시그널: 없음")
+
+    return "\n".join(lines)
+
+
+def _build_market_comment(stock_data_list: List[dict]) -> str:
+    """시장 분위기를 룰 기반으로 한줄 코멘트로 생성한다.
+
+    LLM 분석이 있으면 해당 내용을 우선 활용한다.
+    """
+    up_count = sum(1 for s in stock_data_list if s.get("change_pct", 0) > 0)
+    down_count = sum(1 for s in stock_data_list if s.get("change_pct", 0) < 0)
+    total = len(stock_data_list)
+
+    # VIX
+    vix = None
+    for s in stock_data_list:
+        v = s.get("indicators", {}).get("vix")
+        if v is not None:
+            vix = v
+            break
+
+    # 매수/매도 시그널 종목
+    buy_names = [
+        s["name"] for s in stock_data_list
+        if any(sig.get("type") == "buy" for sig in s.get("signals", []))
+    ]
+    sell_names = [
+        s["name"] for s in stock_data_list
+        if any(sig.get("type") == "sell" for sig in s.get("signals", []))
+    ]
+
+    # LLM reasoning 수집
+    llm_comments = []
+    for s in stock_data_list:
+        llm = s.get("llm_analysis")
+        if llm and llm.get("reasoning"):
+            llm_comments.append(f"{s['name']}: {llm['reasoning']}")
+
+    # 룰 기반 코멘트 생성
+    parts = []
+
+    # 시장 분위기
+    if total > 0:
+        down_ratio = down_count / total
+        if down_ratio >= 0.7:
+            parts.append("전반적 약세장")
+        elif down_ratio <= 0.3:
+            parts.append("전반적 강세장")
+        else:
+            parts.append("혼조세 장세")
+
+    # VIX 코멘트
+    if vix is not None:
+        if vix >= 30:
+            parts.append("극단적 공포 구간으로 역발상 매수 기회 모색 가능")
+        elif vix >= 25:
+            parts.append("시장 공포 심리 지속 중")
+        elif vix <= 12:
+            parts.append("과도한 낙관, 과열 주의 필요")
+
+    # 시그널 코멘트
+    if buy_names and not sell_names:
+        parts.append(f"{', '.join(buy_names)} 매수 기회 포착")
+    elif sell_names and not buy_names:
+        parts.append(f"{', '.join(sell_names)} 매도 압력 감지")
+    elif buy_names and sell_names:
+        parts.append(f"매수({', '.join(buy_names)})와 매도({', '.join(sell_names)}) 엇갈림")
+
+    if not parts:
+        parts.append("뚜렷한 방향성 없이 관망 구간")
+
+    comment = ". ".join(parts) + "."
+
+    lines = []
+    lines.append("")
+    lines.append("<b>━━━ 한줄 코멘트 ━━━</b>")
+    lines.append(f"<i>\"{comment}\"</i>")
+
+    # LLM 코멘트가 있으면 하나만 추가
+    if llm_comments:
+        lines.append(f"🤖 {llm_comments[0]}")
+
+    return "\n".join(lines)
+
+
+# ──────────────────────────────────────────────
+# 주목 종목 블록 빌더 (브리핑용)
+# ──────────────────────────────────────────────
+
+def _build_spotlight_block(stock: dict) -> str:
+    """시그널이 있는 주목 종목의 상세 블록을 생성한다 (브리핑용)."""
     name = stock.get("name", "")
     ticker = stock.get("ticker", "")
     price = stock.get("price", 0)
     change_pct = stock.get("change_pct", 0.0)
-    signals: List[dict] = stock.get("signals", [])
-    indicators: dict = stock.get("indicators", {})
-    investor: dict = stock.get("investor", {})
+    signals = stock.get("signals", [])
+    confluence_score = stock.get("confluence_score", 0)
+    total_indicators = stock.get("total_indicators", 0)
+    direction = stock.get("confluence_direction", "buy")
+    investor = stock.get("investor", {})
+
+    emoji = _change_emoji(change_pct)
+    change_str = _format_change(change_pct)
+    price_str = _format_price(price)
+
+    # 대표 시그널 타입
+    buy_signals = [s for s in signals if s.get("type") == "buy"]
+    sell_signals = [s for s in signals if s.get("type") == "sell"]
+
+    if buy_signals and not sell_signals:
+        header_emoji = "🟢"
+        header_label = "매수 가능성 포착"
+    elif sell_signals and not buy_signals:
+        header_emoji = "🔴"
+        header_label = "매도 압력 증가"
+    else:
+        header_emoji = "🟡"
+        header_label = "매수·매도 혼재"
+
+    lines = []
+    lines.append(f"{header_emoji} <b>{name}</b> — {header_label}")
+    lines.append(f"  {price_str}원 ({emoji}{change_str})")
+
+    # 합류 점수 + 프로그레스 바
+    if total_indicators > 0:
+        label = _confluence_label(confluence_score, total_indicators, direction)
+        bar = _progress_bar(confluence_score, total_indicators)
+        lines.append(f"  합류 {confluence_score:.1f}/{total_indicators} ({label})")
+        lines.append(f"  {bar}")
+
+    # 핵심 근거 (시그널 트리거 + 수급 요약)
+    reasons = []
+    for sig in signals:
+        trigger = sig.get("trigger", "")
+        explain = _EASY_EXPLAIN.get(trigger, "")
+        if explain:
+            reasons.append(explain)
+        else:
+            reasons.append(trigger)
+
+    # 수급 요약 추가
+    foreign_consec = investor.get("foreign_consec_days", 0)
+    inst_consec = investor.get("institutional_consec_days", 0)
+    if foreign_consec and abs(foreign_consec) >= 3:
+        direction_str = "매수" if foreign_consec > 0 else "매도"
+        reasons.append(f"외인 {abs(foreign_consec)}일 연속 {direction_str}")
+    if inst_consec and abs(inst_consec) >= 3:
+        direction_str = "매수" if inst_consec > 0 else "매도"
+        reasons.append(f"기관 {abs(inst_consec)}일 연속 {direction_str}")
+
+    if reasons:
+        lines.append(f"  → {' + '.join(reasons[:3])}")
+
+    # AI 판단 (있으면)
+    llm = stock.get("llm_analysis")
+    if llm and llm.get("reasoning"):
+        lines.append(f"  🤖 {llm['reasoning']}")
+
+    return "\n".join(lines)
+
+
+def _build_compact_row(stock: dict) -> str:
+    """시그널 없는 종목의 compact 한줄 요약을 생성한다."""
+    name = stock.get("name", "")
+    price = stock.get("price", 0)
+    change_pct = stock.get("change_pct", 0.0)
+
+    emoji = _change_emoji(change_pct)
+    change_str = _format_change(change_pct)
+    price_str = _format_price(price)
+
+    return f"{emoji}{change_str}  <b>{name}</b>  {price_str}원"
+
+
+# ──────────────────────────────────────────────
+# 시그널 알림 블록 빌더 (리디자인)
+# ──────────────────────────────────────────────
+
+def _build_signal_summary_sentence(stock: dict) -> str:
+    """시그널 알림 상단의 핵심 요약 문장을 생성한다."""
+    signals = stock.get("signals", [])
+    indicators = stock.get("indicators", {})
+    investor = stock.get("investor", {})
+
+    buy_reasons = []
+    sell_reasons = []
+
+    for sig in signals:
+        trigger = sig.get("trigger", "")
+        explain = _EASY_EXPLAIN.get(trigger, trigger)
+        if sig.get("type") == "buy":
+            buy_reasons.append(explain)
+        elif sig.get("type") == "sell":
+            sell_reasons.append(explain)
+
+    # 수급 정보 추가
+    foreign_consec = investor.get("foreign_consec_days", 0)
+    inst_consec = investor.get("institutional_consec_days", 0)
+    if foreign_consec and foreign_consec >= 3:
+        buy_reasons.append(f"외인 {foreign_consec}일 연속 매수")
+    elif foreign_consec and foreign_consec <= -3:
+        sell_reasons.append(f"외인 {abs(foreign_consec)}일 연속 매도")
+    if inst_consec and inst_consec >= 3:
+        buy_reasons.append(f"기관 {inst_consec}일 연속 매수")
+    elif inst_consec and inst_consec <= -3:
+        sell_reasons.append(f"기관 {abs(inst_consec)}일 연속 매도")
+
+    parts = []
+    if buy_reasons:
+        parts.append(" + ".join(buy_reasons[:3]))
+    if sell_reasons:
+        parts.append(" + ".join(sell_reasons[:3]))
+
+    if buy_reasons and not sell_reasons:
+        conclusion = "기술적으로 반등 가능성이 높아진 구간입니다."
+    elif sell_reasons and not buy_reasons:
+        conclusion = "추가 하락 가능성에 주의가 필요합니다."
+    else:
+        conclusion = "매수·매도 신호가 혼재하여 신중한 판단이 필요합니다."
+
+    if parts:
+        summary = ", ".join(parts)
+        return f"<i>\"{summary}.\n{conclusion}\"</i>"
+    return f"<i>\"{conclusion}\"</i>"
+
+
+def _build_signal_block(stock: dict) -> str:
+    """단일 종목의 시그널 알림 블록을 생성한다 (리디자인)."""
+    name = stock.get("name", "")
+    ticker = stock.get("ticker", "")
+    price = stock.get("price", 0)
+    change_pct = stock.get("change_pct", 0.0)
+    signals = stock.get("signals", [])
+    indicators = stock.get("indicators", {})
+    investor = stock.get("investor", {})
     confluence_score = stock.get("confluence_score", 0)
     total_indicators = stock.get("total_indicators", 0)
 
-    # 대표 시그널 타입 결정 (첫 번째 시그널 기준)
-    primary_signal_type = signals[0]["type"] if signals else "hold"
+    # 대표 시그널 타입 결정
+    buy_signals = [s for s in signals if s.get("type") == "buy"]
+    sell_signals = [s for s in signals if s.get("type") == "sell"]
+
+    if buy_signals and not sell_signals:
+        type_emoji = "📈"
+        type_label = "매수 시그널"
+    elif sell_signals and not buy_signals:
+        type_emoji = "📉"
+        type_label = "매도 시그널"
+    else:
+        type_emoji = "📊"
+        type_label = "혼재 시그널"
 
     lines = []
 
     # 종목 헤더
     lines.append(DIVIDER)
-    lines.append(f"<b>{name}</b> ({ticker}) | {_signal_emoji(primary_signal_type)}")
-    lines.append(DIVIDER)
-
-    # 현재가
+    lines.append(f"{type_emoji} <b>{name} {type_label}</b>")
     price_str = _format_price(price)
     change_str = _format_change(change_pct)
     emoji = _change_emoji(change_pct)
-    lines.append(f"현재가: {price_str}원 {emoji} ({change_str})")
+    lines.append(f"{price_str}원 ({emoji}{change_str})")
     lines.append("")
 
-    # 트리거 시그널
+    # 핵심 요약
+    lines.append("<b>━━━ 핵심 요약 ━━━</b>")
+    lines.append(_build_signal_summary_sentence(stock))
+    lines.append("")
+
+    # 시그널 근거 (✅/⬜ + 쉬운 해석)
+    lines.append("<b>━━━ 시그널 근거 ━━━</b>")
     for sig in signals:
         trigger = sig.get("trigger", "")
-        detail = sig.get("detail", "")
-        lines.append(f"[트리거] {trigger}")
-        if detail:
-            lines.append(f" • {detail}")
-    lines.append("")
+        sig_type = sig.get("type", "")
+        strength = sig.get("strength", 0)
+        explain = _EASY_EXPLAIN.get(trigger, "")
 
-    # 보조 지표
-    lines.append("[보조 지표]")
-
-    rsi = indicators.get("rsi")
-    if rsi is not None:
-        lines.append(f" • RSI: {rsi:.1f} ({_rsi_label(rsi)})")
-
-    macd_hist = indicators.get("macd_histogram")
-    if macd_hist is not None:
-        if macd_hist > 0:
-            lines.append(f" • MACD: 히스토그램 양전환 (+{macd_hist:.1f})")
-        elif macd_hist < 0:
-            lines.append(f" • MACD: 히스토그램 음전환 ({macd_hist:.1f})")
+        if sig_type == "buy":
+            icon = "✅"
+            score_str = f"+{strength:.2f}" if strength else ""
+        elif sig_type == "sell":
+            icon = "🔻"
+            score_str = f"-{strength:.2f}" if strength else ""
         else:
-            lines.append(f" • MACD: 히스토그램 0")
+            icon = "⬜"
+            score_str = ""
 
-    volume_ratio = indicators.get("volume_ratio")
-    if volume_ratio is not None:
-        pct = int(volume_ratio * 100)
-        lines.append(f" • 거래량: 평균 대비 {pct}%")
+        line = f"{icon} {trigger} {score_str}"
+        if explain:
+            line += f" — {explain}"
+        lines.append(line)
 
-    vix = indicators.get("vix")
-    if vix is not None:
-        lines.append(f" • VIX: {vix:.1f} ({_vix_label(vix)})")
+    # 활성화되지 않은 주요 지표 (참고용)
+    active_triggers = {sig.get("trigger", "") for sig in signals}
+    inactive = []
+    rsi = indicators.get("rsi")
+    if rsi is not None and "RSI 과매도" not in active_triggers and "RSI 과매수" not in active_triggers:
+        inactive.append(f"RSI {rsi:.0f} (중립)")
+    macd_hist = indicators.get("macd_histogram")
+    if macd_hist is not None and "MACD 매수" not in active_triggers and "MACD 매도" not in active_triggers:
+        direction_str = "양" if macd_hist > 0 else "음"
+        inactive.append(f"MACD {direction_str}전환")
+
+    if inactive:
+        lines.append(f"⬜ {' · '.join(inactive)}")
 
     lines.append("")
+
+    # 합류 점수 + 프로그레스 바
+    if total_indicators > 0:
+        direction = stock.get("confluence_direction", "buy")
+        label = _confluence_label(confluence_score, total_indicators, direction)
+        bar = _progress_bar(confluence_score, total_indicators)
+        lines.append("<b>━━━ 합류 점수 ━━━</b>")
+        lines.append(f"{confluence_score:.1f} / {total_indicators} ({label})")
+        lines.append(bar)
+        lines.append("")
+
+    # 참고 섹션 (손절, 뉴스, AI, 수급)
+    ref_lines = []
 
     # 수급 정보
     foreign_net = investor.get("foreign_net")
@@ -215,72 +556,54 @@ def _build_signal_block(stock: dict) -> str:
     foreign_consec = investor.get("foreign_consec_days", 0)
     institutional_consec = investor.get("institutional_consec_days", 0)
 
-    has_investor = any(v is not None for v in [foreign_net, institutional_net])
-    if has_investor:
-        lines.append("[수급]")
-        if foreign_net is not None:
-            amt_str = _format_shares(abs(foreign_net))
-            if foreign_consec and foreign_consec > 0:
-                lines.append(f" • 외인 {foreign_consec}일 연속 순매수 ({amt_str})")
-            elif foreign_consec and foreign_consec < 0:
-                lines.append(f" • 외인 {abs(foreign_consec)}일 연속 순매도 ({amt_str})")
-            else:
-                direction = "순매수" if foreign_net >= 0 else "순매도"
-                lines.append(f" • 외인 {direction}: {amt_str}")
+    if foreign_net is not None:
+        amt_str = _format_shares(abs(foreign_net))
+        if foreign_consec and foreign_consec >= 3:
+            ref_lines.append(f"외인 {foreign_consec}일 연속 순매수 ({amt_str})")
+        elif foreign_consec and foreign_consec <= -3:
+            ref_lines.append(f"외인 {abs(foreign_consec)}일 연속 순매도 ({amt_str})")
+        else:
+            d = "순매수" if foreign_net >= 0 else "순매도"
+            ref_lines.append(f"외인 {d} {amt_str}")
 
-        if institutional_net is not None:
-            amt_str = _format_shares(abs(institutional_net))
-            if institutional_consec and institutional_consec > 0:
-                lines.append(f" • 기관 {institutional_consec}일 연속 순매수 ({amt_str})")
-            elif institutional_consec and institutional_consec < 0:
-                lines.append(f" • 기관 {abs(institutional_consec)}일 연속 순매도 ({amt_str})")
-            else:
-                direction = "순매수" if institutional_net >= 0 else "순매도"
-                lines.append(f" • 기관 {direction}: {amt_str}")
+    if institutional_net is not None:
+        amt_str = _format_shares(abs(institutional_net))
+        if institutional_consec and institutional_consec >= 3:
+            ref_lines.append(f"기관 {institutional_consec}일 연속 순매수 ({amt_str})")
+        elif institutional_consec and institutional_consec <= -3:
+            ref_lines.append(f"기관 {abs(institutional_consec)}일 연속 순매도 ({amt_str})")
+        else:
+            d = "순매수" if institutional_net >= 0 else "순매도"
+            ref_lines.append(f"기관 {d} {amt_str}")
 
-        lines.append("")
-
-    # ATR 손절가
+    # 손절 기준
     atr = indicators.get("atr")
     atr_stop_loss = indicators.get("atr_stop_loss")
     if atr is not None and atr_stop_loss is not None:
-        lines.append(f"[손절 기준] ATR({int(atr)}) 기반: {atr_stop_loss:,}원")
-        lines.append("")
+        ref_lines.append(f"손절 기준: ATR 기반 {atr_stop_loss:,}원")
 
     # 뉴스 감성
     news_sentiment = stock.get("news_sentiment")
     if news_sentiment is not None:
         sentiment = news_sentiment.get("sentiment", "중립")
         confidence = news_sentiment.get("confidence", 0.0)
-        summary = news_sentiment.get("summary", "")
         conf_pct = int(confidence * 100)
-
         if sentiment == "긍정":
             sent_emoji = "🟢"
         elif sentiment == "부정":
             sent_emoji = "🔴"
         else:
             sent_emoji = "⬜"
+        ref_lines.append(f"뉴스 감성: {sent_emoji} {sentiment} (신뢰도 {conf_pct}%)")
 
-        lines.append(f"[뉴스 감성] {sent_emoji} {sentiment} (신뢰도 {conf_pct}%)")
-        if summary:
-            lines.append(f" • {summary}")
-
-        # 감성과 시그널 방향 불일치 경고
+        # 불일치 경고
         if signals:
             primary_type = signals[0]["type"]
             if (primary_type == "buy" and sentiment == "부정") or \
                (primary_type == "sell" and sentiment == "긍정"):
-                lines.append(" ⚠️ 주의: 뉴스 감성과 시그널 방향 불일치")
-        lines.append("")
+                ref_lines.append("⚠️ 뉴스 감성과 시그널 방향 불일치")
 
-    # 합류 점수
-    if total_indicators > 0:
-        direction = stock.get("confluence_direction", "buy")
-        label = _confluence_label(confluence_score, total_indicators, direction)
-        lines.append(f"[합류 점수] {confluence_score}/{total_indicators} ({label})")
-
-    # LLM 종합 판단
+    # AI 판단
     llm = stock.get("llm_analysis")
     if llm:
         verdict = llm.get("verdict", "")
@@ -295,23 +618,27 @@ def _build_signal_block(stock: dict) -> str:
         else:
             v_emoji = "⬜"
 
-        lines.append("")
-        lines.append(f"[AI 종합 판단] {v_emoji} {verdict} (신뢰도 {conf}%)")
+        ref_lines.append(f"AI 판단: {v_emoji} {verdict} (신뢰도 {conf}%)")
         if reasoning:
-            lines.append(f" • {reasoning}")
+            ref_lines.append(f"  → {reasoning}")
         if risk_factors:
-            lines.append(f" ⚠️ {', '.join(risk_factors)}")
+            ref_lines.append(f"  ⚠️ {', '.join(risk_factors)}")
+
+    if ref_lines:
+        lines.append("<b>━━━ 참고 ━━━</b>")
+        for rl in ref_lines:
+            lines.append(f" • {rl}")
 
     return "\n".join(lines)
 
 
 def _build_briefing_row(stock: dict) -> str:
-    """일일 브리핑용 종목 한 줄 요약을 생성한다."""
+    """일일 브리핑용 종목 한 줄 요약을 생성한다 (하위 호환)."""
     name = stock.get("name", "")
     ticker = stock.get("ticker", "")
     price = stock.get("price", 0)
     change_pct = stock.get("change_pct", 0.0)
-    signals: List[dict] = stock.get("signals", [])
+    signals = stock.get("signals", [])
     confluence_score = stock.get("confluence_score", 0)
     total_indicators = stock.get("total_indicators", 0)
 
@@ -358,8 +685,8 @@ def _build_briefing_row(stock: dict) -> str:
 def format_signal_alert(stock_data_list: List[dict]) -> str:
     """시그널 발생 시 전송하는 상세 알림 메시지를 생성한다.
 
-    시그널이 있는 종목만 포함하며, 종목별로 트리거, 보조 지표, 수급,
-    합류 점수를 포함한 HTML 블록을 구성한다.
+    시그널이 있는 종목만 포함하며, 종목별로 핵심 요약, 시그널 근거,
+    합류 점수 프로그레스 바, 참고 정보를 포함한 HTML 블록을 구성한다.
 
     Args:
         stock_data_list: 각 종목의 시그널/지표 데이터 리스트.
@@ -371,7 +698,7 @@ def format_signal_alert(stock_data_list: List[dict]) -> str:
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     lines = []
-    lines.append(f"<b>Signalight 매매 시그널</b>")
+    lines.append(f"<b>📡 Signalight 매매 시그널</b>")
     lines.append(now_str)
 
     # 시그널 있는 종목만 필터
@@ -381,6 +708,20 @@ def format_signal_alert(stock_data_list: List[dict]) -> str:
         lines.append("")
         lines.append("현재 발생한 시그널이 없습니다.")
         return "\n".join(lines)
+
+    # 시그널 요약 (상단)
+    buy_names = [s["name"] for s in signal_stocks
+                 if any(sig.get("type") == "buy" for sig in s.get("signals", []))]
+    sell_names = [s["name"] for s in signal_stocks
+                  if any(sig.get("type") == "sell" for sig in s.get("signals", []))]
+
+    lines.append("")
+    summary_parts = []
+    if buy_names:
+        summary_parts.append(f"🟢 매수: {', '.join(buy_names)}")
+    if sell_names:
+        summary_parts.append(f"🔴 매도: {', '.join(sell_names)}")
+    lines.append(" | ".join(summary_parts))
 
     for stock in signal_stocks:
         lines.append("")
@@ -392,8 +733,8 @@ def format_signal_alert(stock_data_list: List[dict]) -> str:
 def format_daily_briefing(stock_data_list: List[dict]) -> str:
     """장마감 일일 요약 메시지를 생성한다.
 
-    시그널 유무와 관계없이 전체 감시 종목의 등락률, 시그널 현황,
-    합류 점수를 요약한다.
+    시장 온도, 주목 종목 (시그널 있는 종목 상세), 나머지 종목 compact,
+    한줄 코멘트로 구성된 분석 보고서 스타일의 메시지.
 
     Args:
         stock_data_list: 전체 감시 종목 데이터 리스트.
@@ -401,40 +742,44 @@ def format_daily_briefing(stock_data_list: List[dict]) -> str:
     Returns:
         텔레그램 parse_mode="HTML" 형식의 메시지 문자열.
     """
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now()
+    weekday_kr = ["월", "화", "수", "목", "금", "토", "일"]
+    day_name = weekday_kr[now.weekday()]
+    today_str = now.strftime("%Y-%m-%d")
 
     lines = []
-    lines.append(f"<b>Signalight 일일 브리핑</b>")
-    lines.append(f"{today_str} 장마감")
+    lines.append(f"<b>📊 Signalight 일일 브리핑</b>")
+    lines.append(f"{today_str} ({day_name}) 장마감")
     lines.append("")
-    lines.append(DIVIDER)
 
     if not stock_data_list:
         lines.append("감시 종목 데이터가 없습니다.")
         return "\n".join(lines)
 
-    for stock in stock_data_list:
-        lines.append(_build_briefing_row(stock))
+    # 시장 온도
+    lines.append(_build_market_temperature(stock_data_list))
+    lines.append("")
+
+    # 주목 종목 (시그널 있는 종목)
+    spotlight_stocks = [s for s in stock_data_list if s.get("signals")]
+    other_stocks = [s for s in stock_data_list if not s.get("signals")]
+
+    if spotlight_stocks:
+        lines.append(f"<b>━━━ 🔥 주목 종목 ━━━</b>")
+        lines.append("")
+        for stock in spotlight_stocks:
+            lines.append(_build_spotlight_block(stock))
+            lines.append("")
+
+    # 나머지 종목 (compact)
+    if other_stocks:
+        lines.append(f"<b>━━━ 나머지 종목 ━━━</b>")
+        for stock in other_stocks:
+            lines.append(_build_compact_row(stock))
         lines.append("")
 
-    # 시그널 발생 종목 집계
-    buy_stocks = [
-        s["name"] for s in stock_data_list
-        if any(sig.get("type") == "buy" for sig in s.get("signals", []))
-    ]
-    sell_stocks = [
-        s["name"] for s in stock_data_list
-        if any(sig.get("type") == "sell" for sig in s.get("signals", []))
-    ]
-
-    lines.append(DIVIDER)
-    lines.append("<b>[오늘의 시그널 요약]</b>")
-    if buy_stocks:
-        lines.append(f"🟢 매수: {', '.join(buy_stocks)}")
-    if sell_stocks:
-        lines.append(f"🔴 매도: {', '.join(sell_stocks)}")
-    if not buy_stocks and not sell_stocks:
-        lines.append("⬜ 발생 시그널 없음")
+    # 한줄 코멘트
+    lines.append(_build_market_comment(stock_data_list))
 
     return "\n".join(lines)
 
@@ -461,7 +806,7 @@ def format_weekly_report(
     week_label = now.strftime("%Y년 %m월 %W주차")
 
     lines = []
-    lines.append(f"<b>Signalight 주간 리포트</b>")
+    lines.append(f"<b>📋 Signalight 주간 리포트</b>")
     lines.append(week_label)
     lines.append("")
     lines.append(DIVIDER)

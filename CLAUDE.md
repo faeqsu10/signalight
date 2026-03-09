@@ -28,8 +28,8 @@ signalight/
 │   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
 │   ├── bot/
 │   │   ├── telegram.py     # 텔레그램 메시지 전송 (4096자 분할 + 3회 재시도)
-│   │   ├── formatter.py    # 메시지 포맷터 (시그널 알림, 일일 브리핑, 주간 리포트)
-│   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, /add, /remove, /list)
+│   │   ├── formatter.py    # 메시지 포맷터 (분석 보고서 스타일: 시장 온도, 주목 종목, 프로그레스 바, 한줄 코멘트)
+│   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, /add, /remove, /list, /score, /info)
 │   ├── trading/
 │   │   ├── __init__.py     # Order, TradingConfig dataclass
 │   │   ├── kiwoom_client.py # 키움 REST API 래퍼 (OAuth, 조회, 주문)
