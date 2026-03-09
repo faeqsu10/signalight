@@ -54,6 +54,13 @@ LONG_MA = 50       # 장기 이동평균 (50일)
 RSI_PERIOD = 14    # RSI 기간
 RSI_OVERSOLD = 30  # RSI 과매도 기준
 RSI_OVERBOUGHT = 70  # RSI 과매수 기준
+
+# Stochastic RSI 설정
+STOCH_RSI_PERIOD = 14
+STOCH_RSI_SMOOTH_K = 3
+STOCH_RSI_SMOOTH_D = 3
+STOCH_RSI_OVERSOLD = 20
+STOCH_RSI_OVERBOUGHT = 80
 DATA_PERIOD_DAYS = 120  # 데이터 조회 기간 (일)
 INVESTOR_CONSEC_DAYS = 3  # 외인/기관 연속 순매수/순매도 판단 기준 (일)
 

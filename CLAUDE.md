@@ -17,8 +17,8 @@ signalight/
 │   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
 │   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
 │   ├── signals/
-│   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, 거래량)
-│   │   ├── strategy.py     # 시그널 판단 + 가중 합류 점수 (VIX 외부 전달)
+│   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, StochRSI, 거래량)
+│   │   ├── strategy.py     # 시그널 판단 + 연속 강도 합류 점수 + 시장 레짐 가중치
 │   │   ├── recovery.py     # 회복 시그널 분석 (6항목 체크리스트 + 포지션 진단)
 │   │   ├── sentiment.py    # Google Gemini 뉴스 감성 분석
 │   │   └── llm_analyzer.py # Gemini 종합 판단 (상충 시그널 해석)

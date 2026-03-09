@@ -129,6 +129,67 @@ def detect_obv_divergence(closes: pd.Series, obv: pd.Series, lookback: int = 20)
     return second_half_close_min < first_half_close_min and second_half_obv_min > first_half_obv_min
 
 
+def calc_stochastic_rsi(
+    closes: pd.Series,
+    rsi_period: int = 14,
+    smooth_k: int = 3,
+    smooth_d: int = 3,
+) -> tuple:
+    """Stochastic RSI 계산. (%K, %D) Series 튜플을 반환한다.
+
+    1) RSI를 구한 뒤
+    2) RSI에 대해 Stochastic 공식 적용 → raw_k
+    3) raw_k를 smooth_k 기간 SMA → %K
+    4) %K를 smooth_d 기간 SMA → %D
+    """
+    rsi = calc_rsi(closes, rsi_period)
+
+    # Stochastic 공식: (RSI - min(RSI, N)) / (max(RSI, N) - min(RSI, N)) * 100
+    rsi_min = rsi.rolling(window=rsi_period).min()
+    rsi_max = rsi.rolling(window=rsi_period).max()
+    rsi_range = rsi_max - rsi_min
+    rsi_range = rsi_range.replace(0, float('nan'))
+
+    raw_k = ((rsi - rsi_min) / rsi_range) * 100
+    k = raw_k.rolling(window=smooth_k).mean()
+    d = k.rolling(window=smooth_d).mean()
+
+    return k, d
+
+
+def calc_obv_divergence_strength(closes: pd.Series, obv: pd.Series, lookback: int = 20) -> float:
+    """OBV 다이버전스 강도를 0.0~1.0으로 반환한다.
+    상승 다이버전스가 강할수록 1.0에 가까움. 없으면 0.0."""
+    if len(closes) < lookback or len(obv) < lookback:
+        return 0.0
+
+    recent_closes = closes.iloc[-lookback:]
+    recent_obv = obv.iloc[-lookback:]
+
+    half = lookback // 2
+    first_half_close_min = recent_closes.iloc[:half].min()
+    second_half_close_min = recent_closes.iloc[half:].min()
+    first_half_obv_min = recent_obv.iloc[:half].min()
+    second_half_obv_min = recent_obv.iloc[half:].min()
+
+    # 가격은 더 낮은 저점, OBV는 더 높은 저점 → 상승 다이버전스
+    if second_half_close_min >= first_half_close_min:
+        return 0.0
+    if second_half_obv_min <= first_half_obv_min:
+        return 0.0
+
+    # 강도: 가격 하락폭 대비 OBV 상승폭 비율로 결정
+    price_drop_pct = (first_half_close_min - second_half_close_min) / first_half_close_min
+    obv_range = abs(recent_obv.max() - recent_obv.min())
+    if obv_range == 0:
+        return 0.5
+    obv_rise_pct = (second_half_obv_min - first_half_obv_min) / obv_range
+
+    # 두 비율의 기하평균 → 0~1 클램프
+    strength = min(1.0, (price_drop_pct * 10 + obv_rise_pct) / 2 + 0.3)
+    return round(max(0.0, min(1.0, strength)), 2)
+
+
 def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
     """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
     if len(volumes) < period:

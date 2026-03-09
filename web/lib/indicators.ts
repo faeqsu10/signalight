@@ -156,6 +156,93 @@ export function calcOBV(closes: number[], volumes: number[]): number[] {
   return obv;
 }
 
+export interface StochasticRSIResult {
+  k: (number | null)[];
+  d: (number | null)[];
+}
+
+export function calcStochasticRSI(
+  closes: number[],
+  rsiPeriod: number = 14,
+  smoothK: number = 3,
+  smoothD: number = 3,
+): StochasticRSIResult {
+  const rsi = calcRSI(closes, rsiPeriod);
+  const k: (number | null)[] = new Array(closes.length).fill(null);
+  const d: (number | null)[] = new Array(closes.length).fill(null);
+
+  // Stochastic on RSI: rawK = (RSI - min(RSI,N)) / (max(RSI,N) - min(RSI,N)) * 100
+  const rawK: (number | null)[] = new Array(closes.length).fill(null);
+  for (let i = rsiPeriod - 1; i < closes.length; i++) {
+    // collect rsiPeriod RSI values ending at i
+    let minR = Infinity;
+    let maxR = -Infinity;
+    let valid = true;
+    for (let j = i - rsiPeriod + 1; j <= i; j++) {
+      if (rsi[j] === null) { valid = false; break; }
+      if (rsi[j]! < minR) minR = rsi[j]!;
+      if (rsi[j]! > maxR) maxR = rsi[j]!;
+    }
+    if (!valid || rsi[i] === null) continue;
+    const range = maxR - minR;
+    rawK[i] = range === 0 ? 50 : ((rsi[i]! - minR) / range) * 100;
+  }
+
+  // Smooth rawK with SMA(smoothK) → %K
+  for (let i = 0; i < closes.length; i++) {
+    if (i < smoothK - 1) continue;
+    let sum = 0;
+    let count = 0;
+    for (let j = i - smoothK + 1; j <= i; j++) {
+      if (rawK[j] !== null) { sum += rawK[j]!; count++; }
+    }
+    k[i] = count === smoothK ? sum / count : null;
+  }
+
+  // Smooth %K with SMA(smoothD) → %D
+  for (let i = 0; i < closes.length; i++) {
+    if (i < smoothD - 1) continue;
+    let sum = 0;
+    let count = 0;
+    for (let j = i - smoothD + 1; j <= i; j++) {
+      if (k[j] !== null) { sum += k[j]!; count++; }
+    }
+    d[i] = count === smoothD ? sum / count : null;
+  }
+
+  return { k, d };
+}
+
+export function detectOBVDivergenceStrength(
+  closes: number[],
+  obv: number[],
+  lookback: number = 20,
+): number {
+  if (closes.length < lookback || obv.length < lookback) return 0;
+
+  const recentCloses = closes.slice(-lookback);
+  const recentOBV = obv.slice(-lookback);
+  const half = Math.floor(lookback / 2);
+
+  const firstHalfCloseMin = Math.min(...recentCloses.slice(0, half));
+  const secondHalfCloseMin = Math.min(...recentCloses.slice(half));
+  const firstHalfOBVMin = Math.min(...recentOBV.slice(0, half));
+  const secondHalfOBVMin = Math.min(...recentOBV.slice(half));
+
+  if (secondHalfCloseMin >= firstHalfCloseMin) return 0;
+  if (secondHalfOBVMin <= firstHalfOBVMin) return 0;
+
+  const priceDropPct = (firstHalfCloseMin - secondHalfCloseMin) / firstHalfCloseMin;
+  const obvMax = Math.max(...recentOBV);
+  const obvMin = Math.min(...recentOBV);
+  const obvRange = Math.abs(obvMax - obvMin);
+  if (obvRange === 0) return 0.5;
+  const obvRisePct = (secondHalfOBVMin - firstHalfOBVMin) / obvRange;
+
+  const strength = Math.min(1.0, (priceDropPct * 10 + obvRisePct) / 2 + 0.3);
+  return Math.round(Math.max(0, Math.min(1, strength)) * 100) / 100;
+}
+
 export function calcVolumeRatio(volumes: number[], period: number = 20): number {
   if (volumes.length < period) return 1.0;
   const window = volumes.slice(-period);

@@ -13,6 +13,13 @@ export const VIX_EXTREME_GREED = 12;
 // 외인/기관 연속 매수/매도 판단 기준 일수
 export const INVESTOR_CONSEC_DAYS = 3;
 
+// Stochastic RSI 설정
+export const STOCH_RSI_PERIOD = 14;
+export const STOCH_RSI_SMOOTH_K = 3;
+export const STOCH_RSI_SMOOTH_D = 3;
+export const STOCH_RSI_OVERSOLD = 20;
+export const STOCH_RSI_OVERBOUGHT = 80;
+
 // 10종목, 5+ 섹터 분산
 export const WATCH_LIST = [
   { ticker: "005930", name: "삼성전자" },       // 반도체
