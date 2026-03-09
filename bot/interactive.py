@@ -627,55 +627,95 @@ class InteractiveBot:
 
             # 메시지 구성
             regime_labels = {
-                "uptrend": "상승장 (매수 1.2x)",
-                "downtrend": "하락장 (매도 1.2x)",
-                "sideways": "횡보장 (가중치 없음)",
+                "uptrend": "📈 상승장",
+                "downtrend": "📉 하락장",
+                "sideways": "➡️ 횡보장",
             }
             regime = data.get("market_regime", "sideways")
-            regime_label = regime_labels.get(regime, "횡보장")
+            regime_label = regime_labels.get(regime, "➡️ 횡보장")
 
             lines = [
-                f"<b>[합류점수 분해] {name} ({ticker})</b>",
+                f"<b>[{name} 합류점수]</b>",
                 f"현재가: {data.get('price', 0):,}원 ({data.get('change_pct', 0):+.1f}%)",
-                f"시장 레짐: {regime_label}",
+                f"시장 분위기: {regime_label}",
                 "",
             ]
+
+            # 지표별 해석 매핑
+            _easy_explain = {
+                "골든크로스": "단기선이 장기선을 뚫고 올라감 → 상승 전환",
+                "데드크로스": "단기선이 장기선 아래로 내려감 → 하락 전환",
+                "RSI 과매도": "많이 빠져서 '너무 싸다' 구간 → 반등 가능",
+                "RSI 과매수": "많이 올라서 '너무 비싸다' 구간 → 조정 가능",
+                "MACD 매수": "추세 전환 신호 → 상승 추세 시작",
+                "MACD 매도": "추세 전환 신호 → 하락 추세 시작",
+                "볼린저밴드 하단": "평소 가격 범위 아래로 이탈 → 반등 가능",
+                "볼린저밴드 상단": "평소 가격 범위 위로 이탈 → 과열 주의",
+                "OBV 상승 다이버전스": "주가↓ 거래량↑ → 누군가 모으는 중",
+                "StochRSI 과매도": "정밀 지표도 바닥 신호 → 반등 임박",
+                "StochRSI 과매수": "정밀 지표도 천장 신호 → 조정 임박",
+                "VIX 공포": "시장 전체가 공포 → 역발상 매수 기회",
+                "VIX 주의": "시장에 불안감 있음 → 매수 기회 가능",
+                "VIX 과열": "시장이 너무 낙관적 → 과열 경고",
+                "외인 연속 매수": "외국인이 계속 사는 중 → 긍정적",
+                "외인 연속 매도": "외국인이 계속 파는 중 → 부정적",
+                "기관 연속 매수": "기관이 계속 사는 중 → 긍정적",
+                "기관 연속 매도": "기관이 계속 파는 중 → 부정적",
+            }
 
             # 시그널별 점수 분해
             signals = data.get("signals", [])
             buy_total = 0.0
             sell_total = 0.0
+            buy_reasons = []
+            sell_reasons = []
 
             if signals:
                 lines.append("<b>📊 지표별 점수:</b>")
                 for sig in signals:
                     sig_type = sig["type"]
-                    strength = sig.get("strength", 0)
+                    sig_strength = sig.get("strength", 0)
                     trigger = sig["trigger"]
+                    explain = _easy_explain.get(trigger, "")
 
                     if sig_type == "buy":
                         icon = "🟢"
-                        buy_total += strength if strength else 0
-                        score_str = f"+{strength:.2f}" if strength else ""
+                        buy_total += sig_strength if sig_strength else 0
+                        score_str = f"+{sig_strength:.2f}" if sig_strength else ""
+                        if explain:
+                            buy_reasons.append(explain.split("→")[0].strip())
                     elif sig_type == "sell":
                         icon = "🔴"
-                        sell_total += strength if strength else 0
-                        score_str = f"-{strength:.2f}" if strength else ""
+                        sell_total += sig_strength if sig_strength else 0
+                        score_str = f"-{sig_strength:.2f}" if sig_strength else ""
+                        if explain:
+                            sell_reasons.append(explain.split("→")[0].strip())
                     else:
                         icon = "⚪"
                         score_str = ""
 
-                    lines.append(f"  {icon} {trigger} {score_str}")
+                    line = f"  {icon} {trigger} {score_str}"
+                    if explain:
+                        line += f"\n       <i>{explain}</i>"
+                    lines.append(line)
             else:
                 lines.append("활성 시그널 없음")
 
+            # 합산 + 판정
             lines.append("")
-            lines.append(f"<b>합산:</b> 매수 {buy_total:.1f} / 매도 {sell_total:.1f}")
+            lines.append(f"<b>매수 합계: {buy_total:.1f}  |  매도 합계: {sell_total:.1f}</b>")
 
             score = data.get("confluence_score", 0)
             direction = data.get("confluence_direction", "neutral")
             strength = data.get("signal_strength", "neutral")
 
+            strength_emojis = {
+                "strong_buy": "🟢🟢",
+                "buy": "🟢",
+                "neutral": "⚪",
+                "sell": "🔴",
+                "strong_sell": "🔴🔴",
+            }
             strength_labels = {
                 "strong_buy": "강한 매수",
                 "buy": "매수",
@@ -683,31 +723,44 @@ class InteractiveBot:
                 "sell": "매도",
                 "strong_sell": "강한 매도",
             }
-            strength_label = strength_labels.get(strength, "중립")
+            s_emoji = strength_emojis.get(strength, "⚪")
+            s_label = strength_labels.get(strength, "중립")
 
-            dir_label = {"buy": "매수", "sell": "매도", "mixed": "혼재", "neutral": "중립"}.get(direction, "중립")
+            lines.append(f"\n{s_emoji} <b>판정: {s_label} (합류점수 {score})</b>")
 
-            lines.append(f"<b>합류점수: {score} ({dir_label})</b>")
-            lines.append(f"<b>판정: {strength_label}</b>")
-
-            # 주요 지표 요약
-            ind = data.get("indicators", {})
+            # 쉬운 해석 요약
             lines.append("")
-            lines.append("<b>📈 지표 현황:</b>")
-            if ind.get("rsi") is not None:
-                lines.append(f"  RSI: {ind['rsi']:.1f}")
-            if ind.get("stoch_rsi_k") is not None:
-                lines.append(f"  StochRSI: K={ind['stoch_rsi_k']:.1f}")
-            if ind.get("vix") is not None:
-                lines.append(f"  VIX: {ind['vix']:.1f}")
+            lines.append("<b>💬 쉬운 해석:</b>")
 
-            inv = data.get("investor", {})
-            if inv.get("foreign_net") is not None:
-                f_dir = "순매수" if inv["foreign_net"] >= 0 else "순매도"
-                lines.append(f"  외인: {f_dir} {abs(inv['foreign_net']):,}주")
-            if inv.get("institutional_net") is not None:
-                i_dir = "순매수" if inv["institutional_net"] >= 0 else "순매도"
-                lines.append(f"  기관: {i_dir} {abs(inv['institutional_net']):,}주")
+            net = buy_total - sell_total
+            if strength == "strong_buy":
+                lines.append("여러 지표가 한꺼번에 매수를 가리키고 있어요.")
+                lines.append("강한 매수 근거가 모인 상태입니다.")
+            elif strength == "buy":
+                lines.append("매수 쪽 근거가 더 많은 상태예요.")
+                if sell_reasons:
+                    lines.append(f"다만 {', '.join(sell_reasons[:2])} 주의.")
+            elif strength == "strong_sell":
+                lines.append("여러 지표가 한꺼번에 매도를 가리키고 있어요.")
+                lines.append("조심해야 할 상태입니다.")
+            elif strength == "sell":
+                lines.append("매도 쪽 근거가 더 많은 상태예요.")
+                if buy_reasons:
+                    lines.append(f"다만 {', '.join(buy_reasons[:2])} 긍정적.")
+            else:
+                # 중립/혼재
+                if buy_total > 0 and sell_total > 0:
+                    lines.append("매수 신호와 매도 신호가 섞여 있어요.")
+                    if buy_reasons and sell_reasons:
+                        lines.append(f"  👍 {', '.join(buy_reasons[:2])}")
+                        lines.append(f"  👎 {', '.join(sell_reasons[:2])}")
+                    lines.append("→ 한쪽으로 확실히 기울 때까지 기다리는 게 좋아요.")
+                elif buy_total == 0 and sell_total == 0:
+                    lines.append("뚜렷한 매수/매도 신호가 없는 상태예요.")
+                    lines.append("→ 지켜보면서 변화를 기다리세요.")
+                else:
+                    lines.append("약한 신호만 있는 상태예요.")
+                    lines.append("→ 더 많은 근거가 모일 때까지 관망 추천.")
 
             send_message("\n".join(lines), chat_id=chat_id)
 
