@@ -317,6 +317,9 @@ class InteractiveBot:
         elif command == "unregister":
             self._cmd_unregister(chat_id)
 
+        elif command == "info":
+            self._cmd_info(chat_id)
+
         elif command == "stop":
             if not _is_admin_chat(chat_id):
                 send_message("관리자 전용 명령어입니다.", chat_id=chat_id)
@@ -363,6 +366,7 @@ class InteractiveBot:
             "<b>Signalight 봇 명령어</b>",
             "",
             "/help — 이 도움말",
+            "/info — 자주 묻는 질문 (FAQ)",
             "/status — 현재 상태 요약",
             "/list — 내 감시 종목 목록",
             "/add [종목코드] [종목명] — 감시 종목 추가",
@@ -384,6 +388,125 @@ class InteractiveBot:
             ])
 
         send_message("\n".join(lines), chat_id=chat_id)
+
+    # ── FAQ 데이터 ──────────────────────────────
+
+    _FAQ = {
+        "what": (
+            "<b>Signalight이 뭔가요?</b>\n"
+            "\n"
+            "한국 주식 매매 시그널(매수/매도 타이밍)을 자동 분석해서\n"
+            "텔레그램으로 알림을 보내주는 봇입니다.\n"
+            "\n"
+            "• 자동매매 ❌ → 자동알림 ✅\n"
+            "• 실제 주문은 하지 않으며, 참고용 시그널만 제공합니다."
+        ),
+        "signals": (
+            "<b>어떤 시그널이 오나요?</b>\n"
+            "\n"
+            "🟢 <b>매수 시그널</b>\n"
+            "• 골든크로스 (단기MA가 장기MA 상향 돌파)\n"
+            "• RSI 과매도 (30 이하)\n"
+            "• MACD 상향 교차\n"
+            "• 외인/기관 연속 순매수\n"
+            "\n"
+            "🔴 <b>매도 시그널</b>\n"
+            "• 데드크로스 (단기MA가 장기MA 하향 돌파)\n"
+            "• RSI 과매수 (70 이상)\n"
+            "• MACD 하향 교차\n"
+            "• 외인/기관 연속 순매도\n"
+            "\n"
+            "여러 지표가 동시에 같은 방향이면 합류 점수가 높아져\n"
+            "더 강한 시그널로 판단합니다."
+        ),
+        "schedule": (
+            "<b>알림은 언제 오나요?</b>\n"
+            "\n"
+            "📋 <b>평일 스케줄</b>\n"
+            "• 09:00 — 헬스체크 (봇 정상 동작 확인)\n"
+            "• 09:30~15:30 — 30분마다 시그널 체크\n"
+            "  → 시그널 발생 시에만 알림\n"
+            "• 16:00 — 일일 브리핑 (전 종목 요약)\n"
+            "• 금요일 16:30 — 주간 리포트\n"
+            "\n"
+            "⚠️ 주말/공휴일에는 알림이 오지 않습니다."
+        ),
+        "howto": (
+            "<b>사용법</b>\n"
+            "\n"
+            "1️⃣ <b>등록</b>\n"
+            "/register 닉네임\n"
+            "\n"
+            "2️⃣ <b>종목 추가</b>\n"
+            "/add 005930 삼성전자\n"
+            "/add 035420 NAVER\n"
+            "\n"
+            "3️⃣ <b>종목 제거</b>\n"
+            "/remove 005930\n"
+            "\n"
+            "4️⃣ <b>내 종목 확인</b>\n"
+            "/list\n"
+            "\n"
+            "추가한 종목에 시그널이 발생하면 자동으로 알림이 옵니다!"
+        ),
+        "codes": (
+            "<b>주요 종목코드</b>\n"
+            "\n"
+            "005930 — 삼성전자\n"
+            "000660 — SK하이닉스\n"
+            "373220 — LG에너지솔루션\n"
+            "006400 — 삼성SDI\n"
+            "207940 — 삼성바이오로직스\n"
+            "068270 — 셀트리온\n"
+            "105560 — KB금융\n"
+            "005380 — 현대차\n"
+            "035420 — NAVER\n"
+            "035720 — 카카오\n"
+            "\n"
+            "종목코드는 네이버 증권에서 확인할 수 있습니다."
+        ),
+        "disclaimer": (
+            "<b>면책사항</b>\n"
+            "\n"
+            "⚠️ Signalight은 투자 참고용 도구입니다.\n"
+            "\n"
+            "• 투자 판단의 최종 책임은 본인에게 있습니다\n"
+            "• 시그널은 기술적 지표 기반이며 100% 정확하지 않습니다\n"
+            "• 과거 시그널이 미래 수익을 보장하지 않습니다\n"
+            "• 본 서비스로 인한 투자 손실에 책임지지 않습니다"
+        ),
+    }
+
+    def _cmd_info(self, chat_id: str) -> None:
+        """/info — FAQ 인라인 키보드 표시."""
+        keyboard = [
+            [
+                {"text": "이게 뭔가요?", "callback_data": "faq:what"},
+                {"text": "어떤 알림이 오나요?", "callback_data": "faq:signals"},
+            ],
+            [
+                {"text": "알림 시간", "callback_data": "faq:schedule"},
+                {"text": "사용법", "callback_data": "faq:howto"},
+            ],
+            [
+                {"text": "종목코드 목록", "callback_data": "faq:codes"},
+                {"text": "면책사항", "callback_data": "faq:disclaimer"},
+            ],
+        ]
+        _send_with_keyboard(
+            chat_id,
+            "<b>궁금한 항목을 선택하세요 👇</b>",
+            keyboard,
+        )
+
+    def _handle_faq(self, query_id: str, chat_id: str, faq_key: str) -> None:
+        """FAQ 콜백을 처리한다."""
+        _answer_callback(query_id)
+        answer = self._FAQ.get(faq_key)
+        if answer:
+            send_message(answer, chat_id=chat_id)
+        else:
+            send_message("해당 항목을 찾을 수 없습니다.", chat_id=chat_id)
 
     def _cmd_register(self, chat_id: str, text: str) -> None:
         """/register [닉네임] — 구독자 등록."""
@@ -635,10 +758,15 @@ class InteractiveBot:
         """인라인 키보드 콜백 쿼리를 처리한다."""
         query_id = callback_query.get("id", "")
         data = callback_query.get("data", "")
+        chat_id = str(callback_query.get("message", {}).get("chat", {}).get("id", ""))
 
         logger.info("콜백 수신: %s", data)
 
-        if data.startswith("confirm_trade:"):
+        if data.startswith("faq:"):
+            faq_key = data.split(":", 1)[1]
+            self._handle_faq(query_id, chat_id, faq_key)
+
+        elif data.startswith("confirm_trade:"):
             ticker = data.split(":", 1)[1]
             self._confirm_trade(query_id, ticker)
 
