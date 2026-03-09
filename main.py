@@ -12,7 +12,10 @@ from signals.strategy import analyze_detailed
 from bot.telegram import send_message
 from bot.formatter import format_signal_alert, format_daily_briefing, format_weekly_report
 from signals.llm_analyzer import analyze_comprehensive, should_call_llm
-from storage.db import init_db, save_signals, save_sentiment, save_llm_analysis, get_active_watchlist
+from storage.db import (
+    init_db, save_signals, save_sentiment, save_llm_analysis,
+    get_active_watchlist, get_active_subscribers, get_subscriber_tickers,
+)
 from bot.interactive import InteractiveBot, set_emergency_stop_callback
 from trading import TradingConfig
 from trading.executor import TradeExecutor
@@ -130,6 +133,44 @@ def _collect_stock_data() -> List[Dict]:
     return stock_data_list
 
 
+def _notify_subscribers(stock_data_list: List[Dict], message_type: str = "signal") -> None:
+    """구독자들에게 개인 워치리스트에 맞는 필터링된 알림을 전송한다."""
+    try:
+        subscribers = get_active_subscribers()
+    except Exception as e:
+        logger.warning("구독자 조회 실패: %s", e)
+        return
+
+    for sub in subscribers:
+        chat_id = sub["chat_id"]
+        try:
+            tickers = get_subscriber_tickers(chat_id)
+            if not tickers:
+                continue
+
+            # 구독자의 종목만 필터링
+            filtered = [s for s in stock_data_list if s.get("ticker") in tickers]
+            if not filtered:
+                continue
+
+            if message_type == "signal":
+                # 시그널이 있는 종목만
+                signal_filtered = [s for s in filtered if s.get("signals")]
+                if not signal_filtered:
+                    continue
+                message = format_signal_alert(filtered)
+            elif message_type == "briefing":
+                message = format_daily_briefing(filtered)
+            else:
+                continue
+
+            send_message(message, chat_id=chat_id)
+            logger.info("구독자 알림 전송: chat_id=%s (%s, %d종목)",
+                        chat_id, message_type, len(filtered))
+        except Exception as e:
+            logger.warning("구독자 알림 전송 실패 (chat_id=%s): %s", chat_id, e)
+
+
 def check_signals():
     """감시 종목들의 시그널을 확인하고 알림을 보낸다."""
     logger.info("시그널 체크 시작...")
@@ -150,6 +191,9 @@ def check_signals():
             logger.info("총 %d개 시그널 전송 완료", total)
         else:
             logger.error("시그널 알림 텔레그램 전송 실패")
+
+        # 구독자 알림
+        _notify_subscribers(stock_data_list, "signal")
     else:
         logger.info("시그널 없음. 알림 미전송.")
 
@@ -166,6 +210,9 @@ def daily_briefing():
             logger.info("일일 브리핑 전송 완료 (%d개 종목)", len(stock_data_list))
         else:
             logger.error("일일 브리핑 텔레그램 전송 실패")
+
+        # 구독자 브리핑
+        _notify_subscribers(stock_data_list, "briefing")
     else:
         logger.warning("데이터 수집 실패. 브리핑 미전송.")
 

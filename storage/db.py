@@ -70,6 +70,28 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_sentiment_ticker_date ON news_sentiment(ticker, created_at);
         CREATE INDEX IF NOT EXISTS idx_llm_ticker_date ON llm_analysis(ticker, created_at);
         CREATE INDEX IF NOT EXISTS idx_watchlist_active ON watch_list(active);
+
+        CREATE TABLE IF NOT EXISTS subscribers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id TEXT NOT NULL UNIQUE,
+            nickname TEXT NOT NULL DEFAULT '',
+            registered_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            active INTEGER NOT NULL DEFAULT 1,
+            is_admin INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS user_watchlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            name TEXT NOT NULL,
+            added_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            active INTEGER NOT NULL DEFAULT 1,
+            UNIQUE(chat_id, ticker)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_sub_active ON subscribers(active);
+        CREATE INDEX IF NOT EXISTS idx_uwl_chat ON user_watchlist(chat_id, active);
     """)
 
     # WATCH_LIST 초기 시드 데이터 마이그레이션
@@ -245,3 +267,135 @@ def get_recent_sentiments(ticker: str, days: int = 7) -> List[Dict]:
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+# ──────────────────────────────────────────────
+# 구독자 관리
+# ──────────────────────────────────────────────
+
+def register_subscriber(chat_id: str, nickname: str = "", is_admin: bool = False) -> bool:
+    """구독자를 등록한다. 이미 존재하면 재활성화."""
+    conn = _get_conn()
+    existing = conn.execute(
+        "SELECT id, active FROM subscribers WHERE chat_id = ?", (chat_id,)
+    ).fetchone()
+
+    if existing:
+        if existing["active"] == 0:
+            conn.execute(
+                "UPDATE subscribers SET active = 1, nickname = ? WHERE chat_id = ?",
+                (nickname, chat_id),
+            )
+            conn.commit()
+            conn.close()
+            return True
+        conn.close()
+        return False  # 이미 활성 상태
+    else:
+        conn.execute(
+            "INSERT INTO subscribers (chat_id, nickname, is_admin) VALUES (?, ?, ?)",
+            (chat_id, nickname, 1 if is_admin else 0),
+        )
+        conn.commit()
+        conn.close()
+        return True
+
+
+def unregister_subscriber(chat_id: str) -> bool:
+    """구독자를 비활성화한다."""
+    conn = _get_conn()
+    cursor = conn.execute(
+        "UPDATE subscribers SET active = 0 WHERE chat_id = ? AND active = 1", (chat_id,)
+    )
+    changed = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return changed
+
+
+def get_active_subscribers() -> List[Dict]:
+    """활성 구독자 목록을 반환한다. [{chat_id, nickname, is_admin}, ...]"""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT chat_id, nickname, is_admin FROM subscribers WHERE active = 1 ORDER BY id"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def is_registered_subscriber(chat_id: str) -> bool:
+    """등록된 활성 구독자인지 확인한다."""
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT id FROM subscribers WHERE chat_id = ? AND active = 1", (chat_id,)
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+
+# ──────────────────────────────────────────────
+# 구독자별 워치리스트
+# ──────────────────────────────────────────────
+
+def add_to_user_watchlist(chat_id: str, ticker: str, name: str) -> bool:
+    """구독자의 개인 워치리스트에 종목을 추가한다."""
+    conn = _get_conn()
+    existing = conn.execute(
+        "SELECT id, active FROM user_watchlist WHERE chat_id = ? AND ticker = ?",
+        (chat_id, ticker),
+    ).fetchone()
+
+    if existing:
+        if existing["active"] == 0:
+            conn.execute(
+                "UPDATE user_watchlist SET active = 1, name = ? WHERE chat_id = ? AND ticker = ?",
+                (name, chat_id, ticker),
+            )
+            conn.commit()
+            conn.close()
+            return True
+        conn.close()
+        return False  # 이미 활성 상태
+    else:
+        conn.execute(
+            "INSERT INTO user_watchlist (chat_id, ticker, name) VALUES (?, ?, ?)",
+            (chat_id, ticker, name),
+        )
+        conn.commit()
+        conn.close()
+        return True
+
+
+def remove_from_user_watchlist(chat_id: str, ticker: str) -> bool:
+    """구독자의 개인 워치리스트에서 종목을 제거한다."""
+    conn = _get_conn()
+    cursor = conn.execute(
+        "UPDATE user_watchlist SET active = 0 WHERE chat_id = ? AND ticker = ? AND active = 1",
+        (chat_id, ticker),
+    )
+    changed = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return changed
+
+
+def get_user_watchlist(chat_id: str) -> List[Tuple[str, str]]:
+    """구독자의 개인 워치리스트를 반환한다. [(ticker, name), ...]"""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT ticker, name FROM user_watchlist WHERE chat_id = ? AND active = 1 ORDER BY id",
+        (chat_id,),
+    ).fetchall()
+    conn.close()
+    return [(row["ticker"], row["name"]) for row in rows]
+
+
+def get_subscriber_tickers(chat_id: str) -> List[str]:
+    """구독자가 구독 중인 종목코드 리스트를 반환한다."""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT ticker FROM user_watchlist WHERE chat_id = ? AND active = 1",
+        (chat_id,),
+    ).fetchall()
+    conn.close()
+    return [row["ticker"] for row in rows]

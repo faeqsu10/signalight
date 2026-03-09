@@ -77,9 +77,17 @@ def _answer_callback(callback_query_id: str, text: str = "") -> None:
     })
 
 
-def _is_allowed_chat(chat_id: str) -> bool:
-    """허용된 chat_id인지 확인한다. TELEGRAM_CHAT_ID 기반 허용 목록 필터링."""
+def _is_admin_chat(chat_id: str) -> bool:
+    """관리자 chat_id인지 확인한다."""
     return str(chat_id) == str(TELEGRAM_CHAT_ID)
+
+
+def _is_allowed_chat(chat_id: str) -> bool:
+    """허용된 chat_id인지 확인한다. 관리자 또는 등록된 구독자."""
+    if _is_admin_chat(chat_id):
+        return True
+    from storage.db import is_registered_subscriber
+    return is_registered_subscriber(str(chat_id))
 
 
 # ──────────────────────────────────────────────
@@ -233,8 +241,27 @@ class InteractiveBot:
             chat_id = str(message.get("chat", {}).get("id", ""))
             text = message.get("text", "")
 
+            # /register는 미등록 유저도 허용
+            if text.startswith("/register") or text.startswith("/start"):
+                parts = text.split(maxsplit=1)
+                command = parts[0].lstrip("/").split("@")[0].lower()
+                args = parts[1] if len(parts) > 1 else ""
+                if command == "register":
+                    self._cmd_register(chat_id, args)
+                    return
+                elif command == "start" and not _is_allowed_chat(chat_id):
+                    # 미등록 유저의 /start → 등록 안내
+                    self._cmd_register_guide(chat_id)
+                    return
+
             if not _is_allowed_chat(chat_id):
                 logger.warning("허용되지 않은 chat_id에서 메시지 수신: %s", chat_id)
+                send_message(
+                    "등록되지 않은 사용자입니다.\n"
+                    "/register [닉네임] 으로 등록하세요.\n"
+                    f"(당신의 chat_id: <code>{chat_id}</code>)",
+                    chat_id=chat_id,
+                )
                 return
 
             if text.startswith("/"):
@@ -270,7 +297,10 @@ class InteractiveBot:
             self._cmd_status(chat_id)
 
         elif command == "scan":
-            self._cmd_scan(chat_id)
+            if _is_admin_chat(chat_id):
+                self._cmd_scan(chat_id)
+            else:
+                send_message("관리자 전용 명령어입니다.", chat_id=chat_id)
 
         elif command == "add":
             self._cmd_add(chat_id, text)
@@ -281,7 +311,16 @@ class InteractiveBot:
         elif command == "list":
             self._cmd_list(chat_id)
 
+        elif command == "subscribers":
+            self._cmd_subscribers(chat_id)
+
+        elif command == "unregister":
+            self._cmd_unregister(chat_id)
+
         elif command == "stop":
+            if not _is_admin_chat(chat_id):
+                send_message("관리자 전용 명령어입니다.", chat_id=chat_id)
+                return
             with _trading_lock:
                 _trading_enabled = False
             logger.warning("긴급 정지 명령 수신. 거래 비활성화.")
@@ -299,6 +338,9 @@ class InteractiveBot:
             )
 
         elif command == "start":
+            if not _is_admin_chat(chat_id):
+                send_message("관리자 전용 명령어입니다.", chat_id=chat_id)
+                return
             with _trading_lock:
                 _trading_enabled = True
             logger.info("거래 재활성화 명령 수신.")
@@ -309,93 +351,219 @@ class InteractiveBot:
         else:
             send_message(
                 f"알 수 없는 명령어: <code>/{command}</code>\n"
-                "/help 로 사용 가능한 명령어를 확인하세요."
+                "/help 로 사용 가능한 명령어를 확인하세요.",
+                chat_id=chat_id,
             )
 
     def _cmd_help(self, chat_id: str) -> None:
         """/help 명령 처리."""
-        text = (
-            "<b>Signalight 봇 명령어</b>\n"
+        is_admin = _is_admin_chat(chat_id)
+
+        lines = [
+            "<b>Signalight 봇 명령어</b>",
+            "",
+            "/help — 이 도움말",
+            "/status — 현재 상태 요약",
+            "/list — 내 감시 종목 목록",
+            "/add [종목코드] [종목명] — 감시 종목 추가",
+            "/remove [종목코드] — 감시 종목 제거",
+        ]
+
+        if is_admin:
+            lines.extend([
+                "",
+                "<b>[관리자 전용]</b>",
+                "/scan — 수동 시장 스캔",
+                "/stop — 긴급 정지 (거래 비활성화)",
+                "/start — 거래 재개",
+                "/subscribers — 구독자 목록",
+            ])
+        else:
+            lines.extend([
+                "/unregister — 구독 해제",
+            ])
+
+        send_message("\n".join(lines), chat_id=chat_id)
+
+    def _cmd_register(self, chat_id: str, text: str) -> None:
+        """/register [닉네임] — 구독자 등록."""
+        from storage.db import register_subscriber
+
+        nickname = text.strip() or f"user_{chat_id[-4:]}"
+
+        if _is_admin_chat(chat_id):
+            send_message("관리자는 이미 등록되어 있습니다.", chat_id=chat_id)
+            return
+
+        if register_subscriber(chat_id, nickname):
+            send_message(
+                f"<b>[등록 완료]</b> 환영합니다, {nickname}!\n"
+                f"\n"
+                f"알림 받을 종목을 추가하세요:\n"
+                f"/add 005930 삼성전자\n"
+                f"/list — 내 종목 목록\n"
+                f"/help — 전체 명령어",
+                chat_id=chat_id,
+            )
+            # 관리자에게 알림
+            send_message(f"[구독자 등록] {nickname} (chat_id: {chat_id})")
+            logger.info("구독자 등록: %s (chat_id=%s)", nickname, chat_id)
+        else:
+            send_message("이미 등록된 구독자입니다.", chat_id=chat_id)
+
+    def _cmd_register_guide(self, chat_id: str) -> None:
+        """미등록 유저의 /start 처리 — 등록 안내."""
+        send_message(
+            "<b>Signalight 주식 시그널 봇</b>\n"
             "\n"
-            "/help — 이 도움말\n"
-            "/status — 현재 거래 상태 및 대기 주문 요약\n"
-            "/scan — 수동 시장 스캔 트리거\n"
-            "/list — 감시 종목 목록 표시\n"
-            "/add [종목코드] [종목명] — 감시 종목 추가\n"
-            "/remove [종목코드] — 감시 종목 제거\n"
-            "/stop — 긴급 정지 (거래 비활성화)\n"
-            "/start — 거래 재개 (정지 해제)\n"
+            "관심 종목의 매매 시그널을 실시간 알림으로 받아보세요.\n"
+            "\n"
+            "/register [닉네임] 으로 등록하세요.\n"
+            "예: /register 홍길동",
+            chat_id=chat_id,
         )
-        send_message(text)
+
+    def _cmd_unregister(self, chat_id: str) -> None:
+        """/unregister — 구독 해제."""
+        from storage.db import unregister_subscriber
+
+        if _is_admin_chat(chat_id):
+            send_message("관리자는 구독 해제할 수 없습니다.", chat_id=chat_id)
+            return
+
+        if unregister_subscriber(chat_id):
+            send_message("구독이 해제되었습니다. 더 이상 알림을 받지 않습니다.", chat_id=chat_id)
+            send_message(f"[구독자 해제] chat_id: {chat_id}")
+            logger.info("구독자 해제: chat_id=%s", chat_id)
+        else:
+            send_message("등록된 구독자가 아닙니다.", chat_id=chat_id)
+
+    def _cmd_subscribers(self, chat_id: str) -> None:
+        """/subscribers — 구독자 목록 (관리자 전용)."""
+        if not _is_admin_chat(chat_id):
+            send_message("관리자 전용 명령어입니다.", chat_id=chat_id)
+            return
+
+        from storage.db import get_active_subscribers, get_user_watchlist
+
+        subscribers = get_active_subscribers()
+        if not subscribers:
+            send_message("등록된 구독자가 없습니다.")
+            return
+
+        lines = ["<b>[구독자 목록]</b>", ""]
+        for i, sub in enumerate(subscribers, 1):
+            cid = sub["chat_id"]
+            nick = sub["nickname"] or "이름없음"
+            tickers = get_user_watchlist(cid)
+            ticker_str = ", ".join(name for _, name in tickers) if tickers else "종목 없음"
+            lines.append(f"{i}. {nick} ({cid})")
+            lines.append(f"   종목: {ticker_str}")
+        lines.append(f"\n총 {len(subscribers)}명")
+        send_message("\n".join(lines))
 
     def _cmd_add(self, chat_id: str, text: str) -> None:
         """/add 종목코드 종목명 — 감시 종목 추가."""
-        from storage.db import add_to_watchlist
+        from storage.db import add_to_watchlist, add_to_user_watchlist
 
         parts = text.strip().split(maxsplit=1)
         if len(parts) < 2:
-            send_message("사용법: /add [종목코드] [종목명]\n예: /add 005930 삼성전자")
+            send_message("사용법: /add [종목코드] [종목명]\n예: /add 005930 삼성전자", chat_id=chat_id)
             return
 
         ticker, name = parts[0], parts[1]
-        if add_to_watchlist(ticker, name):
-            send_message(f"감시 종목 추가: <b>{name}</b> ({ticker})")
-            logger.info("종목 추가: %s (%s)", name, ticker)
+
+        if _is_admin_chat(chat_id):
+            # 관리자: 전역 워치리스트에 추가
+            if add_to_watchlist(ticker, name):
+                send_message(f"감시 종목 추가: <b>{name}</b> ({ticker})", chat_id=chat_id)
+                logger.info("종목 추가: %s (%s)", name, ticker)
+            else:
+                send_message(f"이미 감시 중인 종목입니다: <b>{name}</b> ({ticker})", chat_id=chat_id)
         else:
-            send_message(f"이미 감시 중인 종목입니다: <b>{name}</b> ({ticker})")
+            # 구독자: 개인 워치리스트에 추가
+            if add_to_user_watchlist(chat_id, ticker, name):
+                send_message(f"내 종목 추가: <b>{name}</b> ({ticker})", chat_id=chat_id)
+                logger.info("구독자 종목 추가: chat_id=%s, %s (%s)", chat_id, name, ticker)
+            else:
+                send_message(f"이미 추가된 종목입니다: <b>{name}</b> ({ticker})", chat_id=chat_id)
 
     def _cmd_remove(self, chat_id: str, text: str) -> None:
         """/remove 종목코드 — 감시 종목 제거."""
-        from storage.db import remove_from_watchlist
+        from storage.db import remove_from_watchlist, remove_from_user_watchlist
 
         ticker = text.strip()
         if not ticker:
-            send_message("사용법: /remove [종목코드]\n예: /remove 005930")
+            send_message("사용법: /remove [종목코드]\n예: /remove 005930", chat_id=chat_id)
             return
 
-        if remove_from_watchlist(ticker):
-            send_message(f"감시 종목 제거: ({ticker})")
-            logger.info("종목 제거: %s", ticker)
+        if _is_admin_chat(chat_id):
+            if remove_from_watchlist(ticker):
+                send_message(f"감시 종목 제거: ({ticker})", chat_id=chat_id)
+                logger.info("종목 제거: %s", ticker)
+            else:
+                send_message(f"감시 목록에 없는 종목입니다: ({ticker})", chat_id=chat_id)
         else:
-            send_message(f"감시 목록에 없는 종목입니다: ({ticker})")
+            if remove_from_user_watchlist(chat_id, ticker):
+                send_message(f"내 종목 제거: ({ticker})", chat_id=chat_id)
+                logger.info("구독자 종목 제거: chat_id=%s, %s", chat_id, ticker)
+            else:
+                send_message(f"내 목록에 없는 종목입니다: ({ticker})", chat_id=chat_id)
 
     def _cmd_list(self, chat_id: str) -> None:
-        """/list — 현재 감시 종목 목록 표시."""
-        from storage.db import get_active_watchlist
+        """/list — 감시 종목 목록 표시."""
+        from storage.db import get_active_watchlist, get_user_watchlist
 
-        watchlist = get_active_watchlist()
+        if _is_admin_chat(chat_id):
+            watchlist = get_active_watchlist()
+            title = "감시 종목 목록"
+        else:
+            watchlist = get_user_watchlist(chat_id)
+            title = "내 감시 종목"
+
         if not watchlist:
-            send_message("감시 중인 종목이 없습니다.")
+            msg = "감시 중인 종목이 없습니다."
+            if not _is_admin_chat(chat_id):
+                msg += "\n/add 005930 삼성전자 로 종목을 추가하세요."
+            send_message(msg, chat_id=chat_id)
             return
 
-        lines = ["<b>[감시 종목 목록]</b>", ""]
+        lines = [f"<b>[{title}]</b>", ""]
         for i, (ticker, name) in enumerate(watchlist, 1):
             lines.append(f"{i}. {name} ({ticker})")
         lines.append(f"\n총 {len(watchlist)}개 종목")
-        send_message("\n".join(lines))
+        send_message("\n".join(lines), chat_id=chat_id)
 
     def _cmd_status(self, chat_id: str) -> None:
         """/status 명령 처리."""
-        with _trading_lock:
-            enabled = _trading_enabled
+        lines = ["<b>[Signalight 상태]</b>", ""]
 
-        status_label = "활성" if enabled else "비활성 (긴급 정지)"
+        if _is_admin_chat(chat_id):
+            with _trading_lock:
+                enabled = _trading_enabled
+            status_label = "활성" if enabled else "비활성 (긴급 정지)"
 
-        with self._pending_lock:
-            pending_count = len(self._pending_trades)
-            pending_tickers = list(self._pending_trades.keys())
+            with self._pending_lock:
+                pending_count = len(self._pending_trades)
+                pending_tickers = list(self._pending_trades.keys())
 
-        lines = [
-            "<b>[Signalight 상태]</b>",
-            "",
-            f"거래 상태: <b>{status_label}</b>",
-            f"대기 중인 확인 요청: {pending_count}건",
-        ]
+            lines.append(f"거래 상태: <b>{status_label}</b>")
+            lines.append(f"대기 중인 확인 요청: {pending_count}건")
+            if pending_tickers:
+                lines.append(f"대기 종목: {', '.join(pending_tickers)}")
 
-        if pending_tickers:
-            lines.append(f"대기 종목: {', '.join(pending_tickers)}")
+            from storage.db import get_active_subscribers
+            subs = get_active_subscribers()
+            lines.append(f"구독자: {len(subs)}명")
+        else:
+            from storage.db import get_user_watchlist
+            watchlist = get_user_watchlist(chat_id)
+            lines.append(f"내 감시 종목: {len(watchlist)}개")
+            if watchlist:
+                names = ", ".join(name for _, name in watchlist)
+                lines.append(f"종목: {names}")
 
-        send_message("\n".join(lines))
+        send_message("\n".join(lines), chat_id=chat_id)
 
     def _cmd_scan(self, chat_id: str) -> None:
         """/scan 명령 처리. 수동 시장 스캔을 트리거한다."""

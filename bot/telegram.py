@@ -41,15 +41,21 @@ def _split_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH) -> List[str
     return chunks
 
 
-def send_message(text: str) -> bool:
-    """텔레그램으로 메시지를 보낸다. 4096자 초과 시 자동 분할 전송."""
+def send_message(text: str, chat_id: str = None) -> bool:
+    """텔레그램으로 메시지를 보낸다. 4096자 초과 시 자동 분할 전송.
+
+    Args:
+        text: 전송할 메시지 (HTML 파싱).
+        chat_id: 대상 chat_id. None이면 기본 TELEGRAM_CHAT_ID 사용.
+    """
+    target_chat_id = chat_id or TELEGRAM_CHAT_ID
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     chunks = _split_message(text)
     all_ok = True
 
     for chunk in chunks:
         payload = {
-            "chat_id": TELEGRAM_CHAT_ID,
+            "chat_id": target_chat_id,
             "text": chunk,
             "parse_mode": "HTML",
         }
