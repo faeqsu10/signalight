@@ -323,6 +323,9 @@ class InteractiveBot:
         elif command == "ask":
             self._cmd_ask(chat_id, text)
 
+        elif command == "score":
+            self._cmd_score(chat_id, text)
+
         elif command == "info":
             self._cmd_info(chat_id)
 
@@ -378,6 +381,7 @@ class InteractiveBot:
             "/add [종목코드] [종목명] — 감시 종목 추가",
             "/remove [종목코드] — 감시 종목 제거",
             "/ask [질문] — AI에게 질문 (일 10회)",
+            "/score [종목명] — 합류점수 분해 보기",
         ]
 
         if is_admin:
@@ -482,6 +486,33 @@ class InteractiveBot:
             "• 과거 시그널이 미래 수익을 보장하지 않습니다\n"
             "• 본 서비스로 인한 투자 손실에 책임지지 않습니다"
         ),
+        "confluence": (
+            "<b>합류점수란?</b>\n"
+            "\n"
+            "여러 지표가 같은 방향(매수/매도)을 가리킬 때\n"
+            "각 점수를 합산한 것이 <b>합류점수</b>입니다.\n"
+            "\n"
+            "📊 <b>9개 지표별 점수 (0~1점)</b>\n"
+            "① 이동평균 — 골든/데드크로스 1.0, 추세정렬 0.4\n"
+            "② RSI — 과매도 깊을수록 높음 (30=0.5, 20=1.0)\n"
+            "③ MACD — 교차 1.0, 히스토그램 확대 0.3\n"
+            "④ 볼린저밴드 — 밴드 이탈 1.0, 근처 0.3~0.7\n"
+            "⑤ OBV — 가격↓ + 거래량↑ 다이버전스 최대 0.8\n"
+            "⑥ StochRSI — 보조 과매도/과매수 최대 1.0\n"
+            "⑦ VIX — 시장 공포지수 (공포=매수, 탐욕=매도)\n"
+            "⑧ 외국인 — 3일 연속 순매수/매도 0.75\n"
+            "⑨ 기관 — 3일 연속 순매수/매도 0.75\n"
+            "\n"
+            "🎯 <b>판정 기준</b>\n"
+            "• 3.5 이상 → <b>강한 매수/매도</b>\n"
+            "• 1.5 이상 → 매수/매도\n"
+            "• 1.5 미만 → 중립\n"
+            "\n"
+            "💡 시장 상황(상승장/하락장)에 따라\n"
+            "같은 방향 시그널에 1.2배 가중치가 붙습니다.\n"
+            "\n"
+            "/score 삼성전자 — 실시간 점수 분해 보기"
+        ),
     }
 
     def _cmd_ask(self, chat_id: str, text: str) -> None:
@@ -493,6 +524,190 @@ class InteractiveBot:
             daemon=True,
         )
         ask_thread.start()
+
+    def _cmd_score(self, chat_id: str, text: str) -> None:
+        """/score [종목명/코드] — 합류점수 실시간 분해 표시."""
+        query = text.strip()
+        if not query:
+            send_message(
+                "사용법: /score [종목명 또는 종목코드]\n"
+                "예: /score 삼성전자\n"
+                "예: /score 005930",
+                chat_id=chat_id,
+            )
+            return
+
+        # 별도 스레드에서 실행 (데이터 조회가 느릴 수 있음)
+        score_thread = threading.Thread(
+            target=self._run_score,
+            args=(chat_id, query),
+            name="score-query",
+            daemon=True,
+        )
+        score_thread.start()
+
+    def _run_score(self, chat_id: str, query: str) -> None:
+        """합류점수 분해를 조회하여 메시지를 전송한다."""
+        try:
+            from data.fetcher import fetch_stock_data, fetch_vix
+            from data.investor import fetch_investor_trading
+            from signals.strategy import analyze_detailed
+            from config import WATCH_LIST as _CONFIG_WATCH_LIST
+            from storage.db import get_active_watchlist
+
+            # 종목 찾기
+            try:
+                watchlist = get_active_watchlist() or _CONFIG_WATCH_LIST
+            except Exception:
+                watchlist = _CONFIG_WATCH_LIST
+
+            ticker = None
+            name = None
+
+            # 1. 종목코드 직접 매칭
+            for t, n in watchlist:
+                if t == query:
+                    ticker, name = t, n
+                    break
+
+            # 2. 종목명 매칭
+            if not ticker:
+                for t, n in watchlist:
+                    if query in n or n in query:
+                        ticker, name = t, n
+                        break
+
+            # 3. 별칭 매칭
+            if not ticker:
+                from bot.chat import _ALIASES
+                query_lower = query.lower()
+                for alias, code in _ALIASES.items():
+                    if alias in query_lower:
+                        for t, n in watchlist:
+                            if t == code:
+                                ticker, name = t, n
+                                break
+                        break
+
+            if not ticker:
+                send_message(
+                    f"'{query}'에 해당하는 종목을 찾을 수 없습니다.\n"
+                    "/list 로 감시 종목을 확인하세요.",
+                    chat_id=chat_id,
+                )
+                return
+
+            # 데이터 조회
+            df = fetch_stock_data(ticker)
+            if df.empty:
+                send_message(f"{name}({ticker}) 데이터를 조회할 수 없습니다.", chat_id=chat_id)
+                return
+
+            investor_df = None
+            try:
+                investor_df = fetch_investor_trading(ticker)
+            except Exception:
+                pass
+
+            vix_value = None
+            try:
+                vix_series = fetch_vix()
+                if not vix_series.empty:
+                    vix_value = float(vix_series.iloc[-1])
+            except Exception:
+                pass
+
+            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
+
+            # 메시지 구성
+            regime_labels = {
+                "uptrend": "상승장 (매수 1.2x)",
+                "downtrend": "하락장 (매도 1.2x)",
+                "sideways": "횡보장 (가중치 없음)",
+            }
+            regime = data.get("market_regime", "sideways")
+            regime_label = regime_labels.get(regime, "횡보장")
+
+            lines = [
+                f"<b>[합류점수 분해] {name} ({ticker})</b>",
+                f"현재가: {data.get('price', 0):,}원 ({data.get('change_pct', 0):+.1f}%)",
+                f"시장 레짐: {regime_label}",
+                "",
+            ]
+
+            # 시그널별 점수 분해
+            signals = data.get("signals", [])
+            buy_total = 0.0
+            sell_total = 0.0
+
+            if signals:
+                lines.append("<b>📊 지표별 점수:</b>")
+                for sig in signals:
+                    sig_type = sig["type"]
+                    strength = sig.get("strength", 0)
+                    trigger = sig["trigger"]
+
+                    if sig_type == "buy":
+                        icon = "🟢"
+                        buy_total += strength if strength else 0
+                        score_str = f"+{strength:.2f}" if strength else ""
+                    elif sig_type == "sell":
+                        icon = "🔴"
+                        sell_total += strength if strength else 0
+                        score_str = f"-{strength:.2f}" if strength else ""
+                    else:
+                        icon = "⚪"
+                        score_str = ""
+
+                    lines.append(f"  {icon} {trigger} {score_str}")
+            else:
+                lines.append("활성 시그널 없음")
+
+            lines.append("")
+            lines.append(f"<b>합산:</b> 매수 {buy_total:.1f} / 매도 {sell_total:.1f}")
+
+            score = data.get("confluence_score", 0)
+            direction = data.get("confluence_direction", "neutral")
+            strength = data.get("signal_strength", "neutral")
+
+            strength_labels = {
+                "strong_buy": "강한 매수",
+                "buy": "매수",
+                "neutral": "중립",
+                "sell": "매도",
+                "strong_sell": "강한 매도",
+            }
+            strength_label = strength_labels.get(strength, "중립")
+
+            dir_label = {"buy": "매수", "sell": "매도", "mixed": "혼재", "neutral": "중립"}.get(direction, "중립")
+
+            lines.append(f"<b>합류점수: {score} ({dir_label})</b>")
+            lines.append(f"<b>판정: {strength_label}</b>")
+
+            # 주요 지표 요약
+            ind = data.get("indicators", {})
+            lines.append("")
+            lines.append("<b>📈 지표 현황:</b>")
+            if ind.get("rsi") is not None:
+                lines.append(f"  RSI: {ind['rsi']:.1f}")
+            if ind.get("stoch_rsi_k") is not None:
+                lines.append(f"  StochRSI: K={ind['stoch_rsi_k']:.1f}")
+            if ind.get("vix") is not None:
+                lines.append(f"  VIX: {ind['vix']:.1f}")
+
+            inv = data.get("investor", {})
+            if inv.get("foreign_net") is not None:
+                f_dir = "순매수" if inv["foreign_net"] >= 0 else "순매도"
+                lines.append(f"  외인: {f_dir} {abs(inv['foreign_net']):,}주")
+            if inv.get("institutional_net") is not None:
+                i_dir = "순매수" if inv["institutional_net"] >= 0 else "순매도"
+                lines.append(f"  기관: {i_dir} {abs(inv['institutional_net']):,}주")
+
+            send_message("\n".join(lines), chat_id=chat_id)
+
+        except Exception as e:
+            logger.error("점수 조회 오류 [%s]: %s", query, e)
+            send_message(f"점수 조회 중 오류가 발생했습니다: {e}", chat_id=chat_id)
 
     def _cmd_info(self, chat_id: str) -> None:
         """/info — FAQ 인라인 키보드 표시."""
@@ -506,7 +721,10 @@ class InteractiveBot:
                 {"text": "사용법", "callback_data": "faq:howto"},
             ],
             [
+                {"text": "합류점수란?", "callback_data": "faq:confluence"},
                 {"text": "종목코드 목록", "callback_data": "faq:codes"},
+            ],
+            [
                 {"text": "면책사항", "callback_data": "faq:disclaimer"},
             ],
         ]
