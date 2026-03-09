@@ -109,6 +109,9 @@ class InteractiveBot:
         self._pending_lock = threading.Lock()
         # getUpdates offset (마지막 처리 update_id + 1)
         self._offset: int = 0
+        # AI 채팅 핸들러
+        from bot.chat import ChatHandler
+        self._chat_handler = ChatHandler()
 
     # ── 생명주기 ──────────────────────────────
 
@@ -317,6 +320,9 @@ class InteractiveBot:
         elif command == "unregister":
             self._cmd_unregister(chat_id)
 
+        elif command == "ask":
+            self._cmd_ask(chat_id, text)
+
         elif command == "info":
             self._cmd_info(chat_id)
 
@@ -371,6 +377,7 @@ class InteractiveBot:
             "/list — 내 감시 종목 목록",
             "/add [종목코드] [종목명] — 감시 종목 추가",
             "/remove [종목코드] — 감시 종목 제거",
+            "/ask [질문] — AI에게 질문 (일 10회)",
         ]
 
         if is_admin:
@@ -476,6 +483,16 @@ class InteractiveBot:
             "• 본 서비스로 인한 투자 손실에 책임지지 않습니다"
         ),
     }
+
+    def _cmd_ask(self, chat_id: str, text: str) -> None:
+        """/ask [질문] — AI에게 질문. 별도 스레드에서 처리."""
+        ask_thread = threading.Thread(
+            target=self._chat_handler.handle,
+            args=(chat_id, text),
+            name="ai-chat",
+            daemon=True,
+        )
+        ask_thread.start()
 
     def _cmd_info(self, chat_id: str) -> None:
         """/info — FAQ 인라인 키보드 표시."""
