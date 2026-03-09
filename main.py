@@ -248,7 +248,19 @@ def weekly_report():
 
 def healthcheck():
     """매일 09:00 헬스체크 메시지를 전송한다."""
-    msg = f"[헬스체크] Signalight 정상 동작 중 ({datetime.now().strftime('%Y-%m-%d %H:%M')})"
+    now = datetime.now()
+    weekday_kr = ["월", "화", "수", "목", "금", "토", "일"][now.weekday()]
+    msg = (
+        f"[헬스체크] Signalight 정상 동작 중\n"
+        f"{now.strftime('%Y-%m-%d')} ({weekday_kr}) {now.strftime('%H:%M')}\n"
+        f"\n"
+        f"📋 오늘의 스케줄:\n"
+        f"  09:30~15:30  시그널 체크 (30분 간격)\n"
+        f"  16:00  일일 종합 브리핑\n"
+        f"{'  16:30  주간 리포트' + chr(10) if now.weekday() == 4 else ''}"
+        f"\n"
+        f"💡 명령어: /status /scan /list /help"
+    )
     try:
         send_message(msg)
         logger.info("헬스체크 전송 완료")
