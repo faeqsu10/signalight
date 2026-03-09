@@ -34,6 +34,8 @@ signalight/
 │   │   ├── __init__.py     # Order, TradingConfig dataclass
 │   │   ├── kiwoom_client.py # 키움 REST API 래퍼 (OAuth, 조회, 주문)
 │   │   ├── executor.py     # 주문 실행 + 안전장치 (dry-run, 손실한도, 비중한도)
+│   │   ├── rules.py        # 룰 기반 매매 추천 엔진 (레짐별 진입/청산, 분할매수, 리스크관리)
+│   │   ├── position_tracker.py # 가상 포지션 추적 (SQLite, 분할단계, 트레일링스탑)
 │   │   └── portfolio.py    # 포트폴리오 비중 관리
 │   └── scanner/
 │       ├── __init__.py

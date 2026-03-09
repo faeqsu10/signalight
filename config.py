@@ -73,3 +73,62 @@ VIX_EXTREME_GREED = 12  # 극단적 낙관 (과열 경고)
 RECOVERY_RSI_EXTREME = 20      # RSI 극단 과매도 기준
 RECOVERY_VOLUME_SPIKE = 3.0    # 투매/급등 거래량 배수 (평균 대비)
 RECOVERY_LOOKBACK_DAYS = 750   # 과거 낙폭 에피소드 탐색 기간 (약 3년)
+
+# ──────────────────────────────────────────────
+# 매매 추천 룰 설정
+# ──────────────────────────────────────────────
+
+# 매수 진입 — 레짐별 합류 점수 임계값
+ENTRY_THRESHOLD_UPTREND = 2.5   # 상승장: 낮은 기준 (추세가 이미 우호적)
+ENTRY_THRESHOLD_SIDEWAYS = 3.5  # 횡보장: 표준 기준
+ENTRY_THRESHOLD_DOWNTREND = 4.5 # 하락장: 높은 기준 (역추세 진입은 강한 근거 필요)
+
+# 매수 진입 — 거래량 필터
+MIN_VOLUME_RATIO = 0.7  # 최소 거래량 비율 (평균 대비 70% 이상)
+
+# 분할 매수 설정
+SPLIT_BUY_PHASES = 3         # 분할 매수 단계 수
+SPLIT_BUY_CONFIRM_DAYS = 2   # Phase 2 확인 대기 일수
+SPLIT_BUY_PHASE3_BONUS = 1.0 # Phase 3 진입 추가 점수 기준
+
+# 매도 — 손절 ATR 배수 (레짐별)
+STOP_LOSS_ATR_UPTREND = 2.5   # 상승장: 넓은 손절 (추세에 여유)
+STOP_LOSS_ATR_SIDEWAYS = 2.0  # 횡보장: 표준
+STOP_LOSS_ATR_DOWNTREND = 1.5 # 하락장: 좁은 손절 (빠른 탈출)
+MAX_LOSS_PCT = 8.0             # 최대 손실 하드캡 (%)
+
+# 매도 — 목표가 ATR 배수
+TARGET1_ATR_MULT = 2.0  # 1차 목표 (1/3 매도)
+TARGET2_ATR_MULT = 3.5  # 2차 목표 (1/3 매도)
+
+# 매도 — 트레일링 스탑
+TRAILING_STOP_ATR_MULT = 1.5  # 트레일링 ATR 배수
+
+# 매도 — 시간 제한
+MAX_HOLDING_DAYS = 20  # 최대 보유 거래일
+
+# 포트폴리오 리스크 관리
+MAX_POSITIONS = 5              # 최대 동시 보유 종목 수
+MAX_EXPOSURE_PCT = 70.0        # 최대 총 투자 비중 (%)
+MAX_SECTOR_POSITIONS = 2       # 같은 섹터 최대 보유 수
+TARGET_WEIGHT_PCT = 10.0       # 종목당 목표 비중 (%)
+MAX_SINGLE_POSITION_PCT = 15.0 # 종목당 최대 비중 (%)
+
+# VIX 기반 포지션 조절
+VIX_POSITION_MULT_CALM = 1.0      # VIX < 15: 풀 사이즈
+VIX_POSITION_MULT_NORMAL = 0.8    # VIX 15-25: 80%
+VIX_POSITION_MULT_FEAR = 0.6      # VIX 25-30: 60%
+VIX_POSITION_MULT_EXTREME = 0.5   # VIX > 30: 50%
+
+# 주간 손실 한도
+WEEKLY_LOSS_LIMIT_PCT = 5.0  # 주간 손실 5% 초과 시 매수 중단
+
+# 섹터 매핑 (종목코드 → 섹터)
+SECTOR_MAP = {
+    "005930": "반도체", "000660": "반도체",
+    "373220": "2차전지", "006400": "2차전지",
+    "207940": "바이오", "068270": "바이오",
+    "105560": "금융",
+    "005380": "자동차",
+    "035420": "IT", "035720": "IT",
+}

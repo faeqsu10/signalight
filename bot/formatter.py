@@ -388,6 +388,17 @@ def _build_spotlight_block(stock: dict) -> str:
     if llm and llm.get("reasoning"):
         lines.append(f"  🤖 {llm['reasoning']}")
 
+    # 매매 추천 요약 (있으면)
+    rec = stock.get("trade_recommendation")
+    if rec and rec.get("recommend"):
+        action = rec.get("action", "")
+        if action.startswith("buy_"):
+            stop = rec.get("stop_loss", 0)
+            target = rec.get("target1", 0)
+            lines.append(f"  💡 분할 매수 추천 (손절 {stop:,}원 / 목표 {target:,}원)")
+        elif action in ("stop_loss", "target1", "target2", "trailing", "time_exit", "signal_exit"):
+            lines.append(f"  💡 매도 추천: {rec.get('reason', '')}")
+
     return "\n".join(lines)
 
 
@@ -454,6 +465,72 @@ def _build_signal_summary_sentence(stock: dict) -> str:
         summary = ", ".join(parts)
         return f"<i>\"{summary}.\n{conclusion}\"</i>"
     return f"<i>\"{conclusion}\"</i>"
+
+
+def _build_recommendation_block(rec: dict, current_price: int) -> str:
+    """매매 추천 액션 블록을 생성한다."""
+    action = rec.get("action", "skip")
+    reason = rec.get("reason", "")
+    recommend = rec.get("recommend", False)
+
+    lines = []
+
+    if not recommend:
+        # 매수 추천이 아닌 경우 (보유 중 매도 추천 포함)
+        sell_action = rec.get("action", "")
+        if sell_action in ("stop_loss", "target1", "target2", "trailing", "time_exit", "signal_exit"):
+            sell_pct = rec.get("sell_pct", 0)
+            action_labels = {
+                "stop_loss": "🛑 손절 매도",
+                "target1": "🎯 1차 목표 도달",
+                "target2": "🎯 2차 목표 도달",
+                "trailing": "📉 트레일링 스탑",
+                "time_exit": "⏰ 보유 기간 초과",
+                "signal_exit": "📊 역시그널 매도",
+            }
+            label = action_labels.get(sell_action, "매도")
+            lines.append(f"<b>━━━ 💡 추천 액션 ━━━</b>")
+            lines.append(f"{label}")
+            lines.append(f" • {reason}")
+            if sell_pct > 0:
+                lines.append(f" • 매도 비율: {sell_pct}%")
+        return "\n".join(lines)
+
+    # 매수 추천
+    stop_loss = rec.get("stop_loss", 0)
+    target1 = rec.get("target1", 0)
+    target2 = rec.get("target2", 0)
+    weight_pct = rec.get("weight_pct", 0)
+    details = rec.get("details", {})
+
+    phase_labels = {
+        "buy_phase1": "1단계 진입 (1/3)",
+        "buy_phase2": "2단계 추가 (2/3)",
+        "buy_phase3": "3단계 완성 (3/3)",
+    }
+    phase_label = phase_labels.get(action, action)
+
+    lines.append(f"<b>━━━ 💡 추천 액션 ━━━</b>")
+    lines.append(f"🟢 분할 매수 — {phase_label}")
+    lines.append(f" • {reason}")
+    lines.append(f" • 추천 비중: {weight_pct}%")
+
+    if stop_loss > 0:
+        loss_pct = abs((stop_loss - current_price) / current_price * 100)
+        lines.append(f" • 손절가: {stop_loss:,}원 (-{loss_pct:.1f}%)")
+    if target1 > 0:
+        gain1_pct = (target1 - current_price) / current_price * 100
+        lines.append(f" • 1차 목표: {target1:,}원 (+{gain1_pct:.1f}%)")
+    if target2 > 0:
+        gain2_pct = (target2 - current_price) / current_price * 100
+        lines.append(f" • 2차 목표: {target2:,}원 (+{gain2_pct:.1f}%)")
+
+    regime = details.get("regime", "")
+    if regime:
+        regime_kr = {"uptrend": "상승장", "downtrend": "하락장", "sideways": "횡보장"}.get(regime, regime)
+        lines.append(f" • 시장 레짐: {regime_kr}")
+
+    return "\n".join(lines)
 
 
 def _build_signal_block(stock: dict) -> str:
@@ -628,6 +705,12 @@ def _build_signal_block(stock: dict) -> str:
         lines.append("<b>━━━ 참고 ━━━</b>")
         for rl in ref_lines:
             lines.append(f" • {rl}")
+
+    # 매매 추천 액션
+    rec = stock.get("trade_recommendation")
+    if rec:
+        lines.append("")
+        lines.append(_build_recommendation_block(rec, price))
 
     return "\n".join(lines)
 

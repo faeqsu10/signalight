@@ -19,12 +19,18 @@ from storage.db import (
 from bot.interactive import InteractiveBot, set_emergency_stop_callback
 from trading import TradingConfig
 from trading.executor import TradeExecutor
+from trading.rules import TradeRule
+from trading.position_tracker import PositionTracker
 from infra.logging_config import setup_logging
 
 logger = setup_logging()
 
 # DB 초기화
 init_db()
+
+# 매매 추천 룰 엔진 + 가상 포지션 추적
+_trade_rule = TradeRule()
+_position_tracker = PositionTracker()
 
 
 def _get_watchlist():
@@ -105,6 +111,57 @@ def _collect_stock_data() -> List[Dict]:
                                     llm_result.get("confidence", 0) * 100)
             except Exception as e:
                 logger.warning("%s(%s) LLM 분석 실패: %s", name, ticker, e)
+
+            # 매매 추천 룰 판단 (알림 전용, 실제 주문 없음)
+            try:
+                existing_pos = _position_tracker.get_position(ticker)
+                all_open = _position_tracker.get_all_open()
+
+                if existing_pos:
+                    # 보유 중 → 매도 판단
+                    _position_tracker.update_highest_close(ticker, data.get("price", 0))
+                    existing_pos = _position_tracker.get_position(ticker)  # 갱신된 데이터
+                    sell_rec = _trade_rule.should_sell(data, existing_pos)
+                    if sell_rec.get("recommend"):
+                        data["trade_recommendation"] = sell_rec
+                        # 가상 포지션 청산/갱신
+                        action = sell_rec.get("action", "")
+                        if action == "target1":
+                            _position_tracker.mark_target_hit(ticker, 1)
+                            _position_tracker.update_stop_loss(ticker, existing_pos["entry_price"])
+                        elif action == "target2":
+                            _position_tracker.mark_target_hit(ticker, 2)
+                        elif sell_rec.get("sell_pct", 0) >= 100:
+                            _position_tracker.close_position(
+                                ticker, data.get("price", 0), action)
+                        logger.info("%s(%s) 매도 추천: %s (%d%%)",
+                                    name, ticker, action, sell_rec.get("sell_pct", 0))
+                    else:
+                        data["trade_recommendation"] = sell_rec
+                else:
+                    # 미보유 → 매수 판단
+                    buy_rec = _trade_rule.should_buy(data, all_open)
+                    if buy_rec.get("recommend"):
+                        data["trade_recommendation"] = buy_rec
+                        # 가상 포지션 생성
+                        indicators = data.get("indicators", {})
+                        _position_tracker.open_position(
+                            ticker, name,
+                            entry_price=data.get("price", 0),
+                            entry_atr=indicators.get("atr", 0),
+                            regime=data.get("market_regime", "sideways"),
+                            stop_loss=buy_rec.get("stop_loss", 0),
+                            target1=buy_rec.get("target1", 0),
+                            target2=buy_rec.get("target2", 0),
+                            weight_pct=buy_rec.get("weight_pct", 0),
+                        )
+                        logger.info("%s(%s) 매수 추천: %s (비중 %.1f%%)",
+                                    name, ticker, buy_rec.get("action", ""),
+                                    buy_rec.get("weight_pct", 0))
+                    else:
+                        data["trade_recommendation"] = buy_rec
+            except Exception as e:
+                logger.warning("%s(%s) 매매 추천 판단 실패: %s", name, ticker, e)
 
             # 자동매매 시뮬레이션 (dry_run 모드)
             try:
