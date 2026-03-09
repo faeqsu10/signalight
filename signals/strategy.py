@@ -175,7 +175,7 @@ def analyze_detailed(
                 "trigger": "볼린저밴드 하단 이탈",
                 "type": "buy",
                 "source": "BB",
-                "detail": f"현재가({current_price:,}) <= 하단밴드({current_bb_lower:,.0f}), 반등 가능성",
+                "detail": f"현재가({current_price:,}) ≤ 하단밴드({current_bb_lower:,.0f}), 반등 가능성",
             })
             buy_score += 1.0
         elif current_price >= current_bb_upper:
@@ -183,7 +183,7 @@ def analyze_detailed(
                 "trigger": "볼린저밴드 상단 이탈",
                 "type": "sell",
                 "source": "BB",
-                "detail": f"현재가({current_price:,}) >= 상단밴드({current_bb_upper:,.0f}), 과열 주의",
+                "detail": f"현재가({current_price:,}) ≥ 상단밴드({current_bb_upper:,.0f}), 과열 주의",
             })
             sell_score += 1.0
 
