@@ -236,9 +236,21 @@
 | B-12 | Next.js API 요청/응답 시간 로깅 | ✅ | P3 | api-logger.ts, 5개 route |
 | B-13 | 데이터 소스별 성공/실패율 추적 | ✅ | P3 | metrics.ts, watchlist API 노출 |
 
+## Phase 15 — 자율 트레이딩 파이프라인 [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 135 | autonomous/ 디렉토리 + config + state 기반 구조 | ✅ | AutonomousConfig, PipelineState (SQLite) |
+| 136 | universe.py — KOSPI200 복합 스캔 + 유동성 필터 | ✅ | 골든크로스3점/RSI2점/거래량1점, 거래대금 50억+ |
+| 137 | analyzer.py + decision.py — 분석 + 매매 결정 | ✅ | analyze_detailed 래핑, 포트폴리오 제약 |
+| 138 | execution.py — 안전 주문 실행 + 서킷브레이커 | ✅ | 킬스위치, 장중 시간, 일일/주간 손실 한도 |
+| 139 | evaluator.py — 성과 평가 + 텔레그램 리포트 | ✅ | 주간 리포트, 매매 체결 알림 (AUTO_TRADE_CHAT_ID) |
+| 140 | pipeline.py + runner.py — 파이프라인 + 실행기 | ✅ | 별도 프로세스, schedule 기반, --live/--once 옵션 |
+| 141 | executor/rules 충돌 수정 + 문서 업데이트 | ✅ | skip_score_check 플래그로 유연화 |
+
 ---
 
 ## 통계
 
-- **총 항목**: 134개 (완료 130 + 백로그 2)
+- **총 항목**: 141개 (완료 137 + 백로그 2)
 - **완료율**: 97%

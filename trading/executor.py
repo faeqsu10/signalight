@@ -130,8 +130,9 @@ class TradeExecutor:
         if signal not in ("buy", "sell"):
             return None
 
-        # Require strong confluence
-        if confluence_score < 3:
+        # 시그널 강도 체크 (TradeRule이 사전 검증한 경우 skip_score_check=True)
+        skip_check = stock_data.get("skip_score_check", False)
+        if not skip_check and confluence_score < 3:
             logger.debug(
                 f"TradeExecutor: 시그널 스킵 {ticker} "
                 f"(confluence_score={confluence_score} < 3)"

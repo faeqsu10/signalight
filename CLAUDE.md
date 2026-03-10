@@ -41,6 +41,19 @@ signalight/
 │       ├── __init__.py
 │       └── market_scanner.py # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
 │
+├── [자율 트레이딩 파이프라인] main.py와 분리된 별도 프로세스
+│   └── autonomous/
+│       ├── __init__.py
+│       ├── config.py          # 자율매매 전용 설정 (포지션 5%, 서킷브레이커, 타이밍)
+│       ├── state.py           # 파이프라인 상태 관리 (SQLite: PnL, 에퀴티, 매매로그)
+│       ├── universe.py        # 유니버스 선정 (KOSPI200 복합 스캔 + 유동성 필터)
+│       ├── analyzer.py        # 시그널 분석 (analyze_detailed 래핑)
+│       ├── decision.py        # 매매 결정 (TradeRule 래핑 + 포트폴리오 제약)
+│       ├── execution.py       # 안전 주문 실행 (서킷브레이커 + 킬스위치 + 장중 체크)
+│       ├── evaluator.py       # 성과 평가 + 텔레그램 리포트 (AUTO_TRADE_CHAT_ID)
+│       ├── pipeline.py        # 메인 오케스트레이터 (스캔→분석→결정→실행→추적→평가)
+│       └── runner.py          # 별도 프로세스 진입점 (schedule 기반, --live/--once 옵션)
+│
 ├── [Next.js 프론트엔드] 웹 대시보드
 │   └── web/
 │       ├── app/
