@@ -383,6 +383,31 @@ def _build_spotlight_block(stock: dict) -> str:
     if reasons:
         lines.append(f"  → {' + '.join(reasons[:3])}")
 
+    # 주요 지표 요약
+    indicators = stock.get("indicators", {})
+    indicator_parts = []
+    rsi = indicators.get("rsi")
+    if rsi is not None:
+        rsi_lbl = _rsi_label(rsi)
+        indicator_parts.append(f"RSI {rsi:.0f}({rsi_lbl})")
+    macd_hist = indicators.get("macd_histogram")
+    if macd_hist is not None:
+        d = "▲" if macd_hist > 0 else "▼"
+        indicator_parts.append(f"MACD {d}")
+    vol_ratio = indicators.get("volume_ratio")
+    if vol_ratio is not None:
+        indicator_parts.append(f"거래량 {int(vol_ratio * 100)}%")
+    if indicator_parts:
+        lines.append(f"  📊 {' · '.join(indicator_parts)}")
+
+    # 뉴스 감성
+    news = stock.get("news_sentiment")
+    if news and news.get("sentiment") in ("긍정", "부정"):
+        sent = news["sentiment"]
+        conf = int(news.get("confidence", 0) * 100)
+        s_emoji = "🟢" if sent == "긍정" else "🔴"
+        lines.append(f"  {s_emoji} 뉴스 {sent} (신뢰도 {conf}%)")
+
     # AI 판단 (있으면)
     llm = stock.get("llm_analysis")
     if llm and llm.get("reasoning"):
@@ -403,16 +428,52 @@ def _build_spotlight_block(stock: dict) -> str:
 
 
 def _build_compact_row(stock: dict) -> str:
-    """시그널 없는 종목의 compact 한줄 요약을 생성한다."""
+    """시그널 없는 종목의 요약을 생성한다 (주요 지표 포함)."""
     name = stock.get("name", "")
     price = stock.get("price", 0)
     change_pct = stock.get("change_pct", 0.0)
+    indicators = stock.get("indicators", {})
+    investor = stock.get("investor", {})
 
     emoji = _change_emoji(change_pct)
     change_str = _format_change(change_pct)
     price_str = _format_price(price)
 
-    return f"{emoji}{change_str}  <b>{name}</b>  {price_str}원"
+    # 핵심 지표 수집
+    tags = []
+
+    rsi = indicators.get("rsi")
+    if rsi is not None:
+        if rsi >= 70:
+            tags.append(f"RSI {rsi:.0f} 과매수")
+        elif rsi <= 30:
+            tags.append(f"RSI {rsi:.0f} 과매도")
+        else:
+            tags.append(f"RSI {rsi:.0f}")
+
+    vol_ratio = indicators.get("volume_ratio")
+    if vol_ratio is not None and vol_ratio > 1.5:
+        tags.append(f"거래량 {int(vol_ratio * 100)}%")
+
+    # 수급
+    foreign_consec = investor.get("foreign_consec_days", 0)
+    inst_consec = investor.get("institutional_consec_days", 0)
+    if foreign_consec and abs(foreign_consec) >= 3:
+        d = "매수" if foreign_consec > 0 else "매도"
+        tags.append(f"외인{abs(foreign_consec)}일{d}")
+    if inst_consec and abs(inst_consec) >= 3:
+        d = "매수" if inst_consec > 0 else "매도"
+        tags.append(f"기관{abs(inst_consec)}일{d}")
+
+    # 뉴스 감성
+    news = stock.get("news_sentiment")
+    if news and news.get("sentiment") in ("긍정", "부정"):
+        s_emoji = "🟢" if news["sentiment"] == "긍정" else "🔴"
+        tags.append(f"뉴스{s_emoji}")
+
+    tag_str = f"  ({' · '.join(tags)})" if tags else ""
+
+    return f"{emoji}{change_str}  <b>{name}</b>  {price_str}원{tag_str}"
 
 
 # ──────────────────────────────────────────────

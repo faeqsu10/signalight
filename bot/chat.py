@@ -309,10 +309,10 @@ class ChatHandler:
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {
                         "temperature": 0.3,
-                        "maxOutputTokens": 1024,
+                        "maxOutputTokens": 4096,
                     },
                 },
-                timeout=15,
+                timeout=30,
             )
 
             if resp.status_code != 200:
@@ -323,13 +323,15 @@ class ChatHandler:
             parts = data["candidates"][0]["content"]["parts"]
 
             # thought 파트 스킵 (Gemini 2.5 Flash thinking 모델)
-            text = ""
+            # 모든 non-thought 텍스트 파트를 연결
+            text_parts = []
             for part in parts:
                 if part.get("thought"):
                     continue
-                text = part.get("text", "").strip()
-                if text:
-                    break
+                t = part.get("text", "").strip()
+                if t:
+                    text_parts.append(t)
+            text = "\n".join(text_parts) if text_parts else ""
             if not text:
                 text = parts[-1].get("text", "").strip()
 
