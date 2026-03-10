@@ -16,6 +16,7 @@ import requests
 
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from bot.telegram import send_message
+from autonomous.commands import is_auto_trade_chat, handle_auto_command
 
 logger = logging.getLogger("signalight")
 
@@ -256,6 +257,21 @@ class InteractiveBot:
                     # 미등록 유저의 /start → 등록 안내
                     self._cmd_register_guide(chat_id)
                     return
+
+            # 자율매매 전용 채팅 → autonomous/commands.py로 라우팅
+            if is_auto_trade_chat(chat_id) and text.startswith("/"):
+                parts = text.split(maxsplit=1)
+                command = parts[0].lstrip("/").split("@")[0].lower()
+                args = parts[1] if len(parts) > 1 else ""
+                if handle_auto_command(chat_id, command, args):
+                    return
+                # 자율매매 전용 채팅에서 미지원 명령어
+                send_message(
+                    f"알 수 없는 명령어: <code>/{command}</code>\n"
+                    "/help 로 사용 가능한 명령어를 확인하세요.",
+                    chat_id=chat_id,
+                )
+                return
 
             if not _is_allowed_chat(chat_id):
                 logger.warning("허용되지 않은 chat_id에서 메시지 수신: %s", chat_id)
