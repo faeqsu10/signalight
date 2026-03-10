@@ -346,18 +346,31 @@ class ChatHandler:
 
     @staticmethod
     def _sanitize_html(text: str) -> str:
-        """Gemini 응답의 HTML을 텔레그램 호환으로 정리한다.
+        """Gemini 응답을 텔레그램 호환 HTML로 정리한다.
 
-        텔레그램은 <b>, <i>, <code>, <pre> 만 허용.
-        그 외 태그는 제거하고, 허용 태그의 짝이 안 맞으면 제거한다.
+        1. Markdown → HTML 변환 (**bold**, *italic*, `code`)
+        2. 허용 태그만 남기기 (<b>, <i>, <code>, <pre>)
+        3. 짝 안 맞는 태그 제거
+        4. HTML 특수문자 이스케이프 (태그 외부의 < > &)
         """
-        import html as html_lib
+        import re
+
+        # 0단계: Markdown → HTML 변환
+        # **bold** → <b>bold</b>
+        text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+        # *italic* → <i>italic</i> (단, ** 패턴은 이미 처리됨)
+        text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
+        # `code` → <code>code</code>
+        text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+        # ### 헤더 → <b>헤더</b>
+        text = re.sub(r'^#{1,3}\s+(.+)$', r'<b>\1</b>', text, flags=re.MULTILINE)
+        # - 리스트 → • 리스트
+        text = re.sub(r'^[-*]\s+', '• ', text, flags=re.MULTILINE)
 
         # 허용 태그
         allowed = {"b", "i", "code", "pre"}
 
         # 1단계: 허용되지 않는 태그 제거 (내용은 유지)
-        import re
         def replace_tag(match):
             full = match.group(0)
             tag_name = match.group(1).lower().strip("/")
@@ -367,15 +380,30 @@ class ChatHandler:
 
         cleaned = re.sub(r'<(/?\w+)[^>]*>', replace_tag, text)
 
-        # 2단계: 열린 태그와 닫힌 태그 짝 확인
-        for tag in allowed:
-            open_count = len(re.findall(rf'<{tag}>', cleaned))
-            close_count = len(re.findall(rf'</{tag}>', cleaned))
-            if open_count != close_count:
-                # 짝이 안 맞으면 해당 태그 전부 제거
-                cleaned = re.sub(rf'</?{tag}>', '', cleaned)
+        # 2단계: 태그 외부의 < > & 이스케이프
+        # 태그를 임시 플레이스홀더로 치환 → 이스케이프 → 복원
+        placeholders = []
+        def save_tag(match):
+            placeholders.append(match.group(0))
+            return f"\x00TAG{len(placeholders) - 1}\x00"
 
-        return cleaned
+        escaped = re.sub(r'</?(?:b|i|code|pre)>', save_tag, cleaned)
+        escaped = escaped.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+        def restore_tag(match):
+            idx = int(match.group(1))
+            return placeholders[idx]
+
+        escaped = re.sub(r'\x00TAG(\d+)\x00', restore_tag, escaped)
+
+        # 3단계: 열린 태그와 닫힌 태그 짝 확인
+        for tag in allowed:
+            open_count = len(re.findall(rf'<{tag}>', escaped))
+            close_count = len(re.findall(rf'</{tag}>', escaped))
+            if open_count != close_count:
+                escaped = re.sub(rf'</?{tag}>', '', escaped)
+
+        return escaped
 
     def _send_typing(self, chat_id: str) -> None:
         """'typing...' 상태를 표시한다."""
