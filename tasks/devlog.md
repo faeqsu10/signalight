@@ -1,7 +1,7 @@
 # Signalight 개발 리스트
 
 > 전체 개발 항목 추적. 작업 완료 시 자동 업데이트.
-> 최종 갱신: 2026-03-10 (Phase 13 완료 — 텔레그램 메시지 포맷 리디자인)
+> 최종 갱신: 2026-03-10 (Phase 16 완료 — 자율매매 인터랙티브 + 브리핑 강화)
 
 ---
 
@@ -248,9 +248,19 @@
 | 140 | pipeline.py + runner.py — 파이프라인 + 실행기 | ✅ | 별도 프로세스, schedule 기반, --live/--once 옵션 |
 | 141 | executor/rules 충돌 수정 + 문서 업데이트 | ✅ | skip_score_check 플래그로 유연화 |
 
+## Phase 16 — 자율매매 인터랙티브 + 브리핑 강화 [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 142 | autonomous/commands.py — 자율매매 텔레그램 명령어 | ✅ | /status, /report, /pause, /resume, /history, /positions |
+| 143 | bot/interactive.py — AUTO_TRADE_CHAT_ID 라우팅 통합 | ✅ | 기존 polling 공유, 개인 채팅 분리 |
+| 144 | 일일 브리핑 정보량 강화 (compact row + spotlight) | ✅ | RSI, 거래량, 수급, 뉴스 감성 태그 추가 |
+| 145 | /ask 답변 끊김 수정 (maxTokens + timeout + 파트 연결) | ✅ | 1024→4096 토큰, 15→30초, 전체 파트 연결 |
+| 146 | Gemini Markdown→HTML 변환 + 특수문자 이스케이프 | ✅ | **bold**→<b>, `code`→<code>, < > & 이스케이프 |
+
 ---
 
 ## 통계
 
-- **총 항목**: 141개 (완료 137 + 백로그 2)
+- **총 항목**: 146개 (완료 142 + 백로그 2)
 - **완료율**: 97%
