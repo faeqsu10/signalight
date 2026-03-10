@@ -89,7 +89,11 @@ class SafeExecutor:
         if not self._check_kill_switch():
             return False
 
-        # 매도는 항상 허용 (손절은 보호 우선)
+        # 장중 시간 체크 (매수/매도 모두 — KRX는 장외 주문 불가)
+        if not self._check_market_hours():
+            return False
+
+        # 매도는 장중이면 항상 허용 (손절은 보호 우선)
         if is_sell:
             return True
 
