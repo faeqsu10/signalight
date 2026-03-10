@@ -12,6 +12,9 @@ from config import (
     RSI_OVERSOLD, RSI_OVERBOUGHT, DATA_PERIOD_DAYS,
 )
 from signals.indicators import calc_moving_average, calc_rsi
+from scanner.kospi200_tickers import (
+    KOSPI200_TICKERS, KOSDAQ_MAJOR_TICKERS, ALL_FALLBACK_TICKERS,
+)
 
 logger = logging.getLogger("signalight")
 
@@ -33,8 +36,8 @@ class MarketScanner:
     def _get_all_tickers(self) -> List[Tuple[str, str]]:
         """시장의 전체 종목 (ticker, name) 리스트를 반환한다.
 
-        pykrx.stock.get_market_ticker_list() /
-        pykrx.stock.get_market_ticker_name() 사용.
+        pykrx가 정상이면 pykrx를 사용하고,
+        실패 시 정적 KOSPI200/KOSDAQ 리스트를 fallback으로 사용한다.
         """
         today = datetime.today().strftime("%Y%m%d")
 
@@ -43,12 +46,44 @@ class MarketScanner:
         else:
             markets = [self.market]
 
+        # 1) pykrx 시도
         tickers = []  # type: List[Tuple[str, str]]
         for mkt in markets:
-            ticker_list = stock.get_market_ticker_list(today, market=mkt)
-            for t in ticker_list:
-                name = stock.get_market_ticker_name(t)
-                tickers.append((t, name))
+            try:
+                ticker_list = stock.get_market_ticker_list(today, market=mkt)
+                if ticker_list is not None and len(ticker_list) > 0:
+                    for t in ticker_list:
+                        name = stock.get_market_ticker_name(t)
+                        tickers.append((t, name))
+            except Exception as e:
+                logger.debug("pykrx ticker_list 실패 (%s): %s", mkt, e)
+
+        if tickers:
+            return tickers
+
+        # 2) Fallback: 정적 종목 리스트
+        logger.warning(
+            "pykrx get_market_ticker_list 실패 — 정적 종목 리스트 사용 (%s)",
+            self.market,
+        )
+        if self.market == "KOSDAQ":
+            fallback_codes = KOSDAQ_MAJOR_TICKERS
+        elif self.market == "ALL":
+            fallback_codes = ALL_FALLBACK_TICKERS
+        else:  # KOSPI
+            fallback_codes = KOSPI200_TICKERS
+
+        seen = set()  # type: set
+        for code in fallback_codes:
+            if code in seen:
+                continue
+            seen.add(code)
+            try:
+                name = stock.get_market_ticker_name(code)
+                if name:
+                    tickers.append((code, name))
+            except Exception:
+                tickers.append((code, code))
 
         return tickers
 

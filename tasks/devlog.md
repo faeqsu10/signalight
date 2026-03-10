@@ -1,7 +1,7 @@
 # Signalight 개발 리스트
 
 > 전체 개발 항목 추적. 작업 완료 시 자동 업데이트.
-> 최종 갱신: 2026-03-10 (Phase 16 완료 — 자율매매 인터랙티브 + 브리핑 강화)
+> 최종 갱신: 2026-03-10 (Phase 17 완료 — 자율 트레이딩 파이프라인 시운전 + 배포)
 
 ---
 
@@ -258,9 +258,20 @@
 | 145 | /ask 답변 끊김 수정 (maxTokens + timeout + 파트 연결) | ✅ | 1024→4096 토큰, 15→30초, 전체 파트 연결 |
 | 146 | Gemini Markdown→HTML 변환 + 특수문자 이스케이프 | ✅ | **bold**→<b>, `code`→<code>, < > & 이스케이프 |
 
+## Phase 17 — 자율 트레이딩 파이프라인 시운전 + 배포 [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 147 | pykrx ticker_list fallback (정적 KOSPI200 리스트) | ✅ | scanner/kospi200_tickers.py, pykrx 깨짐 대응 |
+| 148 | runner.py --once dry_run 1회 실행 테스트 | ✅ | exit code 0, 82종목 스캔, 일일 요약 전송 |
+| 149 | signalight-auto.service systemd 등록 | ✅ | dry_run, Restart=always, 스케줄 동작 확인 |
+| 150 | 키움 모의투자 API 연결 테스트 | ✅ | get_stock_info, get_account_evaluation 정상 |
+| 151 | 일일 요약 항상 전송 (거래 0건도 포함) | ✅ | evaluator.py daily_summary 개선 |
+| 152 | CLAUDE.md + devlog.md 문서 업데이트 | ✅ | 아키텍처에 signalight-auto.service 반영 |
+
 ---
 
 ## 통계
 
-- **총 항목**: 146개 (완료 142 + 백로그 2)
+- **총 항목**: 152개 (완료 148 + 백로그 2)
 - **완료율**: 97%

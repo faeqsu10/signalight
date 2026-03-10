@@ -39,7 +39,8 @@ signalight/
 │   │   └── portfolio.py    # 포트폴리오 비중 관리
 │   └── scanner/
 │       ├── __init__.py
-│       └── market_scanner.py # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
+│       ├── market_scanner.py  # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
+│       └── kospi200_tickers.py # pykrx fallback 정적 종목 리스트 (KOSPI200+KOSDAQ)
 │
 ├── [자율 트레이딩 파이프라인] main.py와 분리된 별도 프로세스
 │   └── autonomous/
@@ -155,11 +156,12 @@ signalight/
 ## DevOps & 배포
 
 ### 현재 상태
-- **Python 봇**: systemd user service로 운영 (Restart=always, RestartSec=10)
+- **Python 봇**: systemd user service (`signalight.service`) — 텔레그램 알림 봇
+- **자율 트레이딩**: systemd user service (`signalight-auto.service`) — dry_run 스케줄 기반 자동매매
 - **웹 대시보드**: Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
 - **데이터 소스**: pykrx, Yahoo Finance, 네이버 금융 크롤링, Google Gemini API
 - **로깅**: 구조화 로깅 (콘솔+파일, 10MB 로테이션 × 5백업) — `infra/logging_config.py`
-- **DB**: SQLite WAL 모드 (시그널 이력, 감성, LLM 판단, watch_list)
+- **DB**: SQLite WAL 모드 (시그널 이력, 감성, LLM 판단, watch_list, 자율매매 상태)
 - **Docker**: Multi-stage Dockerfile + docker-compose.yml 구성 완료
 - **캐싱**: Python in-memory 4시간 TTL + 웹 API in-memory 5분 TTL
 

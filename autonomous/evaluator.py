@@ -55,24 +55,37 @@ class PerformanceEvaluator:
         return perf_7d
 
     def daily_summary(self) -> Optional[str]:
-        """일일 거래 요약을 생성하고 전송한다."""
+        """일일 거래 요약을 생성하고 전송한다.
+
+        거래 유무와 관계없이 항상 파이프라인 실행 결과를 전송한다.
+        """
         today = date.today().isoformat()
         daily = self.state.get_daily_pnl(today)
-
-        if not daily or daily["trades_count"] == 0:
-            return None
-
         open_positions = self.tracker.get_all_open()
 
+        trades_count = daily["trades_count"] if daily else 0
+        wins = daily["wins"] if daily else 0
+        losses = daily["losses"] if daily else 0
+        realized_pnl = daily["realized_pnl"] if daily else 0
+
+        mode = "시뮬레이션" if AUTO_CONFIG.dry_run else "실전"
+
         msg_lines = [
-            "<b>[자율매매] 일일 요약</b>",
+            f"<b>[자율매매] 일일 요약 ({mode})</b>",
             f"날짜: {today}",
             "",
-            f"거래: {daily['trades_count']}건 "
-            f"(승 {daily['wins']} / 패 {daily['losses']})",
-            f"실현 PnL: {daily['realized_pnl']:+,}원",
-            f"보유 종목: {len(open_positions)}개",
         ]
+
+        if trades_count > 0:
+            msg_lines.append(
+                f"거래: {trades_count}건 "
+                f"(승 {wins} / 패 {losses})"
+            )
+            msg_lines.append(f"실현 PnL: {realized_pnl:+,}원")
+        else:
+            msg_lines.append("거래: 0건 (시그널 충족 종목 없음)")
+
+        msg_lines.append(f"보유 종목: {len(open_positions)}개")
 
         if open_positions:
             msg_lines.append("")
