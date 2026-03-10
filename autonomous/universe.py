@@ -19,8 +19,16 @@ logger = logging.getLogger("signalight.auto")
 class UniverseSelector:
     """KOSPI200 기반 유니버스 선정기."""
 
-    def __init__(self):
+    # 기본 스캔 가중치
+    DEFAULT_WEIGHTS = {
+        "golden_cross": 3,
+        "rsi_oversold": 2,
+        "volume_surge": 1,
+    }
+
+    def __init__(self, scan_weights: Dict[str, float] = None):
         self.scanner = MarketScanner(market=AUTO_CONFIG.universe_market)
+        self.scan_weights = scan_weights or dict(self.DEFAULT_WEIGHTS)
 
     def select_universe(
         self,
@@ -87,7 +95,7 @@ class UniverseSelector:
                     "composite_score": 0,
                     "scan_signals": [],
                 }
-            candidates[ticker]["composite_score"] += 3  # 골든크로스: 3점
+            candidates[ticker]["composite_score"] += self.scan_weights.get("golden_cross", 3)
             candidates[ticker]["scan_signals"].append("golden_cross")
 
         for item in rsi_oversold:
@@ -100,7 +108,7 @@ class UniverseSelector:
                     "composite_score": 0,
                     "scan_signals": [],
                 }
-            candidates[ticker]["composite_score"] += 2  # RSI 과매도: 2점
+            candidates[ticker]["composite_score"] += self.scan_weights.get("rsi_oversold", 2)
             candidates[ticker]["scan_signals"].append("rsi_oversold")
             candidates[ticker]["rsi"] = item.get("rsi")
 
@@ -114,7 +122,7 @@ class UniverseSelector:
                     "composite_score": 0,
                     "scan_signals": [],
                 }
-            candidates[ticker]["composite_score"] += 1  # 거래량 급증: 1점
+            candidates[ticker]["composite_score"] += self.scan_weights.get("volume_surge", 1)
             candidates[ticker]["scan_signals"].append("volume_surge")
             candidates[ticker]["volume_ratio"] = item.get("volume_ratio")
 

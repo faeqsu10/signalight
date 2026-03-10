@@ -1,7 +1,7 @@
 # Signalight 개발 리스트
 
 > 전체 개발 항목 추적. 작업 완료 시 자동 업데이트.
-> 최종 갱신: 2026-03-10 (Phase 17 완료 — 자율 트레이딩 파이프라인 시운전 + 배포)
+> 최종 갱신: 2026-03-11 (Phase 18 완료 — 아키텍처 문서화 + 자동 개선 루프)
 
 ---
 
@@ -269,9 +269,18 @@
 | 151 | 일일 요약 항상 전송 (거래 0건도 포함) | ✅ | evaluator.py daily_summary 개선 |
 | 152 | CLAUDE.md + devlog.md 문서 업데이트 | ✅ | 아키텍처에 signalight-auto.service 반영 |
 
+## Phase 18 — 아키텍처 문서화 + 자동 개선 루프 [완료]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 153 | docs/architecture.md — 전체 시스템 아키텍처 문서화 | ✅ | 6단계 파이프라인, 데이터 흐름, DB 스키마 |
+| 154 | autonomous/optimizer.py — 성과 기반 자동 파라미터 튜닝 | ✅ | 스캔 가중치 + 합류 임계값, 20건 가드레일 |
+| 155 | pipeline.py + universe.py — 개선 루프 통합 | ✅ | scan_weights 파라미터화, 주간 평가 시 결과 기록 |
+| 156 | decision.py — scan_signals 전달 + CLAUDE.md/devlog 갱신 | ✅ | 매수 시 scan_signals를 reason에 기록 |
+
 ---
 
 ## 통계
 
-- **총 항목**: 152개 (완료 148 + 백로그 2)
+- **총 항목**: 156개 (완료 152 + 백로그 2)
 - **완료율**: 97%

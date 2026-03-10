@@ -16,6 +16,7 @@ from autonomous.analyzer import StockAnalyzer
 from autonomous.decision import DecisionEngine
 from autonomous.execution import SafeExecutor
 from autonomous.evaluator import PerformanceEvaluator
+from autonomous.optimizer import StrategyOptimizer
 
 logger = logging.getLogger("signalight.auto")
 
@@ -27,6 +28,7 @@ class AutonomousPipeline:
         self.state = PipelineState()
         self.tracker = PositionTracker()
         self.trade_rule = TradeRule()
+        self.optimizer = StrategyOptimizer(state=self.state)
 
         self.universe = UniverseSelector()
         self.analyzer = StockAnalyzer()
@@ -69,6 +71,22 @@ class AutonomousPipeline:
         # VIX 캐시 초기화 (매 사이클마다 새로 조회)
         self.analyzer.clear_cache()
         self.executor.reset_daily()
+
+        # ── Phase 0: 최적화 파라미터 적용 ──
+        try:
+            opt_params = self.optimizer.get_optimized_params()
+            if opt_params["active"]:
+                self.universe.scan_weights = opt_params["scan_weights"]
+                self._optimized_thresholds = opt_params["buy_thresholds"]
+                logger.info(
+                    "최적화 파라미터 적용 — 가중치: %s, 임계값: %s",
+                    opt_params["scan_weights"], opt_params["buy_thresholds"],
+                )
+            else:
+                self._optimized_thresholds = None
+        except Exception as e:
+            logger.warning("최적화 파라미터 로드 실패: %s", e)
+            self._optimized_thresholds = None
 
         # ── Phase 1: 보유 종목 매도 판단 ──
         try:
@@ -165,6 +183,13 @@ class AutonomousPipeline:
     def run_weekly_evaluation(self) -> Dict:
         """주간 성과 평가를 실행한다."""
         logger.info("=== 주간 성과 평가 시작 ===")
+
+        # 최근 매도 거래의 결과를 optimizer에 기록
+        try:
+            self._update_optimizer_with_closed_trades()
+        except Exception as e:
+            logger.warning("optimizer 거래 결과 갱신 실패: %s", e)
+
         return self.evaluator.weekly_report()
 
     # ── 내부 메서드 ──
@@ -244,13 +269,18 @@ class AutonomousPipeline:
                 )
                 if order and order.status in ("filled", "simulated"):
                     buy_count += 1
+                    # scan_signals를 reason에 포함 (optimizer 추적용)
+                    scan_sigs = decision.get("scan_signals", [])
+                    reason_parts = [f"score={decision['confluence_score']:.1f}"]
+                    if scan_sigs:
+                        reason_parts.append("scans=" + ",".join(scan_sigs))
                     self.evaluator.send_trade_notification(
                         side="buy",
                         name=order.name,
                         ticker=order.ticker,
                         quantity=order.quantity,
                         price=order.price,
-                        reason=f"score={decision['confluence_score']:.1f}",
+                        reason=" ".join(reason_parts),
                     )
             except Exception as e:
                 logger.error("매수 실행 실패: %s", e)
@@ -301,3 +331,43 @@ class AutonomousPipeline:
             wins=wins,
             losses=losses,
         )
+
+    def _update_optimizer_with_closed_trades(self) -> None:
+        """최근 청산된 포지션의 결과를 optimizer에 기록한다.
+
+        position_tracker의 closed 포지션 중 optimizer에 아직
+        기록되지 않은 거래를 찾아서 update_trade_result()를 호출한다.
+        """
+        closed = self.tracker.get_all_closed()
+        recent_trades = self.state.get_recent_trades(days=7)
+
+        # 최근 7일 매도 거래 (pnl_pct 존재)
+        sell_trades = [
+            t for t in recent_trades
+            if t["side"] == "sell" and t.get("pnl_pct") is not None
+        ]
+
+        for trade in sell_trades:
+            ticker = trade["ticker"]
+            pnl_pct = trade["pnl_pct"]
+
+            # 해당 종목의 매수 거래에서 scan_signals 찾기
+            buy_trades = [
+                t for t in recent_trades
+                if t["ticker"] == ticker and t["side"] == "buy"
+            ]
+
+            # reason 필드에서 scan_signals 추출 시도
+            scan_signals = []
+            for bt in buy_trades:
+                reason = bt.get("reason", "") or ""
+                for sig in ["golden_cross", "rsi_oversold", "volume_surge"]:
+                    if sig in reason and sig not in scan_signals:
+                        scan_signals.append(sig)
+
+            if scan_signals:
+                self.optimizer.update_trade_result(
+                    ticker=ticker,
+                    scan_signals=scan_signals,
+                    pnl_pct=pnl_pct,
+                )

@@ -83,6 +83,7 @@ class DecisionEngine:
                     "stock_data": data,
                     "recommendation": rec,
                     "confluence_score": data.get("confluence_score", 0),
+                    "scan_signals": data.get("scan_signals", []),
                 })
 
         # confluence_score 내림차순 정렬
