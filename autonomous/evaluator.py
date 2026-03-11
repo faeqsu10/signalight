@@ -6,7 +6,7 @@ PositionTracker와 PipelineState의 데이터를 기반으로
 
 import logging
 from datetime import date
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from bot.telegram import send_message
 from trading.position_tracker import PositionTracker
@@ -54,7 +54,7 @@ class PerformanceEvaluator:
 
         return perf_7d
 
-    def daily_summary(self) -> Optional[str]:
+    def daily_summary(self, optimizer_status: Optional[Dict] = None) -> Optional[str]:
         """일일 거래 요약을 생성하고 전송한다.
 
         거래 유무와 관계없이 항상 파이프라인 실행 결과를 전송한다.
@@ -96,6 +96,10 @@ class PerformanceEvaluator:
                 ticker = pos["ticker"]
                 msg_lines.append(f"  {name}({ticker}) 진입가 {entry:,}원")
 
+        if optimizer_status:
+            msg_lines.append("")
+            msg_lines.extend(self._format_optimizer_status(optimizer_status))
+
         msg = "\n".join(msg_lines)
 
         chat_id = AUTO_CONFIG.auto_trade_chat_id
@@ -103,6 +107,121 @@ class PerformanceEvaluator:
             send_message(msg, chat_id=chat_id)
 
         return msg
+
+    def _format_optimizer_status(self, status: Dict) -> List[str]:
+        """피드백 루프(optimizer) 상태를 초보자 친화적으로 포맷한다."""
+        lines = ["<b>피드백 루프 상태</b>"]
+
+        active = bool(status.get("active", False))
+        total = int(status.get("total_trades", 0) or 0)
+        min_trades = int(status.get("min_trades", 20) or 20)
+        win_rate = float(status.get("overall_win_rate", 0.0) or 0.0)
+
+        if active:
+            lines.append(
+                f"적용: ON (샘플 {total}건, 승률 {win_rate:.1f}%)"
+            )
+        else:
+            if total < min_trades:
+                lines.append(f"적용: OFF (샘플 부족 {total}/{min_trades}건)")
+            else:
+                lines.append(f"적용: OFF (WF 기준 미충족, 샘플 {total}건)")
+            lines.append("현재는 기본 기준으로 매매합니다.")
+
+        reason = status.get("adjustment_reason", "")
+        if reason:
+            lines.append(f"판단 사유: {reason}")
+
+        wf_valid = int(status.get("wf_valid_folds", 0) or 0)
+        if wf_valid > 0:
+            wf_passes = int(status.get("wf_passes", 0) or 0)
+            wf_required = int(status.get("wf_required_passes", 0) or 0)
+            avg_imp = float(status.get("avg_improvement", 0.0) or 0.0)
+            imp_th = float(status.get("improvement_threshold", 0.0) or 0.0)
+            lines.append(
+                f"WF 비교: {wf_passes}/{wf_valid} 통과 (기준 {wf_required}), "
+                f"평균 개선 {avg_imp:+.3f} / 기준 +{imp_th:.2f}"
+            )
+
+        latest = status.get("latest_change")
+        if latest:
+            lines.append(
+                f"최근 이력: {latest.get('evaluated_at', '')} | "
+                f"{'적용' if int(latest.get('applied', 0) or 0) == 1 else '미적용'}"
+            )
+
+        default_w = status.get("default_scan_weights", {})
+        scan_w = status.get("scan_weights", {})
+        default_t = status.get("default_buy_thresholds", {})
+        buy_t = status.get("buy_thresholds", {})
+
+        scan_lines = self._format_changes(
+            title="스캔 가중치 변화",
+            mapping_order=[
+                ("golden_cross", "골든크로스"),
+                ("rsi_oversold", "RSI 과매도"),
+                ("volume_surge", "거래량 급증"),
+            ],
+            before=default_w,
+            after=scan_w,
+        )
+        threshold_lines = self._format_changes(
+            title="진입 임계값 변화",
+            mapping_order=[
+                ("uptrend", "상승장"),
+                ("sideways", "횡보장"),
+                ("downtrend", "하락장"),
+            ],
+            before=default_t,
+            after=buy_t,
+        )
+
+        lines.extend(scan_lines)
+        lines.extend(threshold_lines)
+
+        lines.append("")
+        lines.append("<b>초보자 설명</b>")
+        lines.append(
+            "스캔 가중치는 후보 선별 점수 비중입니다. 높을수록 그 신호를 더 중요하게 봅니다."
+        )
+        lines.append(
+            "진입 임계값은 매수에 필요한 최소 점수입니다. 낮아지면 진입이 쉬워지고, 높아지면 보수적으로 진입합니다."
+        )
+
+        return lines
+
+    def _format_changes(
+        self,
+        title: str,
+        mapping_order: List[tuple],
+        before: Dict,
+        after: Dict,
+    ) -> List[str]:
+        lines = [f"<b>{title}</b>"]
+        any_change = False
+
+        for key, label in mapping_order:
+            b = before.get(key)
+            a = after.get(key)
+            if b is None or a is None:
+                continue
+
+            delta = round(float(a) - float(b), 2)
+            if delta == 0:
+                sign = "유지"
+            elif delta > 0:
+                sign = f"상향 +{delta:.2f}"
+                any_change = True
+            else:
+                sign = f"하향 {delta:.2f}"
+                any_change = True
+
+            lines.append(f"- {label}: {float(b):.2f} → {float(a):.2f} ({sign})")
+
+        if not any_change:
+            lines.append("- 변경 없음 (기본값 유지)")
+
+        return lines
 
     def send_trade_notification(
         self, side: str, name: str, ticker: str,

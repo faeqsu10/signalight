@@ -37,7 +37,34 @@ class AutonomousConfig:
     # ── 유니버스 선정 ──
     universe_market: str = "KOSPI"        # 스캔 대상 시장
     universe_max_candidates: int = 30     # 스캔 후보 최대 수
+    universe_scan_limit: int = 50         # 각 스캔(골든/RSI/거래량) 최대 조회 수
     min_trading_value: int = 5_000_000_000  # 최소 일평균 거래대금 (50억)
+    scan_rsi_oversold_threshold: float = 35.0  # RSI 과매도 스캔 기준 (완화)
+    scan_volume_surge_ratio: float = 2.0       # 거래량 급증 스캔 배수 (완화)
+    initial_entry_threshold_uptrend: float = 1.8   # 초기 진입 임계값(상승장, 완화)
+    initial_entry_threshold_sideways: float = 2.6  # 초기 진입 임계값(횡보장, 완화)
+    initial_entry_threshold_downtrend: float = 3.4 # 초기 진입 임계값(하락장, 완화)
+    initial_min_volume_ratio: float = 0.5          # 초기 거래량 필터(완화)
+
+    # ── 피드백 루프(optimizer) ──
+    optimizer_default_weight_golden_cross: float = 3.0
+    optimizer_default_weight_rsi_oversold: float = 2.0
+    optimizer_default_weight_volume_surge: float = 1.0
+
+    optimizer_weight_min_golden_cross: float = 2.1
+    optimizer_weight_max_golden_cross: float = 3.9
+    optimizer_weight_min_rsi_oversold: float = 1.4
+    optimizer_weight_max_rsi_oversold: float = 2.6
+    optimizer_weight_min_volume_surge: float = 0.7
+    optimizer_weight_max_volume_surge: float = 1.3
+
+    optimizer_threshold_adjust_max: float = 0.5
+    optimizer_min_trades: int = 20
+    optimizer_lookback_days: int = 30
+    optimizer_wf_folds: int = 3
+    optimizer_wf_min_validation: int = 5
+    optimizer_wf_required_pass_ratio: float = 0.67
+    optimizer_min_metric_improvement: float = 0.15
 
     # ── 실행 타이밍 ──
     daily_scan_time: str = "16:00"        # 일일 스캔 시각

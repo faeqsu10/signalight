@@ -173,10 +173,12 @@ class MarketScanner:
         logger.info("Scanner: 골든크로스 %d개 종목 발견", len(results))
         return results
 
-    def scan_rsi_oversold(self, limit: int = 20) -> List[Dict]:
+    def scan_rsi_oversold(
+        self, limit: int = 20, oversold_threshold: float = RSI_OVERSOLD
+    ) -> List[Dict]:
         """RSI 과매도 종목 스캔.
 
-        RSI < RSI_OVERSOLD 인 종목을 찾는다.
+        RSI < oversold_threshold 인 종목을 찾는다.
 
         Returns:
             list of {ticker, name, price, rsi, signal}
@@ -201,7 +203,7 @@ class MarketScanner:
                     continue
 
                 rsi_val = float(last_rsi.iloc[-1])
-                if rsi_val < RSI_OVERSOLD:
+                if rsi_val < oversold_threshold:
                     results.append({
                         "ticker": ticker,
                         "name": name,

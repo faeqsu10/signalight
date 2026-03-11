@@ -77,6 +77,39 @@ class TradeRule:
     매수/매도 추천을 반환한다.
     """
 
+    def __init__(
+        self,
+        entry_threshold_overrides: Optional[Dict[str, float]] = None,
+        min_volume_ratio_override: Optional[float] = None,
+    ):
+        # optimizer가 제공한 레짐별 진입 임계값 (없으면 기본 config 사용)
+        self.entry_threshold_overrides = entry_threshold_overrides or {}
+        # 자율매매 전용 거래량 필터 완화값 (없으면 config 기본값)
+        self.min_volume_ratio_override = min_volume_ratio_override
+
+    def set_entry_threshold_overrides(
+        self, overrides: Optional[Dict[str, float]]
+    ) -> None:
+        """레짐별 진입 임계값 오버라이드를 설정한다."""
+        self.entry_threshold_overrides = overrides or {}
+
+    def _get_entry_threshold(self, regime: str) -> float:
+        """레짐별 진입 임계값을 반환한다 (오버라이드 우선)."""
+        value = self.entry_threshold_overrides.get(regime)
+        if value is not None:
+            return float(value)
+        return _get_entry_threshold(regime)
+
+    def set_min_volume_ratio_override(self, value: Optional[float]) -> None:
+        """거래량 필터 오버라이드를 설정한다."""
+        self.min_volume_ratio_override = value
+
+    def _get_min_volume_ratio(self) -> float:
+        """거래량 필터 임계값을 반환한다."""
+        if self.min_volume_ratio_override is not None:
+            return float(self.min_volume_ratio_override)
+        return MIN_VOLUME_RATIO
+
     def should_buy(
         self,
         stock_data: Dict,
@@ -128,7 +161,7 @@ class TradeRule:
             return result
 
         # 2. 레짐별 점수 임계값 체크
-        threshold = _get_entry_threshold(regime)
+        threshold = self._get_entry_threshold(regime)
         if confluence_score < threshold:
             result["reason"] = f"합류 점수 부족 ({confluence_score:.1f} < {threshold})"
             result["details"]["threshold"] = threshold
@@ -141,8 +174,10 @@ class TradeRule:
 
         # 4. 거래량 필터
         volume_ratio = indicators.get("volume_ratio", 1.0)
-        if volume_ratio < MIN_VOLUME_RATIO:
+        min_volume_ratio = self._get_min_volume_ratio()
+        if volume_ratio < min_volume_ratio:
             result["reason"] = f"거래량 부족 (평균 대비 {int(volume_ratio * 100)}%)"
+            result["details"]["min_volume_ratio"] = round(min_volume_ratio, 2)
             return result
 
         # 5. 포트폴리오 제한 체크

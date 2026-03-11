@@ -45,6 +45,13 @@ class AutonomousPipeline:
             state=self.state,
             position_tracker=self.tracker,
         )
+        self._optimizer_status = None
+        self._base_thresholds = {
+            "uptrend": AUTO_CONFIG.initial_entry_threshold_uptrend,
+            "sideways": AUTO_CONFIG.initial_entry_threshold_sideways,
+            "downtrend": AUTO_CONFIG.initial_entry_threshold_downtrend,
+        }
+        self._base_min_volume_ratio = AUTO_CONFIG.initial_min_volume_ratio
 
     def run_daily_cycle(self) -> Dict:
         """일일 매매 사이클을 실행한다.
@@ -74,19 +81,30 @@ class AutonomousPipeline:
 
         # ── Phase 0: 최적화 파라미터 적용 ──
         try:
+            # 시작은 느슨한 기본 기준으로 고정
+            self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
+            self.trade_rule.set_min_volume_ratio_override(self._base_min_volume_ratio)
+
             opt_params = self.optimizer.get_optimized_params()
+            self._optimizer_status = opt_params
+            # 항상 최신 가중치는 반영 (비활성이면 기본값)
+            self.universe.scan_weights = opt_params["scan_weights"]
             if opt_params["active"]:
-                self.universe.scan_weights = opt_params["scan_weights"]
-                self._optimized_thresholds = opt_params["buy_thresholds"]
+                self.trade_rule.set_entry_threshold_overrides(
+                    opt_params["buy_thresholds"]
+                )
                 logger.info(
                     "최적화 파라미터 적용 — 가중치: %s, 임계값: %s",
                     opt_params["scan_weights"], opt_params["buy_thresholds"],
                 )
-            else:
-                self._optimized_thresholds = None
         except Exception as e:
             logger.warning("최적화 파라미터 로드 실패: %s", e)
-            self._optimized_thresholds = None
+            self._optimizer_status = None
+            self.universe.scan_weights = dict(self.universe.DEFAULT_WEIGHTS)
+            self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
+            self.trade_rule.set_min_volume_ratio_override(
+                self._base_min_volume_ratio
+            )
 
         # ── Phase 1: 보유 종목 매도 판단 ──
         try:
@@ -116,7 +134,7 @@ class AutonomousPipeline:
 
         # ── Phase 5: 일일 요약 전송 ──
         try:
-            self.evaluator.daily_summary()
+            self.evaluator.daily_summary(optimizer_status=self._optimizer_status)
         except Exception as e:
             logger.warning("일일 요약 전송 실패: %s", e)
 

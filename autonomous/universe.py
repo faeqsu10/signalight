@@ -57,8 +57,8 @@ class UniverseSelector:
 
         logger.info("유니버스 스캔 시작 (시장: %s)", AUTO_CONFIG.universe_market)
 
-        # 3종 스캔 실행 (각각 limit=50으로 충분히 확보)
-        scan_limit = 50
+        # 3종 스캔 실행 (설정 기반)
+        scan_limit = AUTO_CONFIG.universe_scan_limit
 
         golden_cross = []
         rsi_oversold = []
@@ -71,13 +71,19 @@ class UniverseSelector:
             logger.warning("골든크로스 스캔 실패: %s", e)
 
         try:
-            rsi_oversold = self.scanner.scan_rsi_oversold(limit=scan_limit)
+            rsi_oversold = self.scanner.scan_rsi_oversold(
+                limit=scan_limit,
+                oversold_threshold=AUTO_CONFIG.scan_rsi_oversold_threshold,
+            )
             logger.info("RSI 과매도: %d종목", len(rsi_oversold))
         except Exception as e:
             logger.warning("RSI 과매도 스캔 실패: %s", e)
 
         try:
-            volume_surge = self.scanner.scan_volume_surge(limit=scan_limit)
+            volume_surge = self.scanner.scan_volume_surge(
+                min_ratio=AUTO_CONFIG.scan_volume_surge_ratio,
+                limit=scan_limit,
+            )
             logger.info("거래량 급증: %d종목", len(volume_surge))
         except Exception as e:
             logger.warning("거래량 급증 스캔 실패: %s", e)
