@@ -14,6 +14,8 @@ LONG_MA = 50
 RSI_PERIOD = 14
 RSI_OVERSOLD = 30
 RSI_OVERBOUGHT = 70
+RSI_EXTREME_LOW = 20          # RSI 연속 강도 점수 상한 기준 (과매도 극단)
+RSI_EXTREME_HIGH = 80         # RSI 연속 강도 점수 상한 기준 (과매수 극단)
 VIX_EXTREME_FEAR = 30
 VIX_FEAR = 25
 VIX_EXTREME_GREED = 12
@@ -24,6 +26,16 @@ STOCH_RSI_SMOOTH_D = 3
 STOCH_RSI_OVERSOLD = 20
 STOCH_RSI_OVERBOUGHT = 80
 MACRO_SIGNAL_MAX_SCORE = 1.5
+BB_PCT_B_LOWER = 0.2          # 볼린저밴드 %B 하단 근처 임계값
+BB_PCT_B_UPPER = 0.8          # 볼린저밴드 %B 상단 근처 임계값
+OBV_DIVERGENCE_WEIGHT = 0.8   # OBV 다이버전스 가중치
+CONFLUENCE_MIXED_TOLERANCE = 0.3  # 합류 점수 혼재 판정 허용 오차
+SIGNAL_STRENGTH_STRONG_BUY = 3.5   # 강한 매수 시그널 임계값
+SIGNAL_STRENGTH_BUY = 1.5          # 매수 시그널 임계값
+SIGNAL_STRENGTH_STRONG_SELL = -3.5  # 강한 매도 시그널 임계값
+SIGNAL_STRENGTH_SELL = -1.5        # 매도 시그널 임계값
+VOLUME_RATIO_HIGH = 1.5       # 거래량 비율 높음 기준
+VOLUME_RATIO_LOW = 0.5        # 거래량 비율 낮음 기준
 
 from backtest import Signal, SignalType
 
@@ -92,31 +104,40 @@ def _continuous_rsi_score(
     rsi_value: float,
     rsi_oversold: float = RSI_OVERSOLD,
     rsi_overbought: float = RSI_OVERBOUGHT,
+    rsi_extreme_low: float = RSI_EXTREME_LOW,
+    rsi_extreme_high: float = RSI_EXTREME_HIGH,
 ) -> float:
     """RSI 연속 강도 점수 (0.0 ~ 1.0).
-    과매도: RSI 30=0.5, 25=0.75, 20=1.0 (선형 보간)
-    과매수: RSI 70=0.5, 75=0.75, 80=1.0 (선형 보간)
+    과매도: RSI oversold=0.5, 중간=0.75, extreme_low=1.0 (선형 보간)
+    과매수: RSI overbought=0.5, 중간=0.75, extreme_high=1.0 (선형 보간)
     중립 구간은 0.0.
     """
-    if rsi_value <= 20:
+    if rsi_value <= rsi_extreme_low:
         return 1.0
     elif rsi_value <= rsi_oversold:
-        # 20~30 구간: 1.0 → 0.5 선형
-        return 0.5 + 0.5 * (rsi_oversold - rsi_value) / (rsi_oversold - 20)
-    elif rsi_value >= 80:
+        # extreme_low~oversold 구간: 1.0 → 0.5 선형
+        return 0.5 + 0.5 * (rsi_oversold - rsi_value) / (rsi_oversold - rsi_extreme_low)
+    elif rsi_value >= rsi_extreme_high:
         return 1.0
     elif rsi_value >= rsi_overbought:
-        # 70~80 구간: 0.5 → 1.0 선형
-        return 0.5 + 0.5 * (rsi_value - rsi_overbought) / (80 - rsi_overbought)
+        # overbought~extreme_high 구간: 0.5 → 1.0 선형
+        return 0.5 + 0.5 * (rsi_value - rsi_overbought) / (rsi_extreme_high - rsi_overbought)
     return 0.0
 
 
-def _continuous_bb_score(price: float, bb_lower: float, bb_upper: float, bb_middle: float) -> float:
+def _continuous_bb_score(
+    price: float,
+    bb_lower: float,
+    bb_upper: float,
+    bb_middle: float,
+    bb_pct_b_lower: float = BB_PCT_B_LOWER,
+    bb_pct_b_upper: float = BB_PCT_B_UPPER,
+) -> float:
     """볼린저밴드 %B 기반 연속 점수 (0.0 ~ 1.0).
     하단 이탈: 1.0 (매수)
-    하단 근처(하위 20%): 0.3~0.7 (매수)
+    하단 근처(하위 bb_pct_b_lower): 0.3~0.7 (매수)
     상단 이탈: 1.0 (매도)
-    상단 근처(상위 20%): 0.3~0.7 (매도)
+    상단 근처(상위 bb_pct_b_upper): 0.3~0.7 (매도)
     반환: (buy_score, sell_score)
     """
     bb_range = bb_upper - bb_lower
@@ -127,12 +148,12 @@ def _continuous_bb_score(price: float, bb_lower: float, bb_upper: float, bb_midd
 
     if pct_b <= 0:  # 하단 이탈
         return 1.0  # buy
-    elif pct_b < 0.2:  # 하단 근처
-        return 0.3 + 0.4 * (0.2 - pct_b) / 0.2  # 0.3~0.7 buy
+    elif pct_b < bb_pct_b_lower:  # 하단 근처
+        return 0.3 + 0.4 * (bb_pct_b_lower - pct_b) / bb_pct_b_lower  # 0.3~0.7 buy
     elif pct_b >= 1.0:  # 상단 이탈
         return -1.0  # sell (음수로 표현)
-    elif pct_b > 0.8:  # 상단 근처
-        return -(0.3 + 0.4 * (pct_b - 0.8) / 0.2)  # -0.3~-0.7 sell
+    elif pct_b > bb_pct_b_upper:  # 상단 근처
+        return -(0.3 + 0.4 * (pct_b - bb_pct_b_upper) / (1.0 - bb_pct_b_upper))  # -0.3~-0.7 sell
     return 0.0
 
 
@@ -172,6 +193,8 @@ def analyze_detailed(
     rsi_period = int(settings.get("rsi_period", RSI_PERIOD))
     rsi_oversold = float(settings.get("rsi_oversold", RSI_OVERSOLD))
     rsi_overbought = float(settings.get("rsi_overbought", RSI_OVERBOUGHT))
+    rsi_extreme_low = float(settings.get("rsi_extreme_low", RSI_EXTREME_LOW))
+    rsi_extreme_high = float(settings.get("rsi_extreme_high", RSI_EXTREME_HIGH))
     stoch_rsi_period = int(settings.get("stoch_rsi_period", STOCH_RSI_PERIOD))
     stoch_rsi_smooth_k = int(settings.get("stoch_rsi_smooth_k", STOCH_RSI_SMOOTH_K))
     stoch_rsi_smooth_d = int(settings.get("stoch_rsi_smooth_d", STOCH_RSI_SMOOTH_D))
@@ -181,6 +204,16 @@ def analyze_detailed(
     vix_extreme_fear = float(settings.get("vix_extreme_fear", VIX_EXTREME_FEAR))
     vix_fear = float(settings.get("vix_fear", VIX_FEAR))
     vix_extreme_greed = float(settings.get("vix_extreme_greed", VIX_EXTREME_GREED))
+    bb_pct_b_lower = float(settings.get("bb_pct_b_lower", BB_PCT_B_LOWER))
+    bb_pct_b_upper = float(settings.get("bb_pct_b_upper", BB_PCT_B_UPPER))
+    obv_divergence_weight = float(settings.get("obv_divergence_weight", OBV_DIVERGENCE_WEIGHT))
+    confluence_mixed_tolerance = float(settings.get("confluence_mixed_tolerance", CONFLUENCE_MIXED_TOLERANCE))
+    signal_strength_strong_buy = float(settings.get("signal_strength_strong_buy", SIGNAL_STRENGTH_STRONG_BUY))
+    signal_strength_buy = float(settings.get("signal_strength_buy", SIGNAL_STRENGTH_BUY))
+    signal_strength_strong_sell = float(settings.get("signal_strength_strong_sell", SIGNAL_STRENGTH_STRONG_SELL))
+    signal_strength_sell = float(settings.get("signal_strength_sell", SIGNAL_STRENGTH_SELL))
+    volume_ratio_high = float(settings.get("volume_ratio_high", VOLUME_RATIO_HIGH))
+    volume_ratio_low = float(settings.get("volume_ratio_low", VOLUME_RATIO_LOW))
 
     if len(df) < long_ma_days:
         return result
@@ -244,9 +277,9 @@ def analyze_detailed(
 
     # ── 1. 이동평균선 (연속 점수) ──────────────────
     vol_note = ""
-    if volume_ratio >= 1.5:
+    if volume_ratio >= volume_ratio_high:
         vol_note = " [거래량 확인 ↑]"
-    elif volume_ratio < 0.5:
+    elif volume_ratio < volume_ratio_low:
         vol_note = " [거래량 부족 주의]"
 
     cur_short_val = float(short_ma.iloc[-1]) if not pd.isna(short_ma.iloc[-1]) else None
@@ -291,7 +324,7 @@ def analyze_detailed(
 
     # ── 2. RSI (연속 강도 점수) ────────────────────
     if current_rsi is not None:
-        rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought)
+        rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought, rsi_extreme_low, rsi_extreme_high)
         if rsi_score > 0:
             if current_rsi <= rsi_oversold:
                 weighted = rsi_score * _regime_weight(regime, "buy")
@@ -355,7 +388,7 @@ def analyze_detailed(
 
     # ── 4. 볼린저밴드 (%B 기반 연속 점수) ──────────
     if current_bb_lower is not None and current_bb_upper is not None and current_bb_middle is not None:
-        bb_score = _continuous_bb_score(current_price, current_bb_lower, current_bb_upper, current_bb_middle)
+        bb_score = _continuous_bb_score(current_price, current_bb_lower, current_bb_upper, current_bb_middle, bb_pct_b_lower, bb_pct_b_upper)
         if bb_score > 0:
             weighted = bb_score * _regime_weight(regime, "buy")
             signals.append({
@@ -381,7 +414,7 @@ def analyze_detailed(
     # ── 5. OBV 다이버전스 (신규) ──────────────────
     obv_strength = calc_obv_divergence_strength(closes, obv, lookback=20)
     if obv_strength > 0:
-        weighted = obv_strength * 0.8 * _regime_weight(regime, "buy")
+        weighted = obv_strength * obv_divergence_weight * _regime_weight(regime, "buy")
         signals.append({
             "trigger": "OBV 상승 다이버전스",
             "type": "buy",
@@ -605,7 +638,7 @@ def analyze_detailed(
     result["signals"] = signals
 
     # ── 합류 점수 계산 (방향별 가중 합산) ──────────
-    if buy_score > 0 and sell_score > 0 and abs(buy_score - sell_score) < 0.3:
+    if buy_score > 0 and sell_score > 0 and abs(buy_score - sell_score) < confluence_mixed_tolerance:
         result["confluence_score"] = 0
         result["confluence_direction"] = "mixed"
     else:
@@ -614,13 +647,13 @@ def analyze_detailed(
 
     # 신호 강도 분류 (가중 점수 기반)
     net_score = buy_score - sell_score
-    if net_score >= 3.5:
+    if net_score >= signal_strength_strong_buy:
         result["signal_strength"] = "strong_buy"
-    elif net_score >= 1.5:
+    elif net_score >= signal_strength_buy:
         result["signal_strength"] = "buy"
-    elif net_score <= -3.5:
+    elif net_score <= signal_strength_strong_sell:
         result["signal_strength"] = "strong_sell"
-    elif net_score <= -1.5:
+    elif net_score <= signal_strength_sell:
         result["signal_strength"] = "sell"
     else:
         result["signal_strength"] = "neutral"

@@ -18,6 +18,7 @@ from autonomous.decision import DecisionEngine
 from autonomous.execution import SafeExecutor
 from autonomous.evaluator import PerformanceEvaluator
 from autonomous.optimizer import StrategyOptimizer
+from config import DRY_RUN_VIRTUAL_ASSET
 
 logger = logging.getLogger("signalight.auto")
 
@@ -362,9 +363,9 @@ class AutonomousPipeline:
 
         # dry_run: 가상 에퀴티
         self.state.save_equity_snapshot(
-            total_equity=50_000_000,
+            total_equity=DRY_RUN_VIRTUAL_ASSET,
             invested=0,
-            cash=50_000_000,
+            cash=DRY_RUN_VIRTUAL_ASSET,
             open_positions=len(open_positions),
         )
 

@@ -21,6 +21,7 @@ from config import (
     TARGET_WEIGHT_PCT, MAX_SINGLE_POSITION_PCT,
     VIX_POSITION_MULT_CALM, VIX_POSITION_MULT_NORMAL,
     VIX_POSITION_MULT_FEAR, VIX_POSITION_MULT_EXTREME,
+    VIX_THRESHOLD_EXTREME, VIX_THRESHOLD_FEAR, VIX_THRESHOLD_NORMAL,
     SECTOR_MAP,
 )
 
@@ -47,11 +48,11 @@ def _get_vix_position_mult(vix: Optional[float]) -> float:
     """VIX 수준에 따른 포지션 크기 배수를 반환한다."""
     if vix is None:
         return VIX_POSITION_MULT_NORMAL
-    if vix > 30:
+    if vix > VIX_THRESHOLD_EXTREME:
         return VIX_POSITION_MULT_EXTREME
-    elif vix > 25:
+    elif vix > VIX_THRESHOLD_FEAR:
         return VIX_POSITION_MULT_FEAR
-    elif vix > 15:
+    elif vix > VIX_THRESHOLD_NORMAL:
         return VIX_POSITION_MULT_NORMAL
     return VIX_POSITION_MULT_CALM
 
@@ -134,11 +135,11 @@ class TradeRule:
         if isinstance(overrides, dict):
             if vix is None:
                 return float(overrides.get("normal", VIX_POSITION_MULT_NORMAL))
-            if vix > 30:
+            if vix > VIX_THRESHOLD_EXTREME:
                 return float(overrides.get("extreme", VIX_POSITION_MULT_EXTREME))
-            if vix > 25:
+            if vix > VIX_THRESHOLD_FEAR:
                 return float(overrides.get("fear", VIX_POSITION_MULT_FEAR))
-            if vix > 15:
+            if vix > VIX_THRESHOLD_NORMAL:
                 return float(overrides.get("normal", VIX_POSITION_MULT_NORMAL))
             return float(overrides.get("calm", VIX_POSITION_MULT_CALM))
         return _get_vix_position_mult(vix)

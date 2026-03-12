@@ -9,7 +9,7 @@ from pykrx import stock
 
 from config import (
     SHORT_MA, LONG_MA, RSI_PERIOD,
-    RSI_OVERSOLD, RSI_OVERBOUGHT, DATA_PERIOD_DAYS,
+    RSI_OVERSOLD, RSI_OVERBOUGHT, DATA_PERIOD_DAYS, SCANNER_API_DELAY,
 )
 from signals.indicators import calc_moving_average, calc_rsi
 from scanner.kospi200_tickers import (
@@ -132,7 +132,7 @@ class MarketScanner:
             try:
                 df = self._fetch_ohlcv(ticker)
                 if df is None:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 closes = df["종가"]
@@ -147,7 +147,7 @@ class MarketScanner:
                 short_valid = short_ma.dropna()
                 long_valid = long_ma.dropna()
                 if len(short_valid) < 2 or len(long_valid) < 2:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 # 골든크로스: 오늘 short > long, 어제 short <= long
@@ -172,7 +172,7 @@ class MarketScanner:
             except Exception:
                 pass
 
-            time.sleep(0.1)
+            time.sleep(SCANNER_API_DELAY)
 
         logger.info("Scanner: 골든크로스 %d개 종목 발견", len(results))
         return results
@@ -195,7 +195,7 @@ class MarketScanner:
             try:
                 df = self._fetch_ohlcv(ticker)
                 if df is None:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 closes = df["종가"]
@@ -204,7 +204,7 @@ class MarketScanner:
                 last_rsi = rsi_series.dropna()
 
                 if len(last_rsi) == 0:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 rsi_val = float(last_rsi.iloc[-1])
@@ -222,7 +222,7 @@ class MarketScanner:
             except Exception:
                 pass
 
-            time.sleep(0.1)
+            time.sleep(SCANNER_API_DELAY)
 
         logger.info("Scanner: RSI 과매도 %d개 종목 발견", len(results))
         return results
@@ -243,14 +243,14 @@ class MarketScanner:
             try:
                 df = self._fetch_ohlcv(ticker, days=60)
                 if df is None or len(df) < 5:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 volumes = df["거래량"]
                 closes = df["종가"]
 
                 if len(volumes) < 2:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 # 마지막 거래일 제외한 직전 20일 평균
@@ -258,7 +258,7 @@ class MarketScanner:
                 avg_vol = prev_vols.mean() if len(prev_vols) > 0 else 0
 
                 if avg_vol <= 0:
-                    time.sleep(0.1)
+                    time.sleep(SCANNER_API_DELAY)
                     continue
 
                 ratio = float(volumes.iloc[-1] / avg_vol)
@@ -278,7 +278,7 @@ class MarketScanner:
             except Exception:
                 pass
 
-            time.sleep(0.1)
+            time.sleep(SCANNER_API_DELAY)
 
         logger.info("Scanner: 거래량 급증 %d개 종목 발견", len(results))
         return results

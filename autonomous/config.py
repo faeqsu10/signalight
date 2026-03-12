@@ -107,7 +107,7 @@ class AutonomousConfig:
     market_close_minute: int = 20         # 15:20까지 주문 허용
 
     # ── 주문 설정 ──
-    dry_run: bool = True                  # True = 시뮬레이션 (실제 주문 없음)
+    dry_run: bool = False                 # False = 모의투자 API로 실제 주문
     use_mock: bool = True                 # True = 키움 모의투자
     max_order_amount: int = 5_000_000     # 1회 최대 주문 금액 (원)
     order_type: str = "market"            # "market" 또는 "limit"

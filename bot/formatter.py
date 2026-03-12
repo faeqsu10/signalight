@@ -9,6 +9,22 @@
 from datetime import datetime
 from typing import List, Optional
 
+from config import (
+    RSI_OVERSOLD,
+    RSI_OVERBOUGHT,
+    VIX_EXTREME_FEAR,
+    VIX_FEAR,
+    VIX_EXTREME_GREED,
+    VIX_THRESHOLD_EXTREME,
+    VIX_THRESHOLD_FEAR,
+    VIX_THRESHOLD_NORMAL,
+    INVESTOR_CONSEC_DAYS,
+    MACRO_ALERT_THRESHOLD,
+    MARKET_TEMP_DOWN_SEVERE,
+    MARKET_TEMP_DOWN_MILD,
+    VOLUME_RATIO_HIGH,
+)
+
 
 # ──────────────────────────────────────────────
 # 헬퍼 함수
@@ -113,20 +129,20 @@ def _confluence_label(score: float, total: int, direction: str = "buy") -> str:
 
 def _rsi_label(rsi: float) -> str:
     """RSI 값에 대한 해석 레이블을 반환한다."""
-    if rsi >= 70:
+    if rsi >= RSI_OVERBOUGHT:
         return "과매수"
-    elif rsi <= 30:
+    elif rsi <= RSI_OVERSOLD:
         return "과매도"
     return "중립"
 
 
 def _vix_label(vix: float) -> str:
     """VIX 값에 대한 해석 레이블을 반환한다."""
-    if vix >= 30:
+    if vix >= VIX_EXTREME_FEAR:
         return "극단적 공포"
-    elif vix >= 25:
+    elif vix >= VIX_FEAR:
         return "공포"
-    elif vix <= 12:
+    elif vix <= VIX_EXTREME_GREED:
         return "극단적 낙관"
     return "보통"
 
@@ -175,7 +191,7 @@ DIVIDER = "━━━━━━━━━━━━━━━━━━━"
 DIVIDER_THIN = "───────────────────"
 
 # 매크로 변동률 경고 임계치 (절대값 %)
-_MACRO_ALERT_THRESHOLD = 2.0
+_MACRO_ALERT_THRESHOLD = MACRO_ALERT_THRESHOLD
 
 
 def _format_macro_value(value: float, unit: str) -> str:
@@ -275,9 +291,9 @@ def _build_market_temperature(stock_data_list: List[dict]) -> str:
     # VIX 라인
     if vix is not None:
         vix_lbl = _vix_label(vix)
-        if vix >= 25:
+        if vix >= VIX_THRESHOLD_FEAR:
             vix_emoji = "🥶"
-        elif vix <= 12:
+        elif vix <= VIX_EXTREME_GREED:
             vix_emoji = "🔥"
         else:
             vix_emoji = "😐"
@@ -341,20 +357,20 @@ def _build_market_comment(stock_data_list: List[dict]) -> str:
     # 시장 분위기
     if total > 0:
         down_ratio = down_count / total
-        if down_ratio >= 0.7:
+        if down_ratio >= MARKET_TEMP_DOWN_SEVERE:
             parts.append("전반적 약세장")
-        elif down_ratio <= 0.3:
+        elif down_ratio <= MARKET_TEMP_DOWN_MILD:
             parts.append("전반적 강세장")
         else:
             parts.append("혼조세 장세")
 
     # VIX 코멘트
     if vix is not None:
-        if vix >= 30:
+        if vix >= VIX_THRESHOLD_EXTREME:
             parts.append("극단적 공포 구간으로 역발상 매수 기회 모색 가능")
-        elif vix >= 25:
+        elif vix >= VIX_THRESHOLD_FEAR:
             parts.append("시장 공포 심리 지속 중")
-        elif vix <= 12:
+        elif vix <= VIX_EXTREME_GREED:
             parts.append("과도한 낙관, 과열 주의 필요")
 
     # 시그널 코멘트
@@ -440,10 +456,10 @@ def _build_spotlight_block(stock: dict) -> str:
     # 수급 요약 추가
     foreign_consec = investor.get("foreign_consec_days", 0)
     inst_consec = investor.get("institutional_consec_days", 0)
-    if foreign_consec and abs(foreign_consec) >= 3:
+    if foreign_consec and abs(foreign_consec) >= INVESTOR_CONSEC_DAYS:
         direction_str = "매수" if foreign_consec > 0 else "매도"
         reasons.append(f"외인 {abs(foreign_consec)}일 연속 {direction_str}")
-    if inst_consec and abs(inst_consec) >= 3:
+    if inst_consec and abs(inst_consec) >= INVESTOR_CONSEC_DAYS:
         direction_str = "매수" if inst_consec > 0 else "매도"
         reasons.append(f"기관 {abs(inst_consec)}일 연속 {direction_str}")
 
@@ -511,24 +527,24 @@ def _build_compact_row(stock: dict) -> str:
 
     rsi = indicators.get("rsi")
     if rsi is not None:
-        if rsi >= 70:
+        if rsi >= RSI_OVERBOUGHT:
             tags.append(f"RSI {rsi:.0f} 과매수")
-        elif rsi <= 30:
+        elif rsi <= RSI_OVERSOLD:
             tags.append(f"RSI {rsi:.0f} 과매도")
         else:
             tags.append(f"RSI {rsi:.0f}")
 
     vol_ratio = indicators.get("volume_ratio")
-    if vol_ratio is not None and vol_ratio > 1.5:
+    if vol_ratio is not None and vol_ratio > VOLUME_RATIO_HIGH:
         tags.append(f"거래량 {int(vol_ratio * 100)}%")
 
     # 수급
     foreign_consec = investor.get("foreign_consec_days", 0)
     inst_consec = investor.get("institutional_consec_days", 0)
-    if foreign_consec and abs(foreign_consec) >= 3:
+    if foreign_consec and abs(foreign_consec) >= INVESTOR_CONSEC_DAYS:
         d = "매수" if foreign_consec > 0 else "매도"
         tags.append(f"외인{abs(foreign_consec)}일{d}")
-    if inst_consec and abs(inst_consec) >= 3:
+    if inst_consec and abs(inst_consec) >= INVESTOR_CONSEC_DAYS:
         d = "매수" if inst_consec > 0 else "매도"
         tags.append(f"기관{abs(inst_consec)}일{d}")
 
@@ -567,13 +583,13 @@ def _build_signal_summary_sentence(stock: dict) -> str:
     # 수급 정보 추가
     foreign_consec = investor.get("foreign_consec_days", 0)
     inst_consec = investor.get("institutional_consec_days", 0)
-    if foreign_consec and foreign_consec >= 3:
+    if foreign_consec and foreign_consec >= INVESTOR_CONSEC_DAYS:
         buy_reasons.append(f"외인 {foreign_consec}일 연속 매수")
-    elif foreign_consec and foreign_consec <= -3:
+    elif foreign_consec and foreign_consec <= -INVESTOR_CONSEC_DAYS:
         sell_reasons.append(f"외인 {abs(foreign_consec)}일 연속 매도")
-    if inst_consec and inst_consec >= 3:
+    if inst_consec and inst_consec >= INVESTOR_CONSEC_DAYS:
         buy_reasons.append(f"기관 {inst_consec}일 연속 매수")
-    elif inst_consec and inst_consec <= -3:
+    elif inst_consec and inst_consec <= -INVESTOR_CONSEC_DAYS:
         sell_reasons.append(f"기관 {abs(inst_consec)}일 연속 매도")
 
     parts = []
@@ -763,9 +779,9 @@ def _build_signal_block(stock: dict) -> str:
 
     if foreign_net is not None:
         amt_str = _format_shares(abs(foreign_net))
-        if foreign_consec and foreign_consec >= 3:
+        if foreign_consec and foreign_consec >= INVESTOR_CONSEC_DAYS:
             ref_lines.append(f"외인 {foreign_consec}일 연속 순매수 ({amt_str})")
-        elif foreign_consec and foreign_consec <= -3:
+        elif foreign_consec and foreign_consec <= -INVESTOR_CONSEC_DAYS:
             ref_lines.append(f"외인 {abs(foreign_consec)}일 연속 순매도 ({amt_str})")
         else:
             d = "순매수" if foreign_net >= 0 else "순매도"
@@ -773,9 +789,9 @@ def _build_signal_block(stock: dict) -> str:
 
     if institutional_net is not None:
         amt_str = _format_shares(abs(institutional_net))
-        if institutional_consec and institutional_consec >= 3:
+        if institutional_consec and institutional_consec >= INVESTOR_CONSEC_DAYS:
             ref_lines.append(f"기관 {institutional_consec}일 연속 순매수 ({amt_str})")
-        elif institutional_consec and institutional_consec <= -3:
+        elif institutional_consec and institutional_consec <= -INVESTOR_CONSEC_DAYS:
             ref_lines.append(f"기관 {abs(institutional_consec)}일 연속 순매도 ({amt_str})")
         else:
             d = "순매수" if institutional_net >= 0 else "순매도"

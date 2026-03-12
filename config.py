@@ -69,10 +69,61 @@ VIX_EXTREME_FEAR = 30   # 극단적 공포 (역발상 매수 기회)
 VIX_FEAR = 25           # 공포 구간 (주의 필요)
 VIX_EXTREME_GREED = 12  # 극단적 낙관 (과열 경고)
 
+# RSI 연속 점수 계산용 극단 경계
+RSI_EXTREME_LOW = 20    # RSI 극단 과매도 (연속 점수 최대 구간)
+RSI_EXTREME_HIGH = 80   # RSI 극단 과매수 (연속 점수 최대 구간)
+
+# 볼린저밴드 %B 경계
+BB_PCT_B_LOWER = 0.2    # 하단 근처 판단 경계 (%B 기준)
+BB_PCT_B_UPPER = 0.8    # 상단 근처 판단 경계 (%B 기준)
+
+# 거래량 비율 임계값
+VOLUME_RATIO_HIGH = 1.5  # 거래량 급증 판단 배수 (평균 대비)
+VOLUME_RATIO_LOW = 0.5   # 거래량 부족 판단 배수 (평균 대비)
+
+# 합류 점수 혼재 판단
+CONFLUENCE_MIXED_TOLERANCE = 0.3  # 매수/매도 점수 차이가 이 값 미만이면 혼재(mixed)
+
+# 신호 강도 분류 임계값 (net_score = buy_score - sell_score)
+SIGNAL_STRENGTH_STRONG_BUY = 3.5     # 강한 매수
+SIGNAL_STRENGTH_BUY = 1.5            # 매수
+SIGNAL_STRENGTH_STRONG_SELL = -3.5   # 강한 매도
+SIGNAL_STRENGTH_SELL = -1.5          # 매도
+
+# OBV 다이버전스 가중치
+OBV_DIVERGENCE_WEIGHT = 0.8  # OBV 다이버전스 시그널 기본 가중치
+
 # 회복 분석 설정
 RECOVERY_RSI_EXTREME = 20      # RSI 극단 과매도 기준
 RECOVERY_VOLUME_SPIKE = 3.0    # 투매/급등 거래량 배수 (평균 대비)
 RECOVERY_LOOKBACK_DAYS = 750   # 과거 낙폭 에피소드 탐색 기간 (약 3년)
+RECOVERY_SCORE_STRONG = 9.0    # 회복 점수 — 강한 반등 가능
+RECOVERY_SCORE_MODERATE = 6.0  # 회복 점수 — 중간 반등 가능
+RECOVERY_SCORE_WEAK = 3.0      # 회복 점수 — 약한 반등 가능
+RECOVERY_BB_PERIOD = 20        # 회복 분석 볼린저밴드 기간
+RECOVERY_BB_STD = 2            # 회복 분석 볼린저밴드 표준편차 배수
+RECOVERY_OBV_LOOKBACK = 20     # 회복 OBV 다이버전스 룩백 기간
+RECOVERY_DRAWDOWN_THRESHOLD = -20.0  # 낙폭 에피소드 판단 임계값 (%)
+RECOVERY_LOSS_SEVERE = -30.0   # 포지션 심각 손실 판단 (%)
+RECOVERY_LOSS_MODERATE = -10.0 # 포지션 중간 손실 판단 (%)
+RECOVERY_MARKET_CRASH = -10.0  # 시장 급락 판단 (%)
+RECOVERY_MARKET_DIP = -5.0     # 시장 소폭 하락 판단 (%)
+
+# 포맷터/표시 설정
+MACRO_ALERT_THRESHOLD = 2.0     # 매크로 변동률 경고 표시 기준 (%)
+MARKET_TEMP_DOWN_SEVERE = 0.7   # 시장 온도: 하락 비율 70% 이상 → 한파
+MARKET_TEMP_DOWN_MILD = 0.3     # 시장 온도: 하락 비율 30% 이상 → 쌀쌀
+
+# VIX 포지션 조절 임계값
+VIX_THRESHOLD_EXTREME = 30  # VIX >= 30: 극단적 공포
+VIX_THRESHOLD_FEAR = 25     # VIX >= 25: 공포
+VIX_THRESHOLD_NORMAL = 15   # VIX >= 15: 보통
+
+# 스캐너 API 호출 간격
+SCANNER_API_DELAY = 0.1  # pykrx API 호출 간 대기 시간 (초)
+
+# 자율매매 가상 자산 (dry_run 모드)
+DRY_RUN_VIRTUAL_ASSET = 50_000_000  # 시뮬레이션 가상 자산 (원)
 
 # ──────────────────────────────────────────────
 # 매매 추천 룰 설정

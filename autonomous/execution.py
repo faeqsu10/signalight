@@ -14,6 +14,7 @@ from trading.position_tracker import PositionTracker
 from trading.portfolio import PortfolioManager
 from autonomous.config import AUTO_CONFIG
 from autonomous.state import PipelineState
+from config import DRY_RUN_VIRTUAL_ASSET
 
 logger = logging.getLogger("signalight.auto")
 
@@ -316,8 +317,8 @@ class SafeExecutor:
                 ticker, price, target_weight_pct=weight_pct
             )
 
-        # dry_run: 가상 자산 기준 계산 (5천만원 기준)
-        virtual_asset = 50_000_000
+        # dry_run: 가상 자산 기준 계산
+        virtual_asset = DRY_RUN_VIRTUAL_ASSET
         target_amount = int(virtual_asset * weight_pct / 100)
         return max(0, target_amount // price)
 

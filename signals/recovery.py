@@ -22,6 +22,10 @@ from config import (
     RECOVERY_VOLUME_SPIKE,
     RECOVERY_LOOKBACK_DAYS,
     INVESTOR_CONSEC_DAYS,
+    RECOVERY_SCORE_STRONG, RECOVERY_SCORE_MODERATE, RECOVERY_SCORE_WEAK,
+    RECOVERY_BB_PERIOD, RECOVERY_BB_STD, RECOVERY_OBV_LOOKBACK,
+    RECOVERY_DRAWDOWN_THRESHOLD, RECOVERY_LOSS_SEVERE, RECOVERY_LOSS_MODERATE,
+    RECOVERY_MARKET_CRASH, RECOVERY_MARKET_DIP,
 )
 
 
@@ -106,11 +110,11 @@ class RecoveryAnalysis:
 # ---------- 점수 해석 ----------
 
 def _interpret_score(score: float) -> str:
-    if score >= 9.0:
+    if score >= RECOVERY_SCORE_STRONG:
         return "강한 회복 신호 — 다수 바닥 지표 확인됨. 단, 추세 전환 확인 필요."
-    elif score >= 6.0:
+    elif score >= RECOVERY_SCORE_MODERATE:
         return "복수 바닥 신호 — 일부 회복 조건 충족. 추가 확인 필요."
-    elif score >= 3.0:
+    elif score >= RECOVERY_SCORE_WEAK:
         return "초기 바닥 신호 — 일부 지표만 확인. 아직 하락 중일 수 있음."
     else:
         return "회복 신호 미감지 — 바닥 형성 증거 부족. 추가 하락 가능성 있음."
@@ -132,10 +136,10 @@ def classify_drawdown_context(
         'MARKET_WIDE' | 'SECTOR_WIDE' | 'INDIVIDUAL'
     """
     # 시장도 크게 하락 (종목 하락의 60% 이상이 시장 영향이면)
-    if market_change_pct < -10 and abs(market_change_pct) >= abs(stock_change_pct) * 0.6:
+    if market_change_pct < RECOVERY_MARKET_CRASH and abs(market_change_pct) >= abs(stock_change_pct) * 0.6:
         return "MARKET_WIDE"
     # 시장 하락 있지만 종목이 훨씬 더 하락
-    elif market_change_pct < -5:
+    elif market_change_pct < RECOVERY_MARKET_DIP:
         return "SECTOR_WIDE"
     else:
         return "INDIVIDUAL"
@@ -157,38 +161,38 @@ def get_position_action(
         dict with action, reason, caution
     """
     # 큰 손실 + 매수 신호
-    if pnl_pct <= -30 and signal_strength in ("strong_buy", "buy"):
+    if pnl_pct <= RECOVERY_LOSS_SEVERE and signal_strength in ("strong_buy", "buy"):
         return {
             "action": "분할 추가 매수 검토",
             "reason": f"큰 손실({pnl_pct:+.1f}%) 상태이나 회복 시그널 감지. 물타기 가능.",
             "caution": "전체 포트폴리오 비중 확인 필수. 한 종목 과집중 주의.",
         }
-    elif pnl_pct <= -30 and signal_strength in ("sell", "strong_sell"):
+    elif pnl_pct <= RECOVERY_LOSS_SEVERE and signal_strength in ("sell", "strong_sell"):
         return {
             "action": "손절 검토",
             "reason": f"큰 손실({pnl_pct:+.1f}%) + 추가 하락 신호. 손실 확대 방지 고려.",
             "caution": "감정적 결정 주의. 펀더멘탈 변화 여부 확인.",
         }
-    elif pnl_pct <= -30:
+    elif pnl_pct <= RECOVERY_LOSS_SEVERE:
         return {
             "action": "관망 (홀딩)",
             "reason": f"큰 손실({pnl_pct:+.1f}%) 상태이나 명확한 방향 신호 없음.",
             "caution": "추가 매수/매도 모두 보류. 추세 전환 확인 후 행동.",
         }
     # 보통 손실 (-10~-30%)
-    elif pnl_pct <= -10 and signal_strength in ("strong_buy", "buy"):
+    elif pnl_pct <= RECOVERY_LOSS_MODERATE and signal_strength in ("strong_buy", "buy"):
         return {
             "action": "분할 추가 매수 검토",
             "reason": f"손실({pnl_pct:+.1f}%) 상태이나 매수 신호. 평단가 낮출 기회.",
             "caution": "전체 포트폴리오 비중 확인.",
         }
-    elif pnl_pct <= -10 and signal_strength in ("sell", "strong_sell"):
+    elif pnl_pct <= RECOVERY_LOSS_MODERATE and signal_strength in ("sell", "strong_sell"):
         return {
             "action": "일부 손절 검토",
             "reason": f"손실({pnl_pct:+.1f}%) + 매도 신호. 추가 하락 가능성.",
             "caution": "전량 매도보다 일부 정리 후 관찰 권장.",
         }
-    elif pnl_pct <= -10:
+    elif pnl_pct <= RECOVERY_LOSS_MODERATE:
         return {
             "action": "관망 (홀딩)",
             "reason": f"손실({pnl_pct:+.1f}%) 중. 뚜렷한 방향 없음.",
@@ -244,7 +248,7 @@ def analyze_recovery(
 
     # 지표 계산
     rsi = calc_rsi(closes, RSI_PERIOD)
-    bb_upper, bb_middle, bb_lower = calc_bollinger_bands(closes, 20, 2)
+    bb_upper, bb_middle, bb_lower = calc_bollinger_bands(closes, RECOVERY_BB_PERIOD, RECOVERY_BB_STD)
     obv = calc_obv(closes, volumes)
 
     current_rsi = float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else None
@@ -295,7 +299,7 @@ def analyze_recovery(
     checks.append(RecoveryCheck("거래량 급증 (투매)", vol_spike, 1.5, vol_detail))
 
     # 5. OBV 상승 다이버전스
-    obv_div = detect_obv_divergence(closes, obv, lookback=20)
+    obv_div = detect_obv_divergence(closes, obv, lookback=RECOVERY_OBV_LOOKBACK)
     obv_detail = "OBV 상승 다이버전스 감지" if obv_div else "OBV 다이버전스 미감지"
     checks.append(RecoveryCheck("OBV 상승 다이버전스", obv_div, 1.5, obv_detail))
 
@@ -332,7 +336,7 @@ def analyze_recovery(
 
 def find_historical_drawdowns(
     df: pd.DataFrame,
-    threshold_pct: float = -20.0,
+    threshold_pct: float = RECOVERY_DRAWDOWN_THRESHOLD,
 ) -> List[DrawdownEpisode]:
     """과거 낙폭 에피소드를 탐색한다.
 
