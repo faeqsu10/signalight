@@ -25,6 +25,11 @@ KIWOOM_REST_API_SECRET = os.getenv("KIWOOM_REST_API_SECRET")
 KIWOOM_ACCOUNT_NO = os.getenv("KIWOOM_ACCOUNT_NO", "")
 TRADING_ENV = os.getenv("TRADING_ENV", "mock")  # "mock" or "prod"
 
+# Alpaca Paper Trading (미국 주식)
+ALPACA_API_KEY = os.getenv("ALPACA_API_KEY", "")
+ALPACA_API_SECRET = os.getenv("ALPACA_API_SECRET", "")
+ALPACA_BASE_URL = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
 # 감시할 종목 리스트 (종목코드, 종목명) — 10종목, 5+ 섹터 분산
 WATCH_LIST = [
     ("005930", "삼성전자"),       # 반도체
