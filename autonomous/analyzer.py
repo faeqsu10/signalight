@@ -7,8 +7,10 @@ import logging
 from typing import List, Dict, Optional
 
 from autonomous.config import AUTO_CONFIG
+from config import MACRO_EVENT_RULES, MACRO_SECTOR_IMPACT, MACRO_SIGNAL_MAX_SCORE
 from data.fetcher import fetch_stock_data, fetch_vix
 from data.investor import fetch_investor_trading
+from data.macro_fetcher import fetch_all_macro_prices
 from signals.strategy import analyze_detailed
 
 logger = logging.getLogger("signalight.auto")
@@ -19,6 +21,7 @@ class StockAnalyzer:
 
     def __init__(self):
         self._vix_cache = None  # type: Optional[float]
+        self._macro_cache = None  # type: Optional[Dict]
         self._strategy_settings = {
             "short_ma": AUTO_CONFIG.indicator_short_ma,
             "long_ma": AUTO_CONFIG.indicator_long_ma,
@@ -34,6 +37,11 @@ class StockAnalyzer:
             "vix_extreme_fear": AUTO_CONFIG.vix_extreme_fear,
             "vix_fear": AUTO_CONFIG.vix_fear,
             "vix_extreme_greed": AUTO_CONFIG.vix_extreme_greed,
+            # 매크로 시그널 설정 (config.py에서 가져옴)
+            "macro_signal_max_score": MACRO_SIGNAL_MAX_SCORE,
+            "macro_event_rules": dict(MACRO_EVENT_RULES),
+            "macro_sector_impact": dict(MACRO_SECTOR_IMPACT),
+            "sector_map": AUTO_CONFIG.sector_map,
         }
 
     def analyze_candidates(
@@ -110,11 +118,15 @@ class StockAnalyzer:
         except Exception as e:
             logger.debug("%s(%s) 수급 데이터 실패: %s", name, ticker, e)
 
+        # 매크로 데이터 (4시간 내부 캐시 + 사이클 단위 캐시)
+        macro_data = self._fetch_macro()
+
         data = analyze_detailed(
             df, ticker, name,
             investor_df=investor_df,
             vix_value=vix_value,
             strategy_settings=self._strategy_settings,
+            macro_data=macro_data,
         )
         return data
 
@@ -134,6 +146,34 @@ class StockAnalyzer:
 
         return None
 
+    def _fetch_macro(self) -> Optional[Dict]:
+        """글로벌 매크로 데이터 조회 (사이클 단위 캐시).
+
+        fetch_all_macro_prices()는 내부 4시간 캐시를 가지며,
+        여기서는 사이클 단위로 추가 캐싱하여 중복 호출을 방지한다.
+        """
+        if self._macro_cache is not None:
+            return self._macro_cache
+
+        try:
+            macro_data = fetch_all_macro_prices()
+            if macro_data:
+                self._macro_cache = macro_data
+                indicators = ", ".join(
+                    f"{k}={v.get('price', 'N/A')}" for k, v in macro_data.items()
+                )
+                logger.info("매크로 데이터: %s", indicators)
+                return self._macro_cache
+        except Exception as e:
+            logger.warning("매크로 데이터 조회 실패: %s", e)
+
+        return None
+
+    def get_macro_data(self) -> Optional[Dict]:
+        """캐시된 매크로 데이터를 반환한다 (없으면 None)."""
+        return self._macro_cache
+
     def clear_cache(self) -> None:
-        """VIX 캐시를 초기화한다."""
+        """VIX + 매크로 캐시를 초기화한다."""
         self._vix_cache = None
+        self._macro_cache = None

@@ -1,11 +1,12 @@
 import schedule
 import time
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple
 
 from config import WATCH_LIST as _CONFIG_WATCH_LIST, DATA_PERIOD_DAYS
 from data.fetcher import fetch_stock_data, fetch_vix
 from data.investor import fetch_investor_trading
+from data.macro_fetcher import fetch_all_macro_prices
 from data.news import fetch_news
 from signals.sentiment import analyze_sentiment
 from signals.strategy import analyze_detailed
@@ -49,8 +50,12 @@ _executor = TradeExecutor(config=_trading_config)
 _interactive_bot = InteractiveBot()
 
 
-def _collect_stock_data() -> List[Dict]:
-    """모든 감시 종목의 구조화된 데이터를 수집한다."""
+def _collect_stock_data() -> Tuple[List[Dict], Optional[Dict]]:
+    """모든 감시 종목의 구조화된 데이터를 수집한다.
+
+    Returns:
+        (stock_data_list, macro_data) 튜플
+    """
     stock_data_list = []
 
     # VIX 1회 조회 후 전 종목에 전달 (중복 호출 방지)
@@ -62,6 +67,15 @@ def _collect_stock_data() -> List[Dict]:
             logger.info("VIX 공포지수: %.1f", vix_value)
     except Exception as e:
         logger.warning("VIX 조회 실패: %s", e)
+
+    # 글로벌 매크로 데이터 1회 조회 (4시간 내부 캐시)
+    macro_data = None
+    try:
+        macro_data = fetch_all_macro_prices()
+        if macro_data:
+            logger.info("매크로 데이터: %d개 지표 조회", len(macro_data))
+    except Exception as e:
+        logger.warning("매크로 데이터 조회 실패: %s", e)
 
     watchlist = _get_watchlist()
     for ticker, name in watchlist:
@@ -77,7 +91,7 @@ def _collect_stock_data() -> List[Dict]:
             except Exception as e:
                 logger.warning("%s(%s) 외인/기관 데이터 조회 실패: %s", name, ticker, e)
 
-            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
+            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value, macro_data=macro_data)
 
             # 뉴스 감성 분석 (실패해도 기존 알림에 영향 없음)
             try:
@@ -187,7 +201,7 @@ def _collect_stock_data() -> List[Dict]:
         except Exception as e:
             logger.error("%s(%s) 에러: %s", name, ticker, e)
 
-    return stock_data_list
+    return stock_data_list, macro_data
 
 
 def _notify_subscribers(stock_data_list: List[Dict], message_type: str = "signal") -> None:
@@ -232,7 +246,7 @@ def check_signals():
     """감시 종목들의 시그널을 확인하고 알림을 보낸다."""
     logger.info("시그널 체크 시작...")
 
-    stock_data_list = _collect_stock_data()
+    stock_data_list, macro_data = _collect_stock_data()
 
     # 시그널 있는 종목만 필터
     signal_stocks = [s for s in stock_data_list if s.get("signals")]
@@ -242,7 +256,7 @@ def check_signals():
             for sig in s["signals"]:
                 logger.info("[%s] %s - %s", sig["trigger"], s["name"], sig["detail"])
 
-        message = format_signal_alert(stock_data_list)
+        message = format_signal_alert(stock_data_list, macro_data=macro_data)
         if send_message(message):
             total = sum(len(s["signals"]) for s in signal_stocks)
             logger.info("총 %d개 시그널 전송 완료", total)
@@ -259,10 +273,10 @@ def daily_briefing():
     """장마감 후 전 종목 일일 요약 브리핑을 전송한다."""
     logger.info("일일 브리핑 시작...")
 
-    stock_data_list = _collect_stock_data()
+    stock_data_list, macro_data = _collect_stock_data()
 
     if stock_data_list:
-        message = format_daily_briefing(stock_data_list)
+        message = format_daily_briefing(stock_data_list, macro_data=macro_data)
         if send_message(message):
             logger.info("일일 브리핑 전송 완료 (%d개 종목)", len(stock_data_list))
         else:
@@ -324,7 +338,7 @@ def weekly_report():
             except Exception:
                 pass
 
-            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value)
+            data = analyze_detailed(df, ticker, name, investor_df=investor_df, vix_value=vix_value, macro_data=None)
             data["weekly_change_pct"] = round(weekly_change, 2)
             stock_data_list.append(data)
 

@@ -99,3 +99,12 @@
 - `scripts/export_auto_data.py`로 DB → JSON, pipeline 사이클 후 자동 실행
 - `web/public/data/`에 저장하면 API Route에서 fs.readFileSync로 읽기 가능
 - Vercel 배포 시에는 이 파일이 없으므로 graceful fallback 필수
+
+## 글로벌 매크로 데이터 통합
+- Yahoo Finance v8 chart API로 매크로 지표 수집 (yfinance 패키지 미사용, raw urllib)
+- 티커에 특수문자(`^`, `=`) 포함 시 `urllib.parse.quote(ticker, safe="")` 필수
+- 매크로 시그널 합류 점수는 최대 1.5점 cap — 기술적 시그널(7점+)을 압도 방지
+- 섹터 연관성 기반 점수: 유가 급등 → 에너지 수혜(+), 항공 피해(-)
+- macro_data=None이면 기존 동작 그대로 유지 (하위호환 필수)
+- `fetch_all_macro_prices()`는 내부 4시간 캐시, analyzer에서 사이클 단위 캐시 추가
+- formatter가 기대하는 데이터 형식과 fetcher 반환 형식 일치시킬 것 (dict of dicts)

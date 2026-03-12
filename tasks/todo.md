@@ -139,6 +139,24 @@
 - [ ] mock 거래 데이터 축적 → 옵티마이저 피드백 루프 실증
 - [ ] 자율매매 상태 모니터링 강화 (장중 로그 가시성)
 
+## Phase 10 - 글로벌 매크로 데이터 통합
+### Phase 10-1: 가격 지표 수집 (완료)
+- [x] config.py 매크로 설정 추가 (MACRO_INDICATORS, MACRO_SECTOR_IMPACT, MACRO_EVENT_RULES)
+- [x] data/macro_fetcher.py 구현 (Yahoo v8 API, 6개 지표 병렬 수집, 4시간 캐시)
+- [x] signals/strategy.py 매크로 시그널 통합 (macro_data 파라미터, 최대 1.5점 cap)
+- [x] autonomous/analyzer.py 매크로 데이터 연동 (사이클 단위 캐시, strategy_settings)
+- [x] main.py 매크로 데이터 통합 (수집→분석→포맷터 전달)
+- [x] bot/formatter.py 글로벌 매크로 섹션 추가 (일일 브리핑 + 시그널 알림)
+- [x] web/lib/constants.ts 매크로 설정 TS 포팅
+
+### Phase 10-2: RSS 뉴스 수집 (미착수)
+- [ ] data/macro_news.py 구현 (BBC, CNBC, 한경 RSS)
+- [ ] 키워드 기반 이벤트 분류
+
+### Phase 10-3: GDELT + 시나리오 (미착수)
+- [ ] data/gdelt.py 구현 (지정학 이벤트)
+- [ ] 매크로 시나리오 분석
+
 ## Backlog
 - [x] Vercel 배포
 - [x] OpenDART 시범 도입 (공시 정보, 외인/기관은 미제공)

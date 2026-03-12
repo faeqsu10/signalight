@@ -132,3 +132,94 @@ SECTOR_MAP = {
     "005380": "자동차",
     "035420": "IT", "035720": "IT",
 }
+
+# ──────────────────────────────────────────────
+# 글로벌 매크로 데이터 설정
+# ──────────────────────────────────────────────
+
+# 매크로 가격 지표 (티커, 이름, 단위, 일간변동 임계치%)
+MACRO_INDICATORS = {
+    "WTI": {"ticker": "CL=F", "name": "WTI 원유", "unit": "USD/bbl", "threshold_pct": 5.0},
+    "BRENT": {"ticker": "BZ=F", "name": "브렌트유", "unit": "USD/bbl", "threshold_pct": 5.0},
+    "USDKRW": {"ticker": "KRW=X", "name": "원달러 환율", "unit": "KRW", "threshold_pct": 1.5},
+    "US10Y": {"ticker": "^TNX", "name": "미국 10년 국채", "unit": "%", "threshold_pct": 5.0},
+    "GOLD": {"ticker": "GC=F", "name": "금", "unit": "USD/oz", "threshold_pct": 3.0},
+    "DXY": {"ticker": "DX-Y.NYB", "name": "달러 인덱스", "unit": "pt", "threshold_pct": 1.5},
+}
+
+# 매크로 시그널 합류점수 최대 기여 (기술적 시그널 압도 방지)
+MACRO_SIGNAL_MAX_SCORE = 1.5
+
+# 매크로 캐시 TTL (초)
+MACRO_CACHE_TTL = 14400  # 4시간
+
+# 매크로 이벤트 → 섹터 영향 매핑
+# 각 이벤트는 수혜 섹터(buy)와 피해 섹터(sell)를 정의
+MACRO_SECTOR_IMPACT = {
+    "oil_surge": {
+        "buy": ["에너지", "정유", "조선"],
+        "sell": ["항공", "운송", "화학"],
+    },
+    "oil_crash": {
+        "buy": ["항공", "운송", "화학"],
+        "sell": ["에너지", "정유"],
+    },
+    "fx_krw_weak": {
+        "buy": ["반도체", "자동차", "조선"],  # 수출 수혜
+        "sell": ["항공", "여행"],              # 원가 부담
+    },
+    "fx_krw_strong": {
+        "buy": ["항공", "여행", "내수"],
+        "sell": ["반도체", "자동차"],          # 수출 불리
+    },
+    "rate_hike": {
+        "buy": ["금융", "보험"],
+        "sell": ["성장주", "IT", "2차전지", "바이오"],
+    },
+    "rate_cut": {
+        "buy": ["성장주", "IT", "2차전지", "바이오"],
+        "sell": ["금융"],
+    },
+    "gold_surge": {
+        "buy": ["금광", "안전자산"],
+        "sell": [],
+    },
+    "dollar_strong": {
+        "buy": ["반도체", "자동차"],  # 수출 수혜 (원화 약세 동반)
+        "sell": ["내수"],
+    },
+}
+
+# 매크로 이벤트 판단 기준 (지표 키 → 이벤트 매핑)
+MACRO_EVENT_RULES = {
+    "WTI": {
+        "surge_pct": 5.0,    # 일간 +5% → oil_surge
+        "crash_pct": -5.0,   # 일간 -5% → oil_crash
+        "surge_event": "oil_surge",
+        "crash_event": "oil_crash",
+    },
+    "USDKRW": {
+        "surge_pct": 1.5,    # 일간 +1.5% → fx_krw_weak (원화 약세)
+        "crash_pct": -1.5,   # 일간 -1.5% → fx_krw_strong (원화 강세)
+        "surge_event": "fx_krw_weak",
+        "crash_event": "fx_krw_strong",
+    },
+    "US10Y": {
+        "surge_pct": 5.0,    # 일간 +5% (금리 상승) → rate_hike
+        "crash_pct": -5.0,   # 일간 -5% (금리 하락) → rate_cut
+        "surge_event": "rate_hike",
+        "crash_event": "rate_cut",
+    },
+    "GOLD": {
+        "surge_pct": 3.0,
+        "crash_pct": -3.0,
+        "surge_event": "gold_surge",
+        "crash_event": None,
+    },
+    "DXY": {
+        "surge_pct": 1.5,
+        "crash_pct": -1.5,
+        "surge_event": "dollar_strong",
+        "crash_event": None,
+    },
+}

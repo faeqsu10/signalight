@@ -174,6 +174,73 @@ _EASY_EXPLAIN = {
 DIVIDER = "━━━━━━━━━━━━━━━━━━━"
 DIVIDER_THIN = "───────────────────"
 
+# 매크로 변동률 경고 임계치 (절대값 %)
+_MACRO_ALERT_THRESHOLD = 2.0
+
+
+def _format_macro_value(value: float, unit: str) -> str:
+    """매크로 지표 값을 단위에 맞게 포맷한다."""
+    if unit == "$":
+        return f"${value:,.1f}"
+    elif unit == "₩":
+        return f"₩{value:,.0f}"
+    elif unit == "%":
+        return f"{value:.2f}%"
+    elif unit == "pt":
+        return f"{value:.1f}pt"
+    else:
+        return f"{value:.2f}{unit}"
+
+
+def _build_macro_section(macro_data: Optional[dict]) -> str:
+    """글로벌 매크로 요약 섹션을 생성한다.
+
+    Args:
+        macro_data: fetch_all_macro_prices()의 반환값.
+            구조: {
+                "WTI": {"name": "WTI 원유", "price": 72.5, "change_pct": 3.6, "unit": "USD/bbl", ...},
+                ...
+            }
+            None이면 빈 문자열 반환.
+
+    Returns:
+        섹션 블록 문자열 (비어 있으면 "").
+    """
+    if not macro_data:
+        return ""
+
+    # dict of dicts → list 변환 (fetch_all_macro_prices 형식)
+    indicators = []
+    for key, item in macro_data.items():
+        if isinstance(item, dict):
+            indicators.append(item)
+
+    if not indicators:
+        return ""
+
+    lines = []
+    lines.append("<b>━━━ 🌍 글로벌 매크로 ━━━</b>")
+
+    for item in indicators:
+        name = item.get("name", "")
+        value = item.get("price", item.get("value"))
+        change_pct = item.get("change_pct")
+        unit = item.get("unit", "")
+
+        if value is None:
+            continue
+
+        val_str = _format_macro_value(value, unit)
+
+        if change_pct is not None:
+            change_str = _format_change(change_pct)
+            alert = " ⚠️" if abs(change_pct) >= _MACRO_ALERT_THRESHOLD else ""
+            lines.append(f"{name}: {val_str} ({change_str}){alert}")
+        else:
+            lines.append(f"{name}: {val_str}")
+
+    return "\n".join(lines)
+
 
 # ──────────────────────────────────────────────
 # 시장 온도 / 한줄 코멘트 빌더
@@ -826,15 +893,20 @@ def _build_briefing_row(stock: dict) -> str:
 # 공개 함수
 # ──────────────────────────────────────────────
 
-def format_signal_alert(stock_data_list: List[dict]) -> str:
+def format_signal_alert(
+    stock_data_list: List[dict],
+    macro_data: Optional[dict] = None,
+) -> str:
     """시그널 발생 시 전송하는 상세 알림 메시지를 생성한다.
 
     시그널이 있는 종목만 포함하며, 종목별로 핵심 요약, 시그널 근거,
     합류 점수 프로그레스 바, 참고 정보를 포함한 HTML 블록을 구성한다.
+    매크로 이벤트(임계치 초과 변동)가 있으면 한 줄 요약을 상단에 추가한다.
 
     Args:
         stock_data_list: 각 종목의 시그널/지표 데이터 리스트.
                          signals 키가 비어 있는 종목은 제외된다.
+        macro_data: 글로벌 매크로 지표 dict (없으면 None).
 
     Returns:
         텔레그램 parse_mode="HTML" 형식의 메시지 문자열.
@@ -844,6 +916,22 @@ def format_signal_alert(stock_data_list: List[dict]) -> str:
     lines = []
     lines.append(f"<b>📡 Signalight 매매 시그널</b>")
     lines.append(now_str)
+
+    # 매크로 이벤트 한 줄 요약 (임계치 초과 지표만)
+    if macro_data:
+        alert_items = [
+            item for item in macro_data.values()
+            if isinstance(item, dict)
+            and item.get("change_pct") is not None
+            and abs(item["change_pct"]) >= _MACRO_ALERT_THRESHOLD
+        ]
+        if alert_items:
+            parts = []
+            for item in alert_items:
+                name = item.get("name", "")
+                change_pct = item["change_pct"]
+                parts.append(f"{name} {_format_change(change_pct)}")
+            lines.append(f"🌍 매크로 이벤트: {' · '.join(parts)}")
 
     # 시그널 있는 종목만 필터
     signal_stocks = [s for s in stock_data_list if s.get("signals")]
@@ -874,14 +962,18 @@ def format_signal_alert(stock_data_list: List[dict]) -> str:
     return "\n".join(lines)
 
 
-def format_daily_briefing(stock_data_list: List[dict]) -> str:
+def format_daily_briefing(
+    stock_data_list: List[dict],
+    macro_data: Optional[dict] = None,
+) -> str:
     """장마감 일일 요약 메시지를 생성한다.
 
-    시장 온도, 주목 종목 (시그널 있는 종목 상세), 나머지 종목 compact,
-    한줄 코멘트로 구성된 분석 보고서 스타일의 메시지.
+    시장 온도, 글로벌 매크로 (있을 때), 주목 종목 (시그널 있는 종목 상세),
+    나머지 종목 compact, 한줄 코멘트로 구성된 분석 보고서 스타일의 메시지.
 
     Args:
         stock_data_list: 전체 감시 종목 데이터 리스트.
+        macro_data: 글로벌 매크로 지표 dict (없으면 None, 섹션 생략).
 
     Returns:
         텔레그램 parse_mode="HTML" 형식의 메시지 문자열.
@@ -895,6 +987,12 @@ def format_daily_briefing(stock_data_list: List[dict]) -> str:
     lines.append(f"<b>📊 Signalight 일일 브리핑</b>")
     lines.append(f"{today_str} ({day_name}) 장마감")
     lines.append("")
+
+    # 글로벌 매크로 (데이터가 있을 때만)
+    macro_section = _build_macro_section(macro_data)
+    if macro_section:
+        lines.append(macro_section)
+        lines.append("")
 
     if not stock_data_list:
         lines.append("감시 종목 데이터가 없습니다.")

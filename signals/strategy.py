@@ -23,6 +23,7 @@ STOCH_RSI_SMOOTH_K = 3
 STOCH_RSI_SMOOTH_D = 3
 STOCH_RSI_OVERSOLD = 20
 STOCH_RSI_OVERBOUGHT = 80
+MACRO_SIGNAL_MAX_SCORE = 1.5
 
 from backtest import Signal, SignalType
 
@@ -142,6 +143,7 @@ def analyze_detailed(
     investor_df: Optional[pd.DataFrame] = None,
     vix_value: Optional[float] = None,
     strategy_settings: Optional[Dict] = None,
+    macro_data: Optional[Dict] = None,
 ) -> Dict:
     """주어진 OHLCV 데이터를 분석하여 구조화된 시그널 데이터를 반환한다.
 
@@ -160,7 +162,7 @@ def analyze_detailed(
         "indicators": {},
         "investor": {},
         "confluence_score": 0,
-        "total_indicators": 9,  # MA, RSI, MACD, BB, OBV, VIX, 외인, 기관, StochRSI
+        "total_indicators": 10,  # MA, RSI, MACD, BB, OBV, VIX, 외인, 기관, StochRSI, 매크로
         "market_regime": "sideways",
     }
 
@@ -446,7 +448,95 @@ def analyze_detailed(
             })
             sell_score += 1.0
 
-    # ── 8. 외인/기관 매매동향 (OR 분리) ────────────
+    # ── 8. 매크로 시그널 (유가, 환율, 금리) ──────────
+    if macro_data:
+        macro_max = float(settings.get("macro_signal_max_score", MACRO_SIGNAL_MAX_SCORE))
+        macro_buy = 0.0
+        macro_sell = 0.0
+
+        for key, mdata in macro_data.items():
+            if not isinstance(mdata, dict):
+                continue
+            change_pct = mdata.get("change_pct", 0)
+            threshold = mdata.get("threshold_pct", 5.0)
+            name_str = mdata.get("name", key)
+
+            if abs(change_pct) < threshold * 0.5:
+                continue  # 임계치의 50% 미만이면 무시
+
+            # 변동 강도 (0.0~1.0): 임계치의 50%에서 0.0, 100%에서 1.0
+            intensity = min(1.0, (abs(change_pct) - threshold * 0.5) / (threshold * 0.5))
+
+            # 섹터 연관성 확인 (현재 종목의 섹터)
+            stock_sector = settings.get("sector_map", {}).get(ticker, "")
+
+            # 이벤트 판단 규칙 및 섹터 임팩트
+            event_rules = settings.get("macro_event_rules", {}).get(key, {})
+            sector_impact = settings.get("macro_sector_impact", {})
+
+            if change_pct > 0 and event_rules.get("surge_pct") and change_pct >= event_rules["surge_pct"] * 0.5:
+                event = event_rules.get("surge_event")
+                if event and event in sector_impact:
+                    impact = sector_impact[event]
+                    if stock_sector in impact.get("buy", []):
+                        score = intensity * 0.5
+                        macro_buy += score
+                        signals.append({
+                            "trigger": f"매크로 수혜 ({name_str})",
+                            "type": "buy",
+                            "source": "MACRO",
+                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
+                            "strength": round(score, 2),
+                        })
+                    elif stock_sector in impact.get("sell", []):
+                        score = intensity * 0.5
+                        macro_sell += score
+                        signals.append({
+                            "trigger": f"매크로 리스크 ({name_str})",
+                            "type": "sell",
+                            "source": "MACRO",
+                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
+                            "strength": round(score, 2),
+                        })
+
+            elif change_pct < 0 and event_rules.get("crash_pct") and change_pct <= event_rules["crash_pct"] * 0.5:
+                event = event_rules.get("crash_event")
+                if event and event in sector_impact:
+                    impact = sector_impact[event]
+                    if stock_sector in impact.get("buy", []):
+                        score = intensity * 0.5
+                        macro_buy += score
+                        signals.append({
+                            "trigger": f"매크로 수혜 ({name_str})",
+                            "type": "buy",
+                            "source": "MACRO",
+                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
+                            "strength": round(score, 2),
+                        })
+                    elif stock_sector in impact.get("sell", []):
+                        score = intensity * 0.5
+                        macro_sell += score
+                        signals.append({
+                            "trigger": f"매크로 리스크 ({name_str})",
+                            "type": "sell",
+                            "source": "MACRO",
+                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
+                            "strength": round(score, 2),
+                        })
+
+        # cap 적용
+        macro_buy = min(macro_buy, macro_max)
+        macro_sell = min(macro_sell, macro_max)
+        buy_score += macro_buy
+        sell_score += macro_sell
+
+        # 매크로 데이터를 indicators에 저장
+        result["indicators"]["macro"] = {
+            k: {"price": v.get("price"), "change_pct": v.get("change_pct")}
+            for k, v in macro_data.items() if isinstance(v, dict)
+        }
+
+    # ── 9. 외인/기관 매매동향 (OR 분리) ────────────
     if investor_df is not None and len(investor_df) >= investor_consec_days:
         frgn = investor_df["외인순매수"]
         inst = investor_df["기관순매수"]

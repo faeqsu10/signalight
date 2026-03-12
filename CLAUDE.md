@@ -15,6 +15,7 @@ signalight/
 │   ├── data/
 │   │   ├── fetcher.py      # pykrx KRX OHLCV + Yahoo VIX 데이터 수집
 │   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
+│   │   ├── macro_fetcher.py # 글로벌 매크로 가격 지표 (WTI/환율/금리/금/DXY, 4시간 캐시)
 │   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, StochRSI, 거래량)
