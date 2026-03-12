@@ -87,3 +87,15 @@
 - Python pandas `ewm(span=n).mean()` → TS에서 `alpha = 2/(span+1)` EMA 수동 구현
 - RSI 계산 시 `delta = closes.diff()` → TS에서 `closes[i] - closes[i-1]`
 - MACD는 EMA 기반이라 데이터 초반부터 값이 존재 (rolling MA와 다름)
+
+## 자율매매 config 분리
+- `signals/strategy.py`가 `config.py`에서 직접 import하면 자율매매와 일반 봇이 설정값을 공유하게 됨
+- 해결: strategy.py에 로컬 기본값 정의 + `strategy_settings` dict로 런타임 오버라이드
+- 자율매매는 `autonomous/config.py`의 `AutonomousConfig`에서 모든 파라미터 통합 관리
+- 공유 모듈은 기본값만 갖고, 호출자가 필요시 오버라이드하는 패턴이 가장 깔끔
+
+## 웹-파이썬 데이터 연동
+- Next.js(Vercel)에서 Python SQLite DB 직접 접근 불가 → JSON export 패턴 사용
+- `scripts/export_auto_data.py`로 DB → JSON, pipeline 사이클 후 자동 실행
+- `web/public/data/`에 저장하면 API Route에서 fs.readFileSync로 읽기 가능
+- Vercel 배포 시에는 이 파일이 없으므로 graceful fallback 필수

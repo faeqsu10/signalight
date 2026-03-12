@@ -53,7 +53,8 @@ signalight/
 │       ├── execution.py       # 안전 주문 실행 (서킷브레이커 + 킬스위치 + 장중 체크)
 │       ├── evaluator.py       # 성과 평가 + 텔레그램 리포트 (AUTO_TRADE_CHAT_ID)
 │       ├── optimizer.py       # 성과 기반 전략 자동 튜닝 (스캔 가중치, 합류 임계값)
-│       ├── pipeline.py        # 메인 오케스트레이터 (스캔→분석→결정→실행→추적→평가→개선)
+│       ├── pipeline.py        # 메인 오케스트레이터 (스캔→분석→결정→실행→추적→평가→개선→웹export)
+│       ├── commands.py        # 자율매매 텔레그램 명령어 (/status, /config, /positions, /history, /pause, /resume)
 │       └── runner.py          # 별도 프로세스 진입점 (schedule 기반, --live/--once 옵션)
 │
 ├── [Next.js 프론트엔드] 웹 대시보드
@@ -87,6 +88,9 @@ signalight/
 │           ├── recovery.ts                 # recovery.py 포팅 (회복 분석 + 포지션 진단)
 │           ├── strategy.ts                 # strategy.py 포팅 + VIX/수급 시그널
 │           └── yahoo-finance.ts            # Yahoo Finance OHLCV + VIX fetch
+│
+├── scripts/
+│   └── export_auto_data.py  # 자율매매 DB → JSON export (웹 대시보드용)
 │
 ├── infra/
 │   └── logging_config.py   # 구조화 로깅 설정 (Phase 2에서 추가)

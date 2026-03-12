@@ -130,6 +130,15 @@
 - [x] 종목 즐겨찾기 (localStorage, ★ 토글, 드롭다운 상단 정렬)
 - [x] 시그널 강도 배지 (드롭다운에 컬러 dot 표시)
 
+## Phase 9 - 자율매매 고도화 (진행 중)
+- [x] 키움 mock API 연결 확인 (OAuth 토큰 정상 발급)
+- [x] shared config → autonomous config 분리 (signals/strategy.py에서 config.py 의존성 제거)
+- [x] /config 텔레그램 명령 추가 (자율매매 임계값, 스캔 가중치, 옵티마이저 상태 확인)
+- [x] 웹 자율매매 PnL API (scripts/export_auto_data.py + web API route + pipeline 통합)
+- [ ] 웹 자율매매 대시보드 페이지 (차트 + 거래 이력 UI)
+- [ ] mock 거래 데이터 축적 → 옵티마이저 피드백 루프 실증
+- [ ] 자율매매 상태 모니터링 강화 (장중 로그 가시성)
+
 ## Backlog
 - [x] Vercel 배포
 - [x] OpenDART 시범 도입 (공시 정보, 외인/기관은 미제공)
