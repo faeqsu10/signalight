@@ -349,7 +349,8 @@ class AutonomousPipeline:
         """에퀴티 스냅샷을 저장한다."""
         open_positions = self.tracker.get_all_open()
 
-        if self.executor.portfolio:
+        # 보유 포지션이 있을 때만 API 평가 사용
+        if open_positions and self.executor.portfolio:
             evaluation = self.executor.portfolio._get_evaluation()
             if evaluation:
                 summary = evaluation["summary"]
@@ -361,7 +362,7 @@ class AutonomousPipeline:
                 )
                 return
 
-        # dry_run: 가상 에퀴티
+        # 포지션 없음 또는 평가 실패: 가상 에퀴티 사용
         self.state.save_equity_snapshot(
             total_equity=DRY_RUN_VIRTUAL_ASSET,
             invested=0,

@@ -24,6 +24,7 @@ class UniverseSelector:
         "golden_cross": 3,
         "rsi_oversold": 2,
         "volume_surge": 1,
+        "near_golden_cross": 1.5,
     }
 
     def __init__(self, scan_weights: Dict[str, float] = None):
@@ -72,6 +73,7 @@ class UniverseSelector:
         golden_cross = []
         rsi_oversold = []
         volume_surge = []
+        near_golden_cross = []
 
         try:
             golden_cross = self.scanner.scan_golden_cross(limit=scan_limit)
@@ -96,6 +98,15 @@ class UniverseSelector:
             logger.info("거래량 급증: %d종목", len(volume_surge))
         except Exception as e:
             logger.warning("거래량 급증 스캔 실패: %s", e)
+
+        try:
+            near_golden_cross = self.scanner.scan_near_golden_cross(
+                limit=scan_limit,
+                proximity_ratio=AUTO_CONFIG.scan_near_golden_cross_proximity,
+            )
+            logger.info("근접 골든크로스: %d종목", len(near_golden_cross))
+        except Exception as e:
+            logger.warning("근접 골든크로스 스캔 실패: %s", e)
 
         # 복합 점수 합산 (중복 종목은 점수 누적)
         candidates = {}  # type: Dict[str, Dict]
@@ -141,6 +152,20 @@ class UniverseSelector:
             candidates[ticker]["scan_signals"].append("volume_surge")
             candidates[ticker]["volume_ratio"] = item.get("volume_ratio")
 
+        for item in near_golden_cross:
+            ticker = item["ticker"]
+            if ticker not in candidates:
+                candidates[ticker] = {
+                    "ticker": ticker,
+                    "name": item["name"],
+                    "price": item["price"],
+                    "composite_score": 0,
+                    "scan_signals": [],
+                }
+            candidates[ticker]["composite_score"] += self.scan_weights.get("near_golden_cross", 1.5)
+            candidates[ticker]["scan_signals"].append("near_golden_cross")
+            candidates[ticker]["ma_ratio"] = item.get("ma_ratio")
+
         # 보유 종목 제외
         for ticker in held_tickers:
             candidates.pop(ticker, None)
@@ -153,6 +178,80 @@ class UniverseSelector:
 
         # 복합 점수 내림차순 정렬
         filtered.sort(key=lambda x: x["composite_score"], reverse=True)
+
+        # 적응형 완화: 후보 부족 시 재스캔
+        min_candidates = AUTO_CONFIG.universe_min_candidates
+        max_relaxation_rounds = AUTO_CONFIG.universe_max_relaxation_rounds
+
+        if len(filtered) < min_candidates:
+            current_rsi = AUTO_CONFIG.scan_rsi_oversold_threshold
+            current_vol = AUTO_CONFIG.scan_volume_surge_ratio
+
+            for round_num in range(1, max_relaxation_rounds + 1):
+                relaxed_rsi = current_rsi + (AUTO_CONFIG.universe_rsi_relaxation_step * round_num)
+                relaxed_vol = current_vol - (AUTO_CONFIG.universe_volume_relaxation_step * round_num)
+                relaxed_vol = max(relaxed_vol, 0.5)  # 하한선
+
+                logger.info(
+                    "적응형 완화 라운드 %d: RSI=%.0f, 거래량=%.1f",
+                    round_num, relaxed_rsi, relaxed_vol,
+                )
+
+                new_rsi = []
+                new_vol = []
+
+                try:
+                    new_rsi = self.scanner.scan_rsi_oversold(
+                        limit=scan_limit,
+                        oversold_threshold=relaxed_rsi,
+                    )
+                    logger.info("완화 RSI 과매도: %d종목", len(new_rsi))
+                except Exception as e:
+                    logger.warning("완화 RSI 스캔 실패: %s", e)
+
+                try:
+                    new_vol = self.scanner.scan_volume_surge(
+                        min_ratio=relaxed_vol,
+                        limit=scan_limit,
+                    )
+                    logger.info("완화 거래량 급증: %d종목", len(new_vol))
+                except Exception as e:
+                    logger.warning("완화 거래량 스캔 실패: %s", e)
+
+                # 중복 없이 candidates에 병합
+                for item in new_rsi:
+                    ticker = item["ticker"]
+                    if ticker not in candidates and ticker not in held_tickers:
+                        candidates[ticker] = {
+                            "ticker": ticker,
+                            "name": item["name"],
+                            "price": item["price"],
+                            "composite_score": self.scan_weights.get("rsi_oversold", 2),
+                            "scan_signals": ["rsi_oversold"],
+                            "rsi": item.get("rsi"),
+                        }
+
+                for item in new_vol:
+                    ticker = item["ticker"]
+                    if ticker not in candidates and ticker not in held_tickers:
+                        candidates[ticker] = {
+                            "ticker": ticker,
+                            "name": item["name"],
+                            "price": item["price"],
+                            "composite_score": self.scan_weights.get("volume_surge", 1),
+                            "scan_signals": ["volume_surge"],
+                            "volume_ratio": item.get("volume_ratio"),
+                        }
+
+                # 유동성 필터 재적용
+                filtered = []
+                for ticker, info in candidates.items():
+                    if self._check_liquidity(ticker):
+                        filtered.append(info)
+                filtered.sort(key=lambda x: x["composite_score"], reverse=True)
+
+                if len(filtered) >= min_candidates:
+                    break
 
         result = filtered[:max_candidates]
         logger.info(

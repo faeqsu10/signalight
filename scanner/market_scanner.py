@@ -282,3 +282,64 @@ class MarketScanner:
 
         logger.info("Scanner: 거래량 급증 %d개 종목 발견", len(results))
         return results
+
+    def scan_near_golden_cross(
+        self, limit: int = 50, proximity_ratio: float = 0.98
+    ) -> List[Dict]:
+        """근접 골든크로스 종목 스캔.
+
+        단기 MA / 장기 MA 비율이 proximity_ratio 이상 1.0 미만인 종목을 찾는다.
+        (골든크로스 직전 — 임박 신호)
+
+        Returns:
+            list of {ticker, name, price, ma_ratio, signal}
+        """
+        results = []  # type: List[Dict]
+        tickers = self._get_all_tickers()
+        logger.info("Scanner: 근접 골든크로스 스캔 시작 (%d 종목)", len(tickers))
+
+        for ticker, name in tickers:
+            try:
+                df = self._fetch_ohlcv(ticker)
+                if df is None:
+                    time.sleep(SCANNER_API_DELAY)
+                    continue
+
+                closes = df["종가"]
+
+                short_ma_days = int(self.settings.get("short_ma", SHORT_MA))
+                long_ma_days = int(self.settings.get("long_ma", LONG_MA))
+                short_ma = calc_moving_average(closes, short_ma_days)
+                long_ma = calc_moving_average(closes, long_ma_days)
+
+                short_valid = short_ma.dropna()
+                long_valid = long_ma.dropna()
+                if len(short_valid) < 1 or len(long_valid) < 1:
+                    time.sleep(SCANNER_API_DELAY)
+                    continue
+
+                s = float(short_ma.iloc[-1])
+                l = float(long_ma.iloc[-1])
+                if l <= 0:
+                    time.sleep(SCANNER_API_DELAY)
+                    continue
+
+                ratio = s / l
+                if proximity_ratio <= ratio < 1.0:
+                    results.append({
+                        "ticker": ticker,
+                        "name": name,
+                        "price": int(closes.iloc[-1]),
+                        "ma_ratio": round(ratio, 4),
+                        "signal": "near_golden_cross",
+                    })
+
+                    if len(results) >= limit:
+                        break
+            except Exception:
+                pass
+
+            time.sleep(SCANNER_API_DELAY)
+
+        logger.info("Scanner: 근접 골든크로스 %d개 종목 발견", len(results))
+        return results

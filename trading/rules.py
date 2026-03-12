@@ -8,6 +8,10 @@
 from datetime import datetime, date
 from typing import Dict, List, Optional
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from config import (
     ENTRY_THRESHOLD_UPTREND, ENTRY_THRESHOLD_SIDEWAYS, ENTRY_THRESHOLD_DOWNTREND,
     MIN_VOLUME_RATIO,
@@ -173,6 +177,7 @@ class TradeRule:
             }
         """
         ticker = stock_data.get("ticker", "")
+        name = stock_data.get("name", ticker)
         price = stock_data.get("price", 0)
         signals = stock_data.get("signals", [])
         indicators = stock_data.get("indicators", {})
@@ -180,6 +185,7 @@ class TradeRule:
         confluence_direction = stock_data.get("confluence_direction", "neutral")
         regime = stock_data.get("market_regime", "sideways")
         signal_strength = stock_data.get("signal_strength", "neutral")
+        scan_signals = stock_data.get("scan_signals", [])
 
         result = {
             "recommend": False,
@@ -205,7 +211,11 @@ class TradeRule:
             return result
 
         # 3. 추세 게이트 (MA/MACD 중 하나 이상 필요)
-        if not _has_trend_gate(signals):
+        # RSI 과매도 스캔 종목은 평균회귀 전략이므로 추세 게이트 면제
+        has_rsi_scan = "rsi_oversold" in scan_signals
+        if has_rsi_scan:
+            logger.info("RSI 과매도 스캔 종목: 추세 게이트 면제 (%s)", name)
+        elif not _has_trend_gate(signals):
             result["reason"] = "추세 확인 신호 없음 (MA/MACD 필요)"
             return result
 
