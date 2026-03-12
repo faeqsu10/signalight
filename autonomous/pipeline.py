@@ -4,6 +4,7 @@
 """
 
 import logging
+import os
 from datetime import date
 from typing import List, Dict
 
@@ -52,6 +53,32 @@ class AutonomousPipeline:
             "downtrend": AUTO_CONFIG.initial_entry_threshold_downtrend,
         }
         self._base_min_volume_ratio = AUTO_CONFIG.initial_min_volume_ratio
+        self._base_rule_overrides = {
+            "split_buy_phases": AUTO_CONFIG.split_buy_phases,
+            "split_buy_confirm_days": AUTO_CONFIG.split_buy_confirm_days,
+            "split_buy_phase3_bonus": AUTO_CONFIG.split_buy_phase3_bonus,
+            "stop_loss_atr": {
+                "uptrend": AUTO_CONFIG.stop_loss_atr_uptrend,
+                "sideways": AUTO_CONFIG.stop_loss_atr_sideways,
+                "downtrend": AUTO_CONFIG.stop_loss_atr_downtrend,
+            },
+            "max_loss_pct": AUTO_CONFIG.max_loss_pct,
+            "target1_atr_mult": AUTO_CONFIG.target1_atr_mult,
+            "target2_atr_mult": AUTO_CONFIG.target2_atr_mult,
+            "trailing_stop_atr_mult": AUTO_CONFIG.trailing_stop_atr_mult,
+            "max_holding_days": AUTO_CONFIG.max_holding_days,
+            "max_positions": AUTO_CONFIG.max_positions,
+            "max_sector_positions": AUTO_CONFIG.max_sector_positions,
+            "target_weight_pct": AUTO_CONFIG.target_weight_pct,
+            "max_single_position_pct": AUTO_CONFIG.max_single_position_pct,
+            "vix_position_mult": {
+                "calm": AUTO_CONFIG.vix_position_mult_calm,
+                "normal": AUTO_CONFIG.vix_position_mult_normal,
+                "fear": AUTO_CONFIG.vix_position_mult_fear,
+                "extreme": AUTO_CONFIG.vix_position_mult_extreme,
+            },
+            "sector_map": AUTO_CONFIG.sector_map,
+        }
 
     def run_daily_cycle(self) -> Dict:
         """일일 매매 사이클을 실행한다.
@@ -84,6 +111,7 @@ class AutonomousPipeline:
             # 시작은 느슨한 기본 기준으로 고정
             self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
             self.trade_rule.set_min_volume_ratio_override(self._base_min_volume_ratio)
+            self.trade_rule.set_rule_overrides(self._base_rule_overrides)
 
             opt_params = self.optimizer.get_optimized_params()
             self._optimizer_status = opt_params
@@ -105,6 +133,7 @@ class AutonomousPipeline:
             self.trade_rule.set_min_volume_ratio_override(
                 self._base_min_volume_ratio
             )
+            self.trade_rule.set_rule_overrides(self._base_rule_overrides)
 
         # ── Phase 1: 보유 종목 매도 판단 ──
         try:
@@ -137,6 +166,16 @@ class AutonomousPipeline:
             self.evaluator.daily_summary(optimizer_status=self._optimizer_status)
         except Exception as e:
             logger.warning("일일 요약 전송 실패: %s", e)
+
+        # ── Phase 6: 웹 대시보드 데이터 export ──
+        try:
+            import subprocess
+            subprocess.Popen(
+                ["python3", "scripts/export_auto_data.py"],
+                cwd=os.path.dirname(os.path.dirname(__file__)),
+            )
+        except Exception as e:
+            logger.warning("웹 데이터 export 실패: %s", e)
 
         logger.info(
             "=== 일일 매매 사이클 완료: 매수 %d건, 매도 %d건 ===",
