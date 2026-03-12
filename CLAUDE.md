@@ -16,6 +16,7 @@ signalight/
 │   │   ├── fetcher.py      # pykrx KRX OHLCV + Yahoo VIX 데이터 수집
 │   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
 │   │   ├── macro_fetcher.py # 글로벌 매크로 가격 지표 (WTI/환율/금리/금/DXY, 4시간 캐시)
+│   │   ├── us_fetcher.py   # Yahoo Finance 미국 주식 OHLCV (한글 컬럼명 변환)
 │   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, StochRSI, 거래량)
@@ -32,31 +33,42 @@ signalight/
 │   │   ├── formatter.py    # 메시지 포맷터 (분석 보고서 스타일: 시장 온도, 주목 종목, 프로그레스 바, 한줄 코멘트)
 │   │   └── interactive.py  # 텔레그램 인터랙티브 (/stop, /status, /scan, /add, /remove, /list, /score, /info)
 │   ├── trading/
-│   │   ├── __init__.py     # Order, TradingConfig dataclass
-│   │   ├── kiwoom_client.py # 키움 REST API 래퍼 (OAuth, 조회, 주문)
-│   │   ├── executor.py     # 주문 실행 + 안전장치 (dry-run, 손실한도, 비중한도)
-│   │   ├── rules.py        # 룰 기반 매매 추천 엔진 (레짐별 진입/청산, 분할매수, 리스크관리)
+│   │   ├── __init__.py        # Order, TradingConfig dataclass
+│   │   ├── kiwoom_client.py   # 키움 REST API 래퍼 (OAuth, 조회, 주문)
+│   │   ├── alpaca_client.py   # Alpaca REST API 래퍼 (계좌/포지션/주문/호가)
+│   │   ├── executor.py        # 주문 실행 + 안전장치 (dry-run, 손실한도, 비중한도)
+│   │   ├── rules.py           # 룰 기반 매매 추천 엔진 (레짐별 진입/청산, 분할매수, 리스크관리)
 │   │   ├── position_tracker.py # 가상 포지션 추적 (SQLite, 분할단계, 트레일링스탑)
-│   │   └── portfolio.py    # 포트폴리오 비중 관리
+│   │   └── portfolio.py       # 포트폴리오 비중 관리
 │   └── scanner/
 │       ├── __init__.py
-│       ├── market_scanner.py  # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
-│       └── kospi200_tickers.py # pykrx fallback 정적 종목 리스트 (KOSPI200+KOSDAQ)
+│       ├── market_scanner.py    # KRX 종목 스캐너 (골든크로스, RSI과매도, 거래량급증)
+│       ├── us_market_scanner.py # US 스캐너 (골든크로스/RSI/거래량/근접GC)
+│       └── kospi200_tickers.py  # pykrx fallback 정적 종목 리스트 (KOSPI200+KOSDAQ)
 │
 ├── [자율 트레이딩 파이프라인] main.py와 분리된 별도 프로세스
-│   └── autonomous/
+│   ├── autonomous/            # 한국 주식 자율 트레이딩 파이프라인
+│   │   ├── __init__.py
+│   │   ├── config.py          # 자율매매 전용 설정 (포지션 5%, 서킷브레이커, 타이밍)
+│   │   ├── state.py           # 파이프라인 상태 관리 (SQLite: PnL, 에퀴티, 매매로그)
+│   │   ├── universe.py        # 유니버스 선정 (KOSPI200 복합 스캔 + 유동성 필터)
+│   │   ├── analyzer.py        # 시그널 분석 (analyze_detailed 래핑)
+│   │   ├── decision.py        # 매매 결정 (TradeRule 래핑 + 포트폴리오 제약)
+│   │   ├── execution.py       # 안전 주문 실행 (서킷브레이커 + 킬스위치 + 장중 체크)
+│   │   ├── evaluator.py       # 성과 평가 + 텔레그램 리포트 (AUTO_TRADE_CHAT_ID)
+│   │   ├── optimizer.py       # 성과 기반 전략 자동 튜닝 (스캔 가중치, 합류 임계값)
+│   │   ├── pipeline.py        # 메인 오케스트레이터 (스캔→분석→결정→실행→추적→평가→개선→웹export)
+│   │   ├── commands.py        # 자율매매 텔레그램 명령어 (/status, /config, /positions, /history, /pause, /resume)
+│   │   └── runner.py          # 별도 프로세스 진입점 (schedule 기반, --live/--once 옵션)
+│   │
+│   └── autonomous/us/         # 미국 주식 자율 트레이딩 파이프라인
 │       ├── __init__.py
-│       ├── config.py          # 자율매매 전용 설정 (포지션 5%, 서킷브레이커, 타이밍)
-│       ├── state.py           # 파이프라인 상태 관리 (SQLite: PnL, 에퀴티, 매매로그)
-│       ├── universe.py        # 유니버스 선정 (KOSPI200 복합 스캔 + 유동성 필터)
-│       ├── analyzer.py        # 시그널 분석 (analyze_detailed 래핑)
-│       ├── decision.py        # 매매 결정 (TradeRule 래핑 + 포트폴리오 제약)
-│       ├── execution.py       # 안전 주문 실행 (서킷브레이커 + 킬스위치 + 장중 체크)
-│       ├── evaluator.py       # 성과 평가 + 텔레그램 리포트 (AUTO_TRADE_CHAT_ID)
-│       ├── optimizer.py       # 성과 기반 전략 자동 튜닝 (스캔 가중치, 합류 임계값)
-│       ├── pipeline.py        # 메인 오케스트레이터 (스캔→분석→결정→실행→추적→평가→개선→웹export)
-│       ├── commands.py        # 자율매매 텔레그램 명령어 (/status, /config, /positions, /history, /pause, /resume)
-│       └── runner.py          # 별도 프로세스 진입점 (schedule 기반, --live/--once 옵션)
+│       ├── config.py          # US 전용 설정 (ET 시간대, USD, Alpaca Paper Trading)
+│       ├── universe.py        # US 유니버스 선정 (Yahoo 기반 스캔 + 적응형 완화)
+│       ├── analyzer.py        # US 시그널 분석 (analyze_detailed 래핑)
+│       ├── execution.py       # Alpaca 주문 실행 (장중 체크, 킬스위치)
+│       ├── pipeline.py        # US 오케스트레이터 (스캔→분석→결정→실행)
+│       └── runner.py          # 스케줄러 (05:50 KST 일일스캔, 23:35-05:45 장중)
 │
 ├── [Next.js 프론트엔드] 웹 대시보드
 │   └── web/
@@ -164,6 +176,7 @@ signalight/
 ### 현재 상태
 - **Python 봇**: systemd user service (`signalight.service`) — 텔레그램 알림 봇
 - **자율 트레이딩**: systemd user service (`signalight-auto.service`) — dry_run 스케줄 기반 자동매매
+- **미국 자율 트레이딩**: systemd user service (`signalight-auto-us.service`) — Alpaca Paper Trading 스케줄 기반 자동매매
 - **웹 대시보드**: Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
 - **데이터 소스**: pykrx, Yahoo Finance, 네이버 금융 크롤링, Google Gemini API
 - **로깅**: 구조화 로깅 (콘솔+파일, 10MB 로테이션 × 5백업) — `infra/logging_config.py`

@@ -130,11 +130,13 @@
 - [x] 종목 즐겨찾기 (localStorage, ★ 토글, 드롭다운 상단 정렬)
 - [x] 시그널 강도 배지 (드롭다운에 컬러 dot 표시)
 
-## Phase 9 - 자율매매 고도화 (진행 중)
+## Phase 9 - 자율매매 고도화 (완료)
 - [x] 키움 mock API 연결 확인 (OAuth 토큰 정상 발급)
 - [x] shared config → autonomous config 분리 (signals/strategy.py에서 config.py 의존성 제거)
 - [x] /config 텔레그램 명령 추가 (자율매매 임계값, 스캔 가중치, 옵티마이저 상태 확인)
 - [x] 웹 자율매매 PnL API (scripts/export_auto_data.py + web API route + pipeline 통합)
+- [x] 유니버스 선정 강화: 근접 골든크로스 스캔, 적응형 완화, RSI trend gate 면제
+- [x] 하드코딩 제거: 설정값 외부화 + 주석 추가 (40+ 설정값)
 - [ ] 웹 자율매매 대시보드 페이지 (차트 + 거래 이력 UI)
 - [ ] mock 거래 데이터 축적 → 옵티마이저 피드백 루프 실증
 - [ ] 자율매매 상태 모니터링 강화 (장중 로그 가시성)
@@ -156,6 +158,20 @@
 ### Phase 10-3: GDELT + 시나리오 (미착수)
 - [ ] data/gdelt.py 구현 (지정학 이벤트)
 - [ ] 매크로 시나리오 분석
+
+## Phase 11 - 미국 주식 자율매매 (완료)
+- [x] Alpaca Paper Trading API 연동 (trading/alpaca_client.py)
+- [x] 미국 주식 OHLCV 수집기 (data/us_fetcher.py, Yahoo Finance, 한글 컬럼 변환)
+- [x] US 마켓 스캐너 (scanner/us_market_scanner.py, 4종 스캔)
+- [x] US 자율매매 설정 (autonomous/us/config.py, ET 시간대)
+- [x] US 유니버스 선정 (autonomous/us/universe.py, 적응형 완화)
+- [x] US 시그널 분석 (autonomous/us/analyzer.py)
+- [x] US 주문 실행 (autonomous/us/execution.py, Alpaca API)
+- [x] US 파이프라인 오케스트레이터 (autonomous/us/pipeline.py)
+- [x] US 스케줄 러너 (autonomous/us/runner.py, KST 기준)
+- [x] systemd 서비스 등록 (signalight-auto-us.service)
+- [ ] US 워치리스트 확장 (S&P 500 상위 종목)
+- [ ] US 텔레그램 인터랙티브 명령어 (/us_status, /us_scan)
 
 ## Backlog
 - [x] Vercel 배포

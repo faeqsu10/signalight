@@ -108,3 +108,16 @@
 - macro_data=None이면 기존 동작 그대로 유지 (하위호환 필수)
 - `fetch_all_macro_prices()`는 내부 4시간 캐시, analyzer에서 사이클 단위 캐시 추가
 - formatter가 기대하는 데이터 형식과 fetcher 반환 형식 일치시킬 것 (dict of dicts)
+
+## Alpaca Paper Trading API
+- Base URL: paper-api.alpaca.markets (모의투자), api.alpaca.markets (실전)
+- 인증: APCA-API-KEY-ID + APCA-API-SECRET-KEY 헤더 (OAuth 불필요, 매우 간단)
+- 시장 시간 확인: GET /v2/clock → {"is_open": true/false} (가장 간단한 방법)
+- Paper Trading은 $100,000 가상 자금 제공
+- 장외 시간 주문: status="pending_new" → 장 열리면 자동 체결
+- Data API 엔드포인트가 Trading API와 다름: data.alpaca.markets vs paper-api.alpaca.markets
+
+## 미국 주식 데이터 통합 패턴
+- Yahoo Finance로 OHLCV 가져온 후 한글 컬럼명(종가/고가/저가/시가/거래량)으로 변환
+- 이렇게 하면 analyze_detailed() 등 기존 전략 코드를 수정 없이 재활용 가능
+- investor_df=None으로 전달 — 미국 주식은 외인/기관 데이터 없음 (graceful degradation)
