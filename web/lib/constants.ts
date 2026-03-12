@@ -56,3 +56,32 @@ export const ALL_WATCH_LIST: StockItem[] = [
   ...WATCH_LIST.map((s) => ({ ticker: s.ticker, name: s.name, market: "KR" as MarketType })),
   ...US_WATCH_LIST.map((s) => ({ ticker: s.ticker, name: s.name, market: "US" as MarketType })),
 ];
+
+// ── 글로벌 매크로 데이터 설정 ──
+
+export const MACRO_INDICATORS: Record<string, {
+  ticker: string
+  name: string
+  unit: string
+  threshold_pct: number
+}> = {
+  WTI: { ticker: 'CL=F', name: 'WTI 원유', unit: 'USD/bbl', threshold_pct: 5.0 },
+  BRENT: { ticker: 'BZ=F', name: '브렌트유', unit: 'USD/bbl', threshold_pct: 5.0 },
+  USDKRW: { ticker: 'KRW=X', name: '원달러 환율', unit: 'KRW', threshold_pct: 1.5 },
+  US10Y: { ticker: '^TNX', name: '미국 10년 국채', unit: '%', threshold_pct: 5.0 },
+  GOLD: { ticker: 'GC=F', name: '금', unit: 'USD/oz', threshold_pct: 3.0 },
+  DXY: { ticker: 'DX-Y.NYB', name: '달러 인덱스', unit: 'pt', threshold_pct: 1.5 },
+}
+
+export const MACRO_SIGNAL_MAX_SCORE = 1.5
+
+export const MACRO_SECTOR_IMPACT: Record<string, { buy: string[]; sell: string[] }> = {
+  oil_surge: { buy: ['에너지', '정유', '조선'], sell: ['항공', '운송', '화학'] },
+  oil_crash: { buy: ['항공', '운송', '화학'], sell: ['에너지', '정유'] },
+  fx_krw_weak: { buy: ['반도체', '자동차', '조선'], sell: ['항공', '여행'] },
+  fx_krw_strong: { buy: ['항공', '여행', '내수'], sell: ['반도체', '자동차'] },
+  rate_hike: { buy: ['금융', '보험'], sell: ['성장주', 'IT', '2차전지', '바이오'] },
+  rate_cut: { buy: ['성장주', 'IT', '2차전지', '바이오'], sell: ['금융'] },
+  gold_surge: { buy: ['금광', '안전자산'], sell: [] },
+  dollar_strong: { buy: ['반도체', '자동차'], sell: ['내수'] },
+}
