@@ -6,6 +6,7 @@
 import logging
 from typing import List, Dict, Optional
 
+from autonomous.config import AUTO_CONFIG
 from data.fetcher import fetch_stock_data, fetch_vix
 from data.investor import fetch_investor_trading
 from signals.strategy import analyze_detailed
@@ -18,6 +19,22 @@ class StockAnalyzer:
 
     def __init__(self):
         self._vix_cache = None  # type: Optional[float]
+        self._strategy_settings = {
+            "short_ma": AUTO_CONFIG.indicator_short_ma,
+            "long_ma": AUTO_CONFIG.indicator_long_ma,
+            "rsi_period": AUTO_CONFIG.indicator_rsi_period,
+            "rsi_oversold": AUTO_CONFIG.indicator_rsi_oversold,
+            "rsi_overbought": AUTO_CONFIG.indicator_rsi_overbought,
+            "stoch_rsi_period": AUTO_CONFIG.indicator_stoch_rsi_period,
+            "stoch_rsi_smooth_k": AUTO_CONFIG.indicator_stoch_rsi_smooth_k,
+            "stoch_rsi_smooth_d": AUTO_CONFIG.indicator_stoch_rsi_smooth_d,
+            "stoch_rsi_oversold": AUTO_CONFIG.indicator_stoch_rsi_oversold,
+            "stoch_rsi_overbought": AUTO_CONFIG.indicator_stoch_rsi_overbought,
+            "investor_consec_days": AUTO_CONFIG.investor_consec_days,
+            "vix_extreme_fear": AUTO_CONFIG.vix_extreme_fear,
+            "vix_fear": AUTO_CONFIG.vix_fear,
+            "vix_extreme_greed": AUTO_CONFIG.vix_extreme_greed,
+        }
 
     def analyze_candidates(
         self, candidates: List[Dict]
@@ -97,6 +114,7 @@ class StockAnalyzer:
             df, ticker, name,
             investor_df=investor_df,
             vix_value=vix_value,
+            strategy_settings=self._strategy_settings,
         )
         return data
 

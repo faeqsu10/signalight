@@ -44,6 +44,7 @@ def handle_auto_command(chat_id: str, command: str, args: str) -> bool:
     handlers = {
         "help": _cmd_help,
         "status": _cmd_status,
+        "config": _cmd_config,
         "report": _cmd_report,
         "pause": _cmd_pause,
         "resume": _cmd_resume,
@@ -65,6 +66,7 @@ def _cmd_help(chat_id: str) -> None:
         "<b>[자율매매] 명령어</b>",
         "",
         "/status — 현재 상태 요약",
+        "/config — 현재 설정 및 옵티마이저 상태",
         "/positions — 보유 종목 상세",
         "/history — 최근 매매 이력",
         "/report — 성과 리포트 발송",
@@ -220,6 +222,57 @@ def _cmd_history(chat_id: str) -> None:
         lines.append("")
         lines.append(f"승률: {perf['win_rate']}% "
                       f"| 평균 PnL: {perf['avg_pnl_pct']:+.2f}%")
+
+    send_message("\n".join(lines), chat_id=chat_id)
+
+
+def _cmd_config(chat_id: str) -> None:
+    """/config — 현재 설정 및 옵티마이저 상태."""
+    from autonomous.optimizer import StrategyOptimizer
+
+    opt = StrategyOptimizer(state=_state)
+    params = opt.get_optimized_params()
+
+    cfg = AUTO_CONFIG
+    lines = [
+        "<b>[자율매매] 현재 설정</b>",
+        "",
+        "<b>▸ 진입 임계값</b>",
+        f"  상승장: {params['buy_thresholds']['uptrend']} "
+        f"/ 횡보장: {params['buy_thresholds']['sideways']} "
+        f"/ 하락장: {params['buy_thresholds']['downtrend']}",
+        "",
+        "<b>▸ 스캔 가중치</b>",
+        f"  골든크로스: {params['scan_weights']['golden_cross']} "
+        f"/ RSI과매도: {params['scan_weights']['rsi_oversold']} "
+        f"/ 거래량급증: {params['scan_weights']['volume_surge']}",
+        "",
+        "<b>▸ 거래량 필터</b>",
+        f"  최소 거래량 비율: {cfg.initial_min_volume_ratio}",
+        "",
+        "<b>▸ 리스크 파라미터</b>",
+        f"  종목 비중: {cfg.target_weight_pct:.1f}% / 최대: {cfg.max_single_position_pct:.1f}%",
+        f"  포지션 한도: {cfg.max_positions}종목 / 섹터 {cfg.max_sector_positions}종목",
+        f"  손절: 상승 {cfg.stop_loss_atr_uptrend}ATR "
+        f"/ 횡보 {cfg.stop_loss_atr_sideways}ATR "
+        f"/ 하락 {cfg.stop_loss_atr_downtrend}ATR",
+        "",
+        "<b>▸ 옵티마이저</b>",
+    ]
+
+    if params["active"]:
+        lines.append(
+            f"  상태: 활성 (총 {params['total_trades']}건, "
+            f"승률 {params['overall_win_rate']:.0f}%)"
+        )
+        lines.append(f"  조정 가중치: {params['scan_weights']}")
+        lines.append(f"  조정 임계값: {params['buy_thresholds']}")
+    else:
+        total = params["total_trades"]
+        min_t = params["min_trades"]
+        lines.append(
+            f"  상태: 비활성 (거래 {total}/{min_t}건 미만)"
+        )
 
     send_message("\n".join(lines), chat_id=chat_id)
 

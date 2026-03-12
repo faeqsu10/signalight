@@ -22,12 +22,13 @@ logger = logging.getLogger("signalight")
 class MarketScanner:
     """KRX 시장 전체를 스캔하여 조건에 맞는 종목을 찾는다."""
 
-    def __init__(self, market: str = "KOSPI"):
+    def __init__(self, market: str = "KOSPI", settings: Optional[Dict] = None):
         """
         Args:
             market: "KOSPI", "KOSDAQ", or "ALL"
         """
         self.market = market
+        self.settings = settings or {}
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -93,8 +94,9 @@ class MarketScanner:
         pykrx.stock.get_market_ohlcv_by_date() 사용.
         최소 LONG_MA + 5 행이 없으면 None을 반환한다.
         """
+        long_ma = int(self.settings.get("long_ma", LONG_MA))
         if days is None:
-            days = DATA_PERIOD_DAYS
+            days = int(self.settings.get("data_period_days", DATA_PERIOD_DAYS))
         end = datetime.today()
         start = end - timedelta(days=days)
         try:
@@ -103,7 +105,7 @@ class MarketScanner:
                 end.strftime("%Y%m%d"),
                 ticker,
             )
-            if df.empty or len(df) < LONG_MA + 5:
+            if df.empty or len(df) < long_ma + 5:
                 return None
             return df
         except Exception as e:
@@ -136,8 +138,10 @@ class MarketScanner:
                 closes = df["종가"]
                 volumes = df["거래량"]
 
-                short_ma = calc_moving_average(closes, SHORT_MA)
-                long_ma = calc_moving_average(closes, LONG_MA)
+                short_ma_days = int(self.settings.get("short_ma", SHORT_MA))
+                long_ma_days = int(self.settings.get("long_ma", LONG_MA))
+                short_ma = calc_moving_average(closes, short_ma_days)
+                long_ma = calc_moving_average(closes, long_ma_days)
 
                 # NaN이 아닌 유효 값이 2개 이상 필요
                 short_valid = short_ma.dropna()
@@ -195,7 +199,8 @@ class MarketScanner:
                     continue
 
                 closes = df["종가"]
-                rsi_series = calc_rsi(closes, RSI_PERIOD)
+                rsi_period = int(self.settings.get("rsi_period", RSI_PERIOD))
+                rsi_series = calc_rsi(closes, rsi_period)
                 last_rsi = rsi_series.dropna()
 
                 if len(last_rsi) == 0:

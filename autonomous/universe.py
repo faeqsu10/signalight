@@ -27,7 +27,16 @@ class UniverseSelector:
     }
 
     def __init__(self, scan_weights: Dict[str, float] = None):
-        self.scanner = MarketScanner(market=AUTO_CONFIG.universe_market)
+        scanner_settings = {
+            "data_period_days": AUTO_CONFIG.data_period_days,
+            "short_ma": AUTO_CONFIG.indicator_short_ma,
+            "long_ma": AUTO_CONFIG.indicator_long_ma,
+            "rsi_period": AUTO_CONFIG.indicator_rsi_period,
+        }
+        self.scanner = MarketScanner(
+            market=AUTO_CONFIG.universe_market,
+            settings=scanner_settings,
+        )
         self.scan_weights = scan_weights or dict(self.DEFAULT_WEIGHTS)
 
     def select_universe(

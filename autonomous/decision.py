@@ -204,15 +204,14 @@ class DecisionEngine:
         self, stock_data: Dict, open_positions: List[Dict]
     ) -> bool:
         """섹터 집중도를 체크한다."""
-        from config import SECTOR_MAP
-
         ticker = stock_data.get("ticker", "")
-        sector = SECTOR_MAP.get(ticker, "기타")
+        sector_map = AUTO_CONFIG.sector_map
+        sector = sector_map.get(ticker, "기타")
 
         # 같은 섹터의 현재 보유 수
         sector_count = sum(
             1 for pos in open_positions
-            if SECTOR_MAP.get(pos["ticker"], "기타") == sector
+            if sector_map.get(pos["ticker"], "기타") == sector
         )
 
         if sector_count >= AUTO_CONFIG.max_sector_positions:

@@ -7,6 +7,7 @@
 import os
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
+from config import SECTOR_MAP
 
 load_dotenv()
 
@@ -39,12 +40,43 @@ class AutonomousConfig:
     universe_max_candidates: int = 30     # 스캔 후보 최대 수
     universe_scan_limit: int = 50         # 각 스캔(골든/RSI/거래량) 최대 조회 수
     min_trading_value: int = 5_000_000_000  # 최소 일평균 거래대금 (50억)
+    data_period_days: int = 120           # 자율매매 데이터 조회 기간
+    indicator_short_ma: int = 10
+    indicator_long_ma: int = 50
+    indicator_rsi_period: int = 14
+    indicator_rsi_oversold: float = 35.0
+    indicator_rsi_overbought: float = 70.0
+    indicator_stoch_rsi_period: int = 14
+    indicator_stoch_rsi_smooth_k: int = 3
+    indicator_stoch_rsi_smooth_d: int = 3
+    indicator_stoch_rsi_oversold: float = 20.0
+    indicator_stoch_rsi_overbought: float = 80.0
+    investor_consec_days: int = 3
+    vix_extreme_fear: float = 30.0
+    vix_fear: float = 25.0
+    vix_extreme_greed: float = 12.0
     scan_rsi_oversold_threshold: float = 35.0  # RSI 과매도 스캔 기준 (완화)
     scan_volume_surge_ratio: float = 2.0       # 거래량 급증 스캔 배수 (완화)
     initial_entry_threshold_uptrend: float = 1.8   # 초기 진입 임계값(상승장, 완화)
     initial_entry_threshold_sideways: float = 2.6  # 초기 진입 임계값(횡보장, 완화)
     initial_entry_threshold_downtrend: float = 3.4 # 초기 진입 임계값(하락장, 완화)
     initial_min_volume_ratio: float = 0.5          # 초기 거래량 필터(완화)
+    split_buy_phases: int = 3
+    split_buy_confirm_days: int = 2
+    split_buy_phase3_bonus: float = 1.0
+    stop_loss_atr_uptrend: float = 2.5
+    stop_loss_atr_sideways: float = 2.0
+    stop_loss_atr_downtrend: float = 1.5
+    max_loss_pct: float = 8.0
+    target1_atr_mult: float = 2.0
+    target2_atr_mult: float = 3.5
+    trailing_stop_atr_mult: float = 1.5
+    max_holding_days: int = 20
+    vix_position_mult_calm: float = 1.0
+    vix_position_mult_normal: float = 0.8
+    vix_position_mult_fear: float = 0.6
+    vix_position_mult_extreme: float = 0.5
+    sector_map: dict = field(default_factory=lambda: dict(SECTOR_MAP))
 
     # ── 피드백 루프(optimizer) ──
     optimizer_default_weight_golden_cross: float = 3.0

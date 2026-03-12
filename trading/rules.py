@@ -81,11 +81,13 @@ class TradeRule:
         self,
         entry_threshold_overrides: Optional[Dict[str, float]] = None,
         min_volume_ratio_override: Optional[float] = None,
+        rule_overrides: Optional[Dict[str, object]] = None,
     ):
         # optimizer가 제공한 레짐별 진입 임계값 (없으면 기본 config 사용)
         self.entry_threshold_overrides = entry_threshold_overrides or {}
         # 자율매매 전용 거래량 필터 완화값 (없으면 config 기본값)
         self.min_volume_ratio_override = min_volume_ratio_override
+        self.rule_overrides = rule_overrides or {}
 
     def set_entry_threshold_overrides(
         self, overrides: Optional[Dict[str, float]]
@@ -109,6 +111,40 @@ class TradeRule:
         if self.min_volume_ratio_override is not None:
             return float(self.min_volume_ratio_override)
         return MIN_VOLUME_RATIO
+
+    def set_rule_overrides(self, overrides: Optional[Dict[str, object]]) -> None:
+        """추가 룰 오버라이드를 설정한다."""
+        self.rule_overrides = overrides or {}
+
+    def _get_rule_value(self, key: str, default):
+        """룰 오버라이드가 있으면 해당 값을 반환한다."""
+        value = self.rule_overrides.get(key)
+        return default if value is None else value
+
+    def _get_stop_loss_atr_mult(self, regime: str) -> float:
+        overrides = self._get_rule_value("stop_loss_atr", {})
+        if isinstance(overrides, dict):
+            value = overrides.get(regime)
+            if value is not None:
+                return float(value)
+        return _get_stop_loss_atr_mult(regime)
+
+    def _get_vix_position_mult(self, vix: Optional[float]) -> float:
+        overrides = self._get_rule_value("vix_position_mult", {})
+        if isinstance(overrides, dict):
+            if vix is None:
+                return float(overrides.get("normal", VIX_POSITION_MULT_NORMAL))
+            if vix > 30:
+                return float(overrides.get("extreme", VIX_POSITION_MULT_EXTREME))
+            if vix > 25:
+                return float(overrides.get("fear", VIX_POSITION_MULT_FEAR))
+            if vix > 15:
+                return float(overrides.get("normal", VIX_POSITION_MULT_NORMAL))
+            return float(overrides.get("calm", VIX_POSITION_MULT_CALM))
+        return _get_vix_position_mult(vix)
+
+    def _get_sector_map(self) -> Dict:
+        return self._get_rule_value("sector_map", SECTOR_MAP)
 
     def should_buy(
         self,
@@ -183,18 +219,23 @@ class TradeRule:
         # 5. 포트폴리오 제한 체크
         if current_positions is not None:
             # 최대 동시 보유 종목 수
-            if len(current_positions) >= MAX_POSITIONS:
-                result["reason"] = f"최대 보유 종목 초과 ({MAX_POSITIONS}종목)"
+            max_positions = int(self._get_rule_value("max_positions", MAX_POSITIONS))
+            if len(current_positions) >= max_positions:
+                result["reason"] = f"최대 보유 종목 초과 ({max_positions}종목)"
                 return result
 
             # 같은 섹터 제한
-            sector = SECTOR_MAP.get(ticker, "기타")
+            sector_map = self._get_sector_map()
+            sector = sector_map.get(ticker, "기타")
+            max_sector_positions = int(
+                self._get_rule_value("max_sector_positions", MAX_SECTOR_POSITIONS)
+            )
             same_sector = sum(
                 1 for p in current_positions
-                if SECTOR_MAP.get(p.get("ticker", ""), "기타") == sector
+                if sector_map.get(p.get("ticker", ""), "기타") == sector
             )
-            if same_sector >= MAX_SECTOR_POSITIONS:
-                result["reason"] = f"같은 섹터 초과 ({sector} {MAX_SECTOR_POSITIONS}종목)"
+            if same_sector >= max_sector_positions:
+                result["reason"] = f"같은 섹터 초과 ({sector} {max_sector_positions}종목)"
                 return result
 
         # 6. ATR 기반 손절/목표가 계산
@@ -203,20 +244,32 @@ class TradeRule:
             result["reason"] = "ATR 데이터 없음"
             return result
 
-        stop_loss_mult = _get_stop_loss_atr_mult(regime)
+        stop_loss_mult = self._get_stop_loss_atr_mult(regime)
         stop_loss = int(price - stop_loss_mult * atr)
         # 하드캡 적용
-        hard_stop = int(price * (1 - MAX_LOSS_PCT / 100))
+        max_loss_pct = float(self._get_rule_value("max_loss_pct", MAX_LOSS_PCT))
+        hard_stop = int(price * (1 - max_loss_pct / 100))
         stop_loss = max(stop_loss, hard_stop)
 
-        target1 = int(price + TARGET1_ATR_MULT * atr)
-        target2 = int(price + TARGET2_ATR_MULT * atr)
+        target1_atr_mult = float(
+            self._get_rule_value("target1_atr_mult", TARGET1_ATR_MULT)
+        )
+        target2_atr_mult = float(
+            self._get_rule_value("target2_atr_mult", TARGET2_ATR_MULT)
+        )
+        target1 = int(price + target1_atr_mult * atr)
+        target2 = int(price + target2_atr_mult * atr)
 
         # 7. VIX 기반 포지션 크기 조절
         vix = indicators.get("vix")
-        vix_mult = _get_vix_position_mult(vix)
-        base_weight = TARGET_WEIGHT_PCT / SPLIT_BUY_PHASES
-        weight_pct = min(base_weight * vix_mult, MAX_SINGLE_POSITION_PCT)
+        vix_mult = self._get_vix_position_mult(vix)
+        split_buy_phases = int(self._get_rule_value("split_buy_phases", SPLIT_BUY_PHASES))
+        target_weight_pct = float(self._get_rule_value("target_weight_pct", TARGET_WEIGHT_PCT))
+        max_single_position_pct = float(
+            self._get_rule_value("max_single_position_pct", MAX_SINGLE_POSITION_PCT)
+        )
+        base_weight = target_weight_pct / split_buy_phases
+        weight_pct = min(base_weight * vix_mult, max_single_position_pct)
 
         # 8. 분할 매수 단계 판단
         if existing_position is not None:
@@ -224,17 +277,20 @@ class TradeRule:
             entry_price = existing_position.get("entry_price", price)
             entry_date = existing_position.get("entry_date")
 
-            if phase >= SPLIT_BUY_PHASES:
+            if phase >= split_buy_phases:
                 result["reason"] = "분할 매수 완료 (3/3 단계)"
                 result["action"] = "hold"
                 return result
 
             if phase == 1:
                 # Phase 2: 확인 대기 후 가격 > 진입가
+                split_buy_confirm_days = int(
+                    self._get_rule_value("split_buy_confirm_days", SPLIT_BUY_CONFIRM_DAYS)
+                )
                 if entry_date:
                     days_held = _business_days_between(entry_date, date.today())
-                    if days_held < SPLIT_BUY_CONFIRM_DAYS:
-                        result["reason"] = f"Phase 2 대기 중 ({days_held}/{SPLIT_BUY_CONFIRM_DAYS}일)"
+                    if days_held < split_buy_confirm_days:
+                        result["reason"] = f"Phase 2 대기 중 ({days_held}/{split_buy_confirm_days}일)"
                         result["action"] = "hold"
                         return result
                 if price <= entry_price:
@@ -243,13 +299,16 @@ class TradeRule:
                     return result
 
                 result["action"] = "buy_phase2"
-                result["reason"] = f"Phase 2 분할 매수 추천 (가격 확인 + {SPLIT_BUY_CONFIRM_DAYS}일 경과)"
+                result["reason"] = f"Phase 2 분할 매수 추천 (가격 확인 + {split_buy_confirm_days}일 경과)"
 
             elif phase == 2:
                 # Phase 3: 점수 추가 상승 또는 신고가
-                if confluence_score >= threshold + SPLIT_BUY_PHASE3_BONUS:
+                split_buy_phase3_bonus = float(
+                    self._get_rule_value("split_buy_phase3_bonus", SPLIT_BUY_PHASE3_BONUS)
+                )
+                if confluence_score >= threshold + split_buy_phase3_bonus:
                     result["action"] = "buy_phase3"
-                    result["reason"] = f"Phase 3 분할 매수 추천 (점수 {confluence_score:.1f} ≥ {threshold + SPLIT_BUY_PHASE3_BONUS})"
+                    result["reason"] = f"Phase 3 분할 매수 추천 (점수 {confluence_score:.1f} ≥ {threshold + split_buy_phase3_bonus})"
                 else:
                     result["reason"] = "Phase 3 조건 미충족"
                     result["action"] = "hold"
@@ -336,10 +395,11 @@ class TradeRule:
             return result
 
         # 하드캡 손절
-        if pnl_pct <= -MAX_LOSS_PCT:
+        max_loss_pct = float(self._get_rule_value("max_loss_pct", MAX_LOSS_PCT))
+        if pnl_pct <= -max_loss_pct:
             result["recommend"] = True
             result["action"] = "stop_loss"
-            result["reason"] = f"최대 손실 한도 ({pnl_pct:.1f}% ≤ -{MAX_LOSS_PCT}%)"
+            result["reason"] = f"최대 손실 한도 ({pnl_pct:.1f}% ≤ -{max_loss_pct}%)"
             result["sell_pct"] = 100
             return result
 
@@ -377,7 +437,10 @@ class TradeRule:
         # 4. 트레일링 스탑 (목표1 도달 후)
         if target1_hit and highest_close > 0:
             current_atr = indicators.get("atr", entry_atr)
-            trailing_stop = int(highest_close - TRAILING_STOP_ATR_MULT * current_atr)
+            trailing_stop_atr_mult = float(
+                self._get_rule_value("trailing_stop_atr_mult", TRAILING_STOP_ATR_MULT)
+            )
+            trailing_stop = int(highest_close - trailing_stop_atr_mult * current_atr)
 
             if price <= trailing_stop:
                 result["recommend"] = True
@@ -389,7 +452,8 @@ class TradeRule:
         # 5. 시간 기반 매도
         if entry_date:
             days_held = _business_days_between(entry_date, date.today())
-            if days_held >= MAX_HOLDING_DAYS:
+            max_holding_days = int(self._get_rule_value("max_holding_days", MAX_HOLDING_DAYS))
+            if days_held >= max_holding_days:
                 if pnl_pct > 0:
                     result["recommend"] = True
                     result["action"] = "time_exit"

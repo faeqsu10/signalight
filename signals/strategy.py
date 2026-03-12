@@ -7,12 +7,22 @@ from signals.indicators import (
     calc_atr, calc_bollinger_bands, calc_obv,
     calc_stochastic_rsi, calc_obv_divergence_strength,
 )
-from config import (
-    SHORT_MA, LONG_MA, RSI_PERIOD, RSI_OVERSOLD, RSI_OVERBOUGHT,
-    VIX_EXTREME_FEAR, VIX_FEAR, VIX_EXTREME_GREED, INVESTOR_CONSEC_DAYS,
-    STOCH_RSI_PERIOD, STOCH_RSI_SMOOTH_K, STOCH_RSI_SMOOTH_D,
-    STOCH_RSI_OVERSOLD, STOCH_RSI_OVERBOUGHT,
-)
+# Local defaults — mirrors config.py values so this module has no dependency on config.py.
+# autonomous/analyzer.py passes overrides via strategy_settings dict at call time.
+SHORT_MA = 10
+LONG_MA = 50
+RSI_PERIOD = 14
+RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 70
+VIX_EXTREME_FEAR = 30
+VIX_FEAR = 25
+VIX_EXTREME_GREED = 12
+INVESTOR_CONSEC_DAYS = 3
+STOCH_RSI_PERIOD = 14
+STOCH_RSI_SMOOTH_K = 3
+STOCH_RSI_SMOOTH_D = 3
+STOCH_RSI_OVERSOLD = 20
+STOCH_RSI_OVERBOUGHT = 80
 
 from backtest import Signal, SignalType
 
@@ -77,7 +87,11 @@ def _regime_weight(regime: str, signal_type: str) -> float:
     return 1.0
 
 
-def _continuous_rsi_score(rsi_value: float) -> float:
+def _continuous_rsi_score(
+    rsi_value: float,
+    rsi_oversold: float = RSI_OVERSOLD,
+    rsi_overbought: float = RSI_OVERBOUGHT,
+) -> float:
     """RSI 연속 강도 점수 (0.0 ~ 1.0).
     과매도: RSI 30=0.5, 25=0.75, 20=1.0 (선형 보간)
     과매수: RSI 70=0.5, 75=0.75, 80=1.0 (선형 보간)
@@ -85,14 +99,14 @@ def _continuous_rsi_score(rsi_value: float) -> float:
     """
     if rsi_value <= 20:
         return 1.0
-    elif rsi_value <= RSI_OVERSOLD:
+    elif rsi_value <= rsi_oversold:
         # 20~30 구간: 1.0 → 0.5 선형
-        return 0.5 + 0.5 * (RSI_OVERSOLD - rsi_value) / (RSI_OVERSOLD - 20)
+        return 0.5 + 0.5 * (rsi_oversold - rsi_value) / (rsi_oversold - 20)
     elif rsi_value >= 80:
         return 1.0
-    elif rsi_value >= RSI_OVERBOUGHT:
+    elif rsi_value >= rsi_overbought:
         # 70~80 구간: 0.5 → 1.0 선형
-        return 0.5 + 0.5 * (rsi_value - RSI_OVERBOUGHT) / (80 - RSI_OVERBOUGHT)
+        return 0.5 + 0.5 * (rsi_value - rsi_overbought) / (80 - rsi_overbought)
     return 0.0
 
 
@@ -127,6 +141,7 @@ def analyze_detailed(
     name: str,
     investor_df: Optional[pd.DataFrame] = None,
     vix_value: Optional[float] = None,
+    strategy_settings: Optional[Dict] = None,
 ) -> Dict:
     """주어진 OHLCV 데이터를 분석하여 구조화된 시그널 데이터를 반환한다.
 
@@ -149,7 +164,23 @@ def analyze_detailed(
         "market_regime": "sideways",
     }
 
-    if len(df) < LONG_MA:
+    settings = strategy_settings or {}
+    short_ma_days = int(settings.get("short_ma", SHORT_MA))
+    long_ma_days = int(settings.get("long_ma", LONG_MA))
+    rsi_period = int(settings.get("rsi_period", RSI_PERIOD))
+    rsi_oversold = float(settings.get("rsi_oversold", RSI_OVERSOLD))
+    rsi_overbought = float(settings.get("rsi_overbought", RSI_OVERBOUGHT))
+    stoch_rsi_period = int(settings.get("stoch_rsi_period", STOCH_RSI_PERIOD))
+    stoch_rsi_smooth_k = int(settings.get("stoch_rsi_smooth_k", STOCH_RSI_SMOOTH_K))
+    stoch_rsi_smooth_d = int(settings.get("stoch_rsi_smooth_d", STOCH_RSI_SMOOTH_D))
+    stoch_rsi_oversold = float(settings.get("stoch_rsi_oversold", STOCH_RSI_OVERSOLD))
+    stoch_rsi_overbought = float(settings.get("stoch_rsi_overbought", STOCH_RSI_OVERBOUGHT))
+    investor_consec_days = int(settings.get("investor_consec_days", INVESTOR_CONSEC_DAYS))
+    vix_extreme_fear = float(settings.get("vix_extreme_fear", VIX_EXTREME_FEAR))
+    vix_fear = float(settings.get("vix_fear", VIX_FEAR))
+    vix_extreme_greed = float(settings.get("vix_extreme_greed", VIX_EXTREME_GREED))
+
+    if len(df) < long_ma_days:
         return result
 
     closes = df["종가"]
@@ -166,16 +197,16 @@ def analyze_detailed(
     sell_score = 0.0
 
     # ── 지표 계산 ──────────────────────────────────
-    short_ma = calc_moving_average(closes, SHORT_MA)
-    long_ma = calc_moving_average(closes, LONG_MA)
-    rsi = calc_rsi(closes, RSI_PERIOD)
+    short_ma = calc_moving_average(closes, short_ma_days)
+    long_ma = calc_moving_average(closes, long_ma_days)
+    rsi = calc_rsi(closes, rsi_period)
     macd_line, signal_line, histogram = calc_macd(closes)
     volume_ratio = calc_volume_ratio(volumes)
     atr = calc_atr(df["고가"], df["저가"], closes, period=14)
     bb_upper, bb_middle, bb_lower = calc_bollinger_bands(closes, 20, 2)
     obv = calc_obv(closes, volumes)
     stoch_k, stoch_d = calc_stochastic_rsi(
-        closes, STOCH_RSI_PERIOD, STOCH_RSI_SMOOTH_K, STOCH_RSI_SMOOTH_D,
+        closes, stoch_rsi_period, stoch_rsi_smooth_k, stoch_rsi_smooth_d,
     )
 
     current_rsi = float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else None
@@ -231,7 +262,7 @@ def analyze_detailed(
                     "trigger": "골든크로스",
                     "type": "buy",
                     "source": "MA_CROSS",
-                    "detail": f"{SHORT_MA}일선({cur_short_val:,.0f}) > {LONG_MA}일선({cur_long_val:,.0f}) 상향 돌파{vol_note}",
+                    "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 상향 돌파{vol_note}",
                     "strength": round(ma_score, 2),
                 })
                 buy_score += ma_score
@@ -241,7 +272,7 @@ def analyze_detailed(
                     "trigger": "데드크로스",
                     "type": "sell",
                     "source": "MA_CROSS",
-                    "detail": f"{SHORT_MA}일선({cur_short_val:,.0f}) < {LONG_MA}일선({cur_long_val:,.0f}) 하향 돌파{vol_note}",
+                    "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 하향 돌파{vol_note}",
                     "strength": round(ma_score, 2),
                 })
                 sell_score += ma_score
@@ -258,9 +289,9 @@ def analyze_detailed(
 
     # ── 2. RSI (연속 강도 점수) ────────────────────
     if current_rsi is not None:
-        rsi_score = _continuous_rsi_score(current_rsi)
+        rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought)
         if rsi_score > 0:
-            if current_rsi <= RSI_OVERSOLD:
+            if current_rsi <= rsi_oversold:
                 weighted = rsi_score * _regime_weight(regime, "buy")
                 signals.append({
                     "trigger": "RSI 과매도",
@@ -270,7 +301,7 @@ def analyze_detailed(
                     "strength": round(weighted, 2),
                 })
                 buy_score += weighted
-            elif current_rsi >= RSI_OVERBOUGHT:
+            elif current_rsi >= rsi_overbought:
                 weighted = rsi_score * _regime_weight(regime, "sell")
                 signals.append({
                     "trigger": "RSI 과매수",
@@ -360,26 +391,26 @@ def analyze_detailed(
 
     # ── 6. Stochastic RSI (신규) ──────────────────
     if current_stoch_k is not None:
-        if current_stoch_k <= STOCH_RSI_OVERSOLD:
+        if current_stoch_k <= stoch_rsi_oversold:
             # 연속 점수: 20=0.5, 10=0.75, 0=1.0
-            raw = 0.5 + 0.5 * (STOCH_RSI_OVERSOLD - current_stoch_k) / STOCH_RSI_OVERSOLD
+            raw = 0.5 + 0.5 * (stoch_rsi_oversold - current_stoch_k) / stoch_rsi_oversold
             stoch_score = min(1.0, raw) * _regime_weight(regime, "buy")
             signals.append({
                 "trigger": "StochRSI 과매도",
                 "type": "buy",
                 "source": "STOCH_RSI",
-                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {STOCH_RSI_OVERSOLD} 이하)",
+                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_oversold:.0f} 이하)",
                 "strength": round(stoch_score, 2),
             })
             buy_score += stoch_score
-        elif current_stoch_k >= STOCH_RSI_OVERBOUGHT:
-            raw = 0.5 + 0.5 * (current_stoch_k - STOCH_RSI_OVERBOUGHT) / (100 - STOCH_RSI_OVERBOUGHT)
+        elif current_stoch_k >= stoch_rsi_overbought:
+            raw = 0.5 + 0.5 * (current_stoch_k - stoch_rsi_overbought) / (100 - stoch_rsi_overbought)
             stoch_score = min(1.0, raw) * _regime_weight(regime, "sell")
             signals.append({
                 "trigger": "StochRSI 과매수",
                 "type": "sell",
                 "source": "STOCH_RSI",
-                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {STOCH_RSI_OVERBOUGHT} 이상)",
+                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_overbought:.0f} 이상)",
                 "strength": round(stoch_score, 2),
             })
             sell_score += stoch_score
@@ -387,7 +418,7 @@ def analyze_detailed(
     # ── 7. VIX 공포지수 ──────────────────────────
     if vix_value is not None:
         result["indicators"]["vix"] = vix_value
-        if vix_value >= VIX_EXTREME_FEAR:
+        if vix_value >= vix_extreme_fear:
             signals.append({
                 "trigger": "VIX 공포",
                 "type": "buy",
@@ -396,7 +427,7 @@ def analyze_detailed(
                 "strength": 1.0,
             })
             buy_score += 1.0
-        elif vix_value >= VIX_FEAR:
+        elif vix_value >= vix_fear:
             signals.append({
                 "trigger": "VIX 주의",
                 "type": "buy",
@@ -405,7 +436,7 @@ def analyze_detailed(
                 "strength": 0.7,
             })
             buy_score += 0.7
-        elif vix_value <= VIX_EXTREME_GREED:
+        elif vix_value <= vix_extreme_greed:
             signals.append({
                 "trigger": "VIX 과열",
                 "type": "sell",
@@ -416,14 +447,14 @@ def analyze_detailed(
             sell_score += 1.0
 
     # ── 8. 외인/기관 매매동향 (OR 분리) ────────────
-    if investor_df is not None and len(investor_df) >= INVESTOR_CONSEC_DAYS:
+    if investor_df is not None and len(investor_df) >= investor_consec_days:
         frgn = investor_df["외인순매수"]
         inst = investor_df["기관순매수"]
 
         foreign_consec = _count_consecutive(frgn)
         institutional_consec = _count_consecutive(inst)
 
-        recent = investor_df.tail(INVESTOR_CONSEC_DAYS)
+        recent = investor_df.tail(investor_consec_days)
         foreign_net = int(recent["외인순매수"].sum())
         institutional_net = int(recent["기관순매수"].sum())
 
@@ -444,7 +475,7 @@ def analyze_detailed(
                 "trigger": "외인 연속 매수",
                 "type": "buy",
                 "source": "FOREIGN",
-                "detail": f"외국인 {INVESTOR_CONSEC_DAYS}일 연속 순매수 ({foreign_net:+,}주)",
+                "detail": f"외국인 {investor_consec_days}일 연속 순매수 ({foreign_net:+,}주)",
                 "strength": round(weighted, 2),
             })
             buy_score += weighted
@@ -454,7 +485,7 @@ def analyze_detailed(
                 "trigger": "외인 연속 매도",
                 "type": "sell",
                 "source": "FOREIGN",
-                "detail": f"외국인 {INVESTOR_CONSEC_DAYS}일 연속 순매도 ({foreign_net:+,}주)",
+                "detail": f"외국인 {investor_consec_days}일 연속 순매도 ({foreign_net:+,}주)",
                 "strength": round(weighted, 2),
             })
             sell_score += weighted
@@ -466,7 +497,7 @@ def analyze_detailed(
                 "trigger": "기관 연속 매수",
                 "type": "buy",
                 "source": "INSTITUTIONAL",
-                "detail": f"기관 {INVESTOR_CONSEC_DAYS}일 연속 순매수 ({institutional_net:+,}주)",
+                "detail": f"기관 {investor_consec_days}일 연속 순매수 ({institutional_net:+,}주)",
                 "strength": round(weighted, 2),
             })
             buy_score += weighted
@@ -476,7 +507,7 @@ def analyze_detailed(
                 "trigger": "기관 연속 매도",
                 "type": "sell",
                 "source": "INSTITUTIONAL",
-                "detail": f"기관 {INVESTOR_CONSEC_DAYS}일 연속 순매도 ({institutional_net:+,}주)",
+                "detail": f"기관 {investor_consec_days}일 연속 순매도 ({institutional_net:+,}주)",
                 "strength": round(weighted, 2),
             })
             sell_score += weighted
