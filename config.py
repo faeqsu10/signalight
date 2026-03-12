@@ -189,6 +189,15 @@ SECTOR_MAP = {
     "035420": "IT", "035720": "IT",
 }
 
+# 미국 주식 섹터 매핑
+US_SECTOR_MAP = {
+    "AAPL": "Tech", "NVDA": "Semiconductor",
+    "TSLA": "Auto", "MSFT": "Tech", "AMZN": "Retail",
+}
+
+# 미국 주식 가상 자산
+DRY_RUN_VIRTUAL_ASSET_USD = 100_000.0  # Alpaca Paper Trading 기본 자금 (USD)
+
 # ──────────────────────────────────────────────
 # 글로벌 매크로 데이터 설정
 # ──────────────────────────────────────────────
