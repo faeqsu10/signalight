@@ -341,6 +341,12 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <a
+            href="/autonomous"
+            className="text-blue-500 hover:underline text-sm hidden sm:inline"
+          >
+            자율매매 →
+          </a>
           <div className="relative">
             <input
               type="text"

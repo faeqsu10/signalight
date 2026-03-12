@@ -5,6 +5,17 @@ Usage:
 
 Output:
     web/public/data/autonomous.json
+
+JSON 구조:
+    {
+      "kr": { "equity": [...], "daily_pnl": [...], "trades": [...],
+               "summary": {...}, "updated_at": "..." },
+      "us": { "equity": [], "daily_pnl": [], "trades": [],
+               "summary": {...}, "updated_at": "..." }
+    }
+
+TODO: DB에 market 컬럼이 추가되면 KR/US 데이터를 분리해서 export한다.
+      현재는 모든 데이터를 "kr"에, "us"는 빈 값으로 export한다.
 """
 
 import json
@@ -27,6 +38,32 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,)
     )
     return cur.fetchone() is not None
+
+
+def _calc_summary(equity, daily_pnl):
+    """equity 커브와 daily_pnl로 요약 통계를 계산한다."""
+    total_trades = sum(d["trades"] for d in daily_pnl)
+    total_wins = sum(d["wins"] for d in daily_pnl)
+    total_pnl = sum(d["pnl"] for d in daily_pnl)
+    win_rate = round(total_wins / total_trades * 100, 1) if total_trades > 0 else 0.0
+
+    max_drawdown = 0.0
+    if equity:
+        peak = equity[0]["total"]
+        for e in equity:
+            if e["total"] > peak:
+                peak = e["total"]
+            if peak > 0:
+                dd = (peak - e["total"]) / peak * 100
+                if dd > max_drawdown:
+                    max_drawdown = dd
+
+    return {
+        "total_trades": total_trades,
+        "win_rate": win_rate,
+        "total_pnl": total_pnl,
+        "max_drawdown": round(max_drawdown, 2),
+    }
 
 
 def export() -> None:
@@ -107,34 +144,26 @@ def export() -> None:
 
     conn.close()
 
-    # ── summary ──
-    total_trades = sum(d["trades"] for d in daily_pnl)
-    total_wins = sum(d["wins"] for d in daily_pnl)
-    total_pnl = sum(d["pnl"] for d in daily_pnl)
-    win_rate = round(total_wins / total_trades * 100, 1) if total_trades > 0 else 0.0
+    now_iso = datetime.now().isoformat(timespec="seconds")
 
-    # MDD: equity 커브에서 최대 낙폭
-    max_drawdown = 0.0
-    if equity:
-        peak = equity[0]["total"]
-        for e in equity:
-            if e["total"] > peak:
-                peak = e["total"]
-            if peak > 0:
-                dd = (peak - e["total"]) / peak * 100
-                if dd > max_drawdown:
-                    max_drawdown = dd
+    # TODO: market 컬럼이 생기면 여기서 KR/US 분리
+    kr_summary = _calc_summary(equity, daily_pnl)
+    us_summary = _calc_summary([], [])
 
     data = {
-        "updated_at": datetime.now().isoformat(timespec="seconds"),
-        "equity": equity,
-        "daily_pnl": daily_pnl,
-        "recent_trades": recent_trades,
-        "summary": {
-            "total_trades": total_trades,
-            "win_rate": win_rate,
-            "total_pnl": total_pnl,
-            "max_drawdown": round(max_drawdown, 2),
+        "kr": {
+            "equity": equity,
+            "daily_pnl": daily_pnl,
+            "trades": recent_trades,
+            "summary": kr_summary,
+            "updated_at": now_iso,
+        },
+        "us": {
+            "equity": [],
+            "daily_pnl": [],
+            "trades": [],
+            "summary": us_summary,
+            "updated_at": now_iso,
         },
     }
 
@@ -142,7 +171,8 @@ def export() -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"[export_auto_data] 저장 완료: {OUT_PATH}")
-    print(f"  equity: {len(equity)}건, daily_pnl: {len(daily_pnl)}건, trades: {len(recent_trades)}건")
+    print(f"  KR equity: {len(equity)}건, daily_pnl: {len(daily_pnl)}건, trades: {len(recent_trades)}건")
+    print(f"  US: (empty, TODO: market 컬럼 분리 후 구현)")
 
 
 if __name__ == "__main__":
