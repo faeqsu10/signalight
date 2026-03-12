@@ -137,9 +137,9 @@
 - [x] 웹 자율매매 PnL API (scripts/export_auto_data.py + web API route + pipeline 통합)
 - [x] 유니버스 선정 강화: 근접 골든크로스 스캔, 적응형 완화, RSI trend gate 면제
 - [x] 하드코딩 제거: 설정값 외부화 + 주석 추가 (40+ 설정값)
-- [ ] 웹 자율매매 대시보드 페이지 (차트 + 거래 이력 UI)
+- [x] 웹 자율매매 대시보드 페이지 (차트 + 거래 이력 UI)
 - [ ] mock 거래 데이터 축적 → 옵티마이저 피드백 루프 실증
-- [ ] 자율매매 상태 모니터링 강화 (장중 로그 가시성)
+- [x] 자율매매 상태 모니터링 강화 (스캔 결과 요약 텔레그램 알림)
 
 ## Phase 10 - 글로벌 매크로 데이터 통합
 ### Phase 10-1: 가격 지표 수집 (완료)
@@ -151,9 +151,9 @@
 - [x] bot/formatter.py 글로벌 매크로 섹션 추가 (일일 브리핑 + 시그널 알림)
 - [x] web/lib/constants.ts 매크로 설정 TS 포팅
 
-### Phase 10-2: RSS 뉴스 수집 (미착수)
-- [ ] data/macro_news.py 구현 (BBC, CNBC, 한경 RSS)
-- [ ] 키워드 기반 이벤트 분류
+### Phase 10-2: RSS 뉴스 수집 (완료)
+- [x] data/macro_news.py 구현 (CNBC, Reuters, 한경 RSS)
+- [x] 키워드 기반 이벤트 분류 (config.py MACRO_NEWS_KEYWORDS)
 
 ### Phase 10-3: GDELT + 시나리오 (미착수)
 - [ ] data/gdelt.py 구현 (지정학 이벤트)
@@ -170,8 +170,8 @@
 - [x] US 파이프라인 오케스트레이터 (autonomous/us/pipeline.py)
 - [x] US 스케줄 러너 (autonomous/us/runner.py, KST 기준)
 - [x] systemd 서비스 등록 (signalight-auto-us.service)
-- [ ] US 워치리스트 확장 (S&P 500 상위 종목)
-- [ ] US 텔레그램 인터랙티브 명령어 (/us_status, /us_scan)
+- [x] US 워치리스트 확장 (S&P 500 상위 30종목, 8개 섹터)
+- [x] US 텔레그램 인터랙티브 명령어 (/us_status, /us_scan, /us_positions, /us_config)
 
 ## Backlog
 - [x] Vercel 배포

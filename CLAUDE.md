@@ -10,14 +10,15 @@
 ```
 signalight/
 ├── [Python 백엔드] 텔레그램 알림 봇
-│   ├── config.py           # 설정 (KR 10종목 + US 5종목, 지표 파라미터, 환경변수)
+│   ├── config.py           # 설정 (KR 10종목 + US 30종목, 지표 파라미터, 환경변수, RSS 뉴스)
 │   ├── main.py             # 진입점 + 스케줄러 (DB 우선 워치리스트, VIX 1회 조회)
 │   ├── data/
 │   │   ├── fetcher.py      # pykrx KRX OHLCV + Yahoo VIX 데이터 수집
 │   │   ├── investor.py     # 네이버 금융 외인/기관 순매수 크롤링
 │   │   ├── macro_fetcher.py # 글로벌 매크로 가격 지표 (WTI/환율/금리/금/DXY, 4시간 캐시)
 │   │   ├── us_fetcher.py   # Yahoo Finance 미국 주식 OHLCV (한글 컬럼명 변환)
-│   │   └── news.py         # 네이버 금융 종목별 뉴스 크롤링
+│   │   ├── news.py         # 네이버 금융 종목별 뉴스 크롤링
+│   │   └── macro_news.py   # 글로벌 매크로 RSS 뉴스 수집 + 키워드 이벤트 분류
 │   ├── signals/
 │   │   ├── indicators.py   # 기술적 지표 (MA, Wilder RSI, MACD, ATR, BB, OBV, StochRSI, 거래량)
 │   │   ├── strategy.py     # 시그널 판단 + 연속 강도 합류 점수 + 시장 레짐 가중치
@@ -68,6 +69,7 @@ signalight/
 │       ├── analyzer.py        # US 시그널 분석 (analyze_detailed 래핑)
 │       ├── execution.py       # Alpaca 주문 실행 (장중 체크, 킬스위치)
 │       ├── pipeline.py        # US 오케스트레이터 (스캔→분석→결정→실행)
+│       ├── commands.py        # US 텔레그램 명령어 (/us_status, /us_scan, /us_positions, /us_config)
 │       └── runner.py          # 스케줄러 (05:50 KST 일일스캔, 23:35-05:45 장중)
 │
 ├── [Next.js 프론트엔드] 웹 대시보드
