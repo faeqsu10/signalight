@@ -1,7 +1,7 @@
 # Signalight 개발 리스트
 
 > 전체 개발 항목 추적. 작업 완료 시 자동 업데이트.
-> 최종 갱신: 2026-03-11 (Phase 18 완료 — 아키텍처 문서화 + 자동 개선 루프)
+> 최종 갱신: 2026-03-12 (Phase 18 완료 + Phase 19 매크로 설정 포팅)
 
 ---
 
@@ -278,9 +278,15 @@
 | 155 | pipeline.py + universe.py — 개선 루프 통합 | ✅ | scan_weights 파라미터화, 주간 평가 시 결과 기록 |
 | 156 | decision.py — scan_signals 전달 + CLAUDE.md/devlog 갱신 | ✅ | 매수 시 scan_signals를 reason에 기록 |
 
+## Phase 19 — 글로벌 매크로 설정 포팅 [진행 중]
+
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 157 | web/lib/constants.ts — 매크로 설정 포팅 | ✅ | MACRO_INDICATORS, MACRO_SIGNAL_MAX_SCORE, MACRO_SECTOR_IMPACT |
+
 ---
 
 ## 통계
 
-- **총 항목**: 156개 (완료 152 + 백로그 2)
+- **총 항목**: 157개 (완료 153 + 진행중 1 + 백로그 2)
 - **완료율**: 97%
