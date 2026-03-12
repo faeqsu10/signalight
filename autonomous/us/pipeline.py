@@ -103,6 +103,9 @@ class USAutonomousPipeline:
             "sells": 0,
             "buys": 0,
             "errors": [],
+            "scan_count": 0,
+            "analyze_count": 0,
+            "top_candidates": [],
         }
 
         # VIX/매크로 캐시 초기화 (매 사이클마다 새로 조회)
@@ -143,7 +146,11 @@ class USAutonomousPipeline:
 
         # ── Phase 2: 유니버스 스캔 + 분석 + 매수 ──
         try:
-            result["buys"] = self._phase_buy()
+            buy_result = self._phase_buy()
+            result["buys"] = buy_result["buys"]
+            result["scan_count"] = buy_result["scan_count"]
+            result["analyze_count"] = buy_result["analyze_count"]
+            result["top_candidates"] = buy_result["top_candidates"]
         except Exception as e:
             logger.error("매수 판단 실패: %s", e)
             result["errors"].append(f"buy: {e}")
@@ -160,7 +167,21 @@ class USAutonomousPipeline:
         except Exception as e:
             logger.warning("일일 PnL 기록 실패: %s", e)
 
-        # ── Phase 5: 일일 요약 전송 ──
+        # ── Phase 5: 스캔 결과 요약 전송 ──
+        try:
+            self.evaluator.send_cycle_summary(
+                flag="🇺🇸",
+                scan_count=result["scan_count"],
+                analyze_count=result["analyze_count"],
+                buy_count=result["buys"],
+                sell_count=result["sells"],
+                top_candidates=result["top_candidates"],
+                currency="USD",
+            )
+        except Exception as e:
+            logger.warning("스캔 요약 전송 실패: %s", e)
+
+        # ── Phase 6: 일일 요약 전송 ──
         try:
             self.evaluator.daily_summary(optimizer_status=self._optimizer_status)
         except Exception as e:
@@ -274,26 +295,63 @@ class USAutonomousPipeline:
 
         return sell_count
 
-    def _phase_buy(self) -> int:
-        """유니버스 스캔 + 분석 + 매수 결정 + 실행."""
+    def _phase_buy(self) -> Dict:
+        """유니버스 스캔 + 분석 + 매수 결정 + 실행.
+
+        Returns:
+            {"buys": int, "scan_count": int, "analyze_count": int, "top_candidates": list}
+        """
+        phase_result = {
+            "buys": 0,
+            "scan_count": 0,
+            "analyze_count": 0,
+            "top_candidates": [],
+        }
+
         held = set(pos["ticker"] for pos in self.tracker.get_all_open())
 
         candidates = self.universe.select_universe(held_tickers=held)
         if not candidates:
             logger.info("🇺🇸 매수 후보 없음")
-            return 0
+            return phase_result
 
+        phase_result["scan_count"] = len(candidates)
         logger.info("🇺🇸 매수 후보 스캔: %d종목", len(candidates))
 
         analyzed = self.analyzer.analyze_candidates(candidates)
         if not analyzed:
             logger.info("🇺🇸 분석 통과 종목 없음")
-            return 0
+            return phase_result
+
+        phase_result["analyze_count"] = len(analyzed)
+        phase_result["top_candidates"] = analyzed
+
+        # 상위 3개 후보 로깅
+        top3 = sorted(
+            analyzed, key=lambda x: x.get("confluence_score", 0), reverse=True
+        )[:3]
+        for item in top3:
+            logger.info(
+                "🇺🇸 상위 후보: %s(%s) score=%.1f signals=%s",
+                item.get("name", ""), item.get("ticker", ""),
+                item.get("confluence_score", 0),
+                item.get("scan_signals", []),
+            )
 
         buy_decisions = self.decision.make_buy_decisions(analyzed)
         if not buy_decisions:
             logger.info("🇺🇸 매수 조건 충족 종목 없음")
-            return 0
+            return phase_result
+
+        # 매수 결정 로깅
+        for dec in buy_decisions:
+            sd = dec["stock_data"]
+            logger.info(
+                "🇺🇸 매수 결정: %s(%s) score=%.1f reason=%s",
+                sd.get("name", ""), sd.get("ticker", ""),
+                dec.get("confluence_score", 0),
+                dec["recommendation"].get("action", ""),
+            )
 
         buy_count = 0
         for decision in buy_decisions:
@@ -321,7 +379,8 @@ class USAutonomousPipeline:
             except Exception as e:
                 logger.error("매수 실행 실패: %s", e)
 
-        return buy_count
+        phase_result["buys"] = buy_count
+        return phase_result
 
     def _save_equity_snapshot(self) -> None:
         """에퀴티 스냅샷을 저장한다."""

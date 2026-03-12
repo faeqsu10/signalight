@@ -223,6 +223,101 @@ class PerformanceEvaluator:
 
         return lines
 
+    def send_cycle_summary(
+        self,
+        flag: str,
+        scan_count: int,
+        analyze_count: int,
+        buy_count: int,
+        sell_count: int,
+        top_candidates: List[Dict],
+        currency: str = "KRW",
+    ) -> None:
+        """사이클 스캔 결과 요약을 텔레그램으로 전송한다.
+
+        Args:
+            flag: 국기 이모지 prefix (예: "🇰🇷" 또는 "🇺🇸")
+            scan_count: 스캔으로 선정된 후보 종목 수
+            analyze_count: 분석 완료 종목 수
+            buy_count: 매수 체결 건수
+            sell_count: 매도 체결 건수
+            top_candidates: 상위 후보 리스트 (analyze_candidates 결과)
+            currency: "KRW" 또는 "USD"
+        """
+        chat_id = AUTO_CONFIG.auto_trade_chat_id
+        if not chat_id:
+            return
+
+        open_positions = self.tracker.get_all_open()
+        equity_rows = self.state.get_equity_history(days=1)
+        total_equity = 0
+        mdd_pct = 0.0
+
+        if equity_rows:
+            latest = equity_rows[-1]
+            total_equity = latest.get("total_equity", 0)
+
+        perf = self.state.get_performance_summary(days=30)
+        mdd_pct = perf.get("max_drawdown_pct", 0.0) or 0.0
+
+        if currency == "USD":
+            # equity는 cents 단위로 저장됨
+            equity_display = f"${total_equity / 100:,.0f}" if total_equity else "$0"
+            label = "US 자율매매"
+        else:
+            equity_display = f"₩{total_equity:,}" if total_equity else "₩0"
+            label = "자율매매"
+
+        lines = [
+            f"{flag} <b>[{label}] 일일 스캔 리포트</b>",
+            "━━━━━━━━━━━━━━━━━━",
+            f"📊 스캔: {scan_count}종목 후보",
+            f"📈 분석: {analyze_count}종목 완료",
+            f"🎯 매수: {buy_count}건, 매도: {sell_count}건",
+        ]
+
+        # 상위 후보 (최대 5개)
+        top = sorted(
+            top_candidates,
+            key=lambda x: x.get("confluence_score", 0),
+            reverse=True,
+        )[:5]
+
+        if top:
+            lines.append("")
+            lines.append("상위 후보:")
+            for item in top:
+                name = item.get("name", item.get("ticker", ""))
+                score = item.get("confluence_score", 0)
+                signals = item.get("scan_signals", [])
+                sig_str = "+".join(
+                    self._scan_signal_short(s) for s in signals
+                ) if signals else "-"
+                lines.append(f"• {name} score={score:.1f} [{sig_str}]")
+
+        # 포트폴리오 현황
+        lines.append("")
+        lines.append("포트폴리오:")
+        lines.append(f"• 총 자산: {equity_display}")
+        lines.append(f"• 보유: {len(open_positions)}종목")
+        lines.append(f"• MDD: {mdd_pct:.1f}%")
+
+        if AUTO_CONFIG.dry_run:
+            lines.append("")
+            lines.append("<i>(시뮬레이션 모드)</i>")
+
+        send_message("\n".join(lines), chat_id=chat_id)
+
+    def _scan_signal_short(self, signal: str) -> str:
+        """스캔 시그널 코드를 짧은 한글 라벨로 변환한다."""
+        mapping = {
+            "golden_cross": "골든크로스",
+            "rsi_oversold": "RSI",
+            "volume_surge": "거래량",
+            "near_golden_cross": "근접GC",
+        }
+        return mapping.get(signal, signal)
+
     def send_trade_notification(
         self, side: str, name: str, ticker: str,
         quantity: int, price: int,

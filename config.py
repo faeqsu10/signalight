@@ -312,3 +312,51 @@ MACRO_EVENT_RULES = {
         "crash_event": None,
     },
 }
+
+# ──────────────────────────────────────────────
+# RSS 매크로 뉴스 설정
+# ──────────────────────────────────────────────
+
+# RSS 피드 소스
+MACRO_RSS_FEEDS = {
+    "CNBC_ECONOMY": {
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
+        "name": "CNBC Economy",
+        "lang": "en",
+    },
+    "CNBC_MARKET": {
+        "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839069",
+        "name": "CNBC Market",
+        "lang": "en",
+    },
+    "REUTERS_BUSINESS": {
+        "url": "https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best",
+        "name": "Reuters Business",
+        "lang": "en",
+    },
+    "HANKYUNG": {
+        "url": "https://www.hankyung.com/feed/economy",
+        "name": "한국경제 경제",
+        "lang": "ko",
+    },
+    "HANKYUNG_MARKET": {
+        "url": "https://www.hankyung.com/feed/stock",
+        "name": "한국경제 증권",
+        "lang": "ko",
+    },
+}
+
+# 매크로 뉴스 키워드 → 이벤트 매핑
+MACRO_NEWS_KEYWORDS = {
+    "oil": ["oil", "crude", "opec", "petroleum", "원유", "유가", "OPEC"],
+    "rate": ["interest rate", "fed", "federal reserve", "rate hike", "rate cut", "기준금리", "금리인상", "금리인하", "연준"],
+    "trade_war": ["tariff", "trade war", "sanctions", "관세", "무역전쟁", "제재"],
+    "inflation": ["inflation", "cpi", "consumer price", "인플레이션", "물가", "소비자물가"],
+    "recession": ["recession", "slowdown", "gdp", "경기침체", "경기둔화"],
+    "geopolitical": ["war", "conflict", "military", "전쟁", "분쟁", "군사"],
+    "currency": ["dollar", "exchange rate", "forex", "달러", "환율", "원달러"],
+    "gold": ["gold", "금값", "금가격"],
+}
+
+# 매크로 뉴스 캐시 TTL (초)
+MACRO_NEWS_CACHE_TTL = 3600  # 1시간
