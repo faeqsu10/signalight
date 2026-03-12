@@ -34,13 +34,47 @@ export const WATCH_LIST = [
   { ticker: "035720", name: "카카오" },          // IT/플랫폼
 ] as const;
 
-// 미국 주식
+// 미국 주식 (S&P 500 주요 30종목, 8개 섹터)
 export const US_WATCH_LIST = [
+  // Tech
   { ticker: "AAPL", name: "Apple" },
-  { ticker: "NVDA", name: "NVIDIA" },
-  { ticker: "TSLA", name: "Tesla" },
   { ticker: "MSFT", name: "Microsoft" },
+  { ticker: "GOOGL", name: "Alphabet" },
+  { ticker: "META", name: "Meta" },
+  { ticker: "NVDA", name: "NVIDIA" },
+  { ticker: "AMD", name: "AMD" },
+  { ticker: "CRM", name: "Salesforce" },
+  { ticker: "ADBE", name: "Adobe" },
+  // Semiconductor
+  { ticker: "AVGO", name: "Broadcom" },
+  { ticker: "QCOM", name: "Qualcomm" },
+  { ticker: "INTC", name: "Intel" },
+  // Auto/EV
+  { ticker: "TSLA", name: "Tesla" },
+  { ticker: "F", name: "Ford" },
+  { ticker: "GM", name: "GM" },
+  // E-commerce/Retail
   { ticker: "AMZN", name: "Amazon" },
+  { ticker: "WMT", name: "Walmart" },
+  { ticker: "COST", name: "Costco" },
+  // Finance
+  { ticker: "JPM", name: "JPMorgan" },
+  { ticker: "BAC", name: "BankOfAmerica" },
+  { ticker: "GS", name: "GoldmanSachs" },
+  // Healthcare
+  { ticker: "JNJ", name: "Johnson&Johnson" },
+  { ticker: "UNH", name: "UnitedHealth" },
+  { ticker: "PFE", name: "Pfizer" },
+  // Energy
+  { ticker: "XOM", name: "ExxonMobil" },
+  { ticker: "CVX", name: "Chevron" },
+  // Industrial
+  { ticker: "BA", name: "Boeing" },
+  { ticker: "CAT", name: "Caterpillar" },
+  // Consumer
+  { ticker: "KO", name: "CocaCola" },
+  { ticker: "PG", name: "Procter&Gamble" },
+  { ticker: "DIS", name: "Disney" },
 ] as const;
 
 // 전체 종목 (한국 + 미국)

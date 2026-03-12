@@ -44,13 +44,28 @@ WATCH_LIST = [
     ("035720", "카카오"),          # IT/플랫폼
 ]
 
-# 미국 주식 감시 리스트
+# 미국 주식 감시 리스트 (S&P 500 주요 30종목, 8개 섹터)
 US_WATCH_LIST = [
-    ("AAPL", "Apple"),
-    ("NVDA", "NVIDIA"),
-    ("TSLA", "Tesla"),
-    ("MSFT", "Microsoft"),
-    ("AMZN", "Amazon"),
+    # Tech
+    ("AAPL", "Apple"), ("MSFT", "Microsoft"), ("GOOGL", "Alphabet"),
+    ("META", "Meta"), ("NVDA", "NVIDIA"), ("AMD", "AMD"),
+    ("CRM", "Salesforce"), ("ADBE", "Adobe"),
+    # Semiconductor
+    ("AVGO", "Broadcom"), ("QCOM", "Qualcomm"), ("INTC", "Intel"),
+    # Auto/EV
+    ("TSLA", "Tesla"), ("F", "Ford"), ("GM", "GM"),
+    # E-commerce/Retail
+    ("AMZN", "Amazon"), ("WMT", "Walmart"), ("COST", "Costco"),
+    # Finance
+    ("JPM", "JPMorgan"), ("BAC", "BankOfAmerica"), ("GS", "GoldmanSachs"),
+    # Healthcare
+    ("JNJ", "Johnson&Johnson"), ("UNH", "UnitedHealth"), ("PFE", "Pfizer"),
+    # Energy
+    ("XOM", "ExxonMobil"), ("CVX", "Chevron"),
+    # Industrial
+    ("BA", "Boeing"), ("CAT", "Caterpillar"),
+    # Consumer
+    ("KO", "CocaCola"), ("PG", "Procter&Gamble"), ("DIS", "Disney"),
 ]
 
 # 시그널 설정
@@ -189,10 +204,19 @@ SECTOR_MAP = {
     "035420": "IT", "035720": "IT",
 }
 
-# 미국 주식 섹터 매핑
+# 미국 주식 섹터 매핑 (30종목)
 US_SECTOR_MAP = {
-    "AAPL": "Tech", "NVDA": "Semiconductor",
-    "TSLA": "Auto", "MSFT": "Tech", "AMZN": "Retail",
+    "AAPL": "Tech", "MSFT": "Tech", "GOOGL": "Tech",
+    "META": "Tech", "CRM": "Tech", "ADBE": "Tech",
+    "NVDA": "Semiconductor", "AMD": "Semiconductor",
+    "AVGO": "Semiconductor", "QCOM": "Semiconductor", "INTC": "Semiconductor",
+    "TSLA": "Auto", "F": "Auto", "GM": "Auto",
+    "AMZN": "Retail", "WMT": "Retail", "COST": "Retail",
+    "JPM": "Finance", "BAC": "Finance", "GS": "Finance",
+    "JNJ": "Healthcare", "UNH": "Healthcare", "PFE": "Healthcare",
+    "XOM": "Energy", "CVX": "Energy",
+    "BA": "Industrial", "CAT": "Industrial",
+    "KO": "Consumer", "PG": "Consumer", "DIS": "Consumer",
 }
 
 # 미국 주식 가상 자산

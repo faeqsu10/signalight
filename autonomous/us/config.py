@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 import os
 from dotenv import load_dotenv
+from config import US_SECTOR_MAP
 
 load_dotenv()
 
@@ -105,10 +106,7 @@ class USAutonomousConfig:
     virtual_asset: float = 100_000.0      # Alpaca Paper Trading 기본 자금 (USD)
 
     # ── 섹터 매핑 ──
-    sector_map: dict = field(default_factory=lambda: {
-        "AAPL": "Tech", "NVDA": "Semiconductor",
-        "TSLA": "Auto", "MSFT": "Tech", "AMZN": "Retail",
-    })
+    sector_map: dict = field(default_factory=lambda: dict(US_SECTOR_MAP))
 
 
 US_AUTO_CONFIG = USAutonomousConfig()
