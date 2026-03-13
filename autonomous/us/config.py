@@ -31,7 +31,7 @@ class USAutonomousConfig:
     consecutive_loss_pause_days: int = 2
 
     # ── 유니버스 ──
-    universe_max_candidates: int = 20
+    universe_max_candidates: int = 50
     universe_scan_limit: int = 50
     data_period_days: int = 120
 
@@ -43,14 +43,14 @@ class USAutonomousConfig:
     indicator_rsi_overbought: float = 70.0
 
     # ── 스캔 설정 ──
-    scan_rsi_oversold_threshold: float = 40.0
-    scan_volume_surge_ratio: float = 1.5
+    scan_rsi_oversold_threshold: float = 45.0
+    scan_volume_surge_ratio: float = 1.3
     scan_near_golden_cross_proximity: float = 0.98
 
     # ── 진입 임계값 ──
     initial_entry_threshold_uptrend: float = 0.8   # 진입 임계값(상승장, 적극적)
-    initial_entry_threshold_sideways: float = 1.2  # 진입 임계값(횡보장, 적극적)
-    initial_entry_threshold_downtrend: float = 1.8 # 진입 임계값(하락장, 적극적)
+    initial_entry_threshold_sideways: float = 1.0  # 진입 임계값(횡보장, 적극적)
+    initial_entry_threshold_downtrend: float = 1.5 # 진입 임계값(하락장, 적극적)
     initial_min_volume_ratio: float = 0.3
 
     # ── 매매 설정 ──
@@ -67,7 +67,7 @@ class USAutonomousConfig:
     max_holding_days: int = 20
 
     # ── VIX ──
-    vix_extreme_fear: float = 30.0
+    vix_extreme_fear: float = 28.0
     vix_fear: float = 25.0
     vix_extreme_greed: float = 12.0
     vix_position_mult_calm: float = 1.0

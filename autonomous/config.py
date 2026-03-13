@@ -37,9 +37,9 @@ class AutonomousConfig:
 
     # ── 유니버스 선정 ──
     universe_market: str = "KOSPI"        # 스캔 대상 시장
-    universe_max_candidates: int = 30     # 스캔 후보 최대 수
+    universe_max_candidates: int = 50     # 스캔 후보 최대 수
     universe_scan_limit: int = 50         # 각 스캔(골든/RSI/거래량) 최대 조회 수
-    min_trading_value: int = 5_000_000_000  # 최소 일평균 거래대금 (50억)
+    min_trading_value: int = 3_000_000_000  # 최소 일평균 거래대금 (30억)
     data_period_days: int = 120           # 자율매매 데이터 조회 기간
     indicator_short_ma: int = 10
     indicator_long_ma: int = 50
@@ -52,19 +52,19 @@ class AutonomousConfig:
     indicator_stoch_rsi_oversold: float = 20.0
     indicator_stoch_rsi_overbought: float = 80.0
     investor_consec_days: int = 3
-    vix_extreme_fear: float = 30.0
+    vix_extreme_fear: float = 28.0
     vix_fear: float = 25.0
     vix_extreme_greed: float = 12.0
-    scan_rsi_oversold_threshold: float = 40.0  # RSI 과매도 스캔 기준 (완화)
-    scan_volume_surge_ratio: float = 1.5       # 거래량 급증 스캔 배수 (완화)
+    scan_rsi_oversold_threshold: float = 45.0  # RSI 과매도 스캔 기준 (완화)
+    scan_volume_surge_ratio: float = 1.3       # 거래량 급증 스캔 배수 (완화)
     scan_near_golden_cross_proximity: float = 0.98  # 근접 골든크로스 short/long MA 비율 하한
     universe_min_candidates: int = 3           # 최소 후보 수 (미달 시 적응형 완화)
     universe_max_relaxation_rounds: int = 2    # 적응형 완화 최대 라운드
     universe_rsi_relaxation_step: float = 5.0  # 라운드당 RSI 완화 폭
     universe_volume_relaxation_step: float = 0.3  # 라운드당 거래량 비율 완화 폭
     initial_entry_threshold_uptrend: float = 0.8   # 초기 진입 임계값(상승장, 적극적)
-    initial_entry_threshold_sideways: float = 1.2  # 초기 진입 임계값(횡보장, 적극적)
-    initial_entry_threshold_downtrend: float = 1.8 # 초기 진입 임계값(하락장, 적극적)
+    initial_entry_threshold_sideways: float = 1.0  # 초기 진입 임계값(횡보장, 적극적)
+    initial_entry_threshold_downtrend: float = 1.5 # 초기 진입 임계값(하락장, 적극적)
     initial_min_volume_ratio: float = 0.3          # 초기 거래량 필터(적극적)
     split_buy_phases: int = 3
     split_buy_confirm_days: int = 2

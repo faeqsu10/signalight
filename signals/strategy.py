@@ -357,7 +357,7 @@ def analyze_detailed(
             elif current_rsi <= 40:
                 # RSI 35~40: graduated buy signal (데드존 해소)
                 # 40에 가까울수록 약한 신호
-                grad_strength = 0.3 * (40 - current_rsi) / (40 - rsi_oversold)
+                grad_strength = 0.5 * (40 - current_rsi) / (40 - rsi_oversold)
                 weighted = grad_strength * _regime_weight(regime, "buy")
                 signals.append({
                     "trigger": "RSI 근접 과매도",
@@ -478,7 +478,7 @@ def analyze_detailed(
             stoch_weighted = min(1.0, raw) * _regime_weight(regime, "buy")
             # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
             if rsi_fired_buy:
-                stoch_weighted *= 0.5
+                stoch_weighted *= 0.7
             signals.append({
                 "trigger": "StochRSI 과매도",
                 "type": "buy",
@@ -492,7 +492,7 @@ def analyze_detailed(
             stoch_weighted = min(1.0, raw) * _regime_weight(regime, "sell")
             # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
             if rsi_fired_sell:
-                stoch_weighted *= 0.5
+                stoch_weighted *= 0.7
             signals.append({
                 "trigger": "StochRSI 과매수",
                 "type": "sell",

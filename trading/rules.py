@@ -223,7 +223,7 @@ class TradeRule:
         # 2. 레짐별 점수 임계값 체크
         #    역추세 매수 종목은 uptrend 임계값 적용 (buy_score만으로는 downtrend 임계값 도달 불가)
         if has_counter_trend_exempt and confluence_direction not in ("buy",):
-            threshold = self._get_entry_threshold("uptrend")
+            threshold = self._get_entry_threshold("uptrend") * 0.75  # 0.8 * 0.75 = 0.6
         else:
             threshold = self._get_entry_threshold(regime)
         if confluence_score < threshold:
