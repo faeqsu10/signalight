@@ -226,40 +226,46 @@ class USAutonomousPipeline:
         """
         result = {"buys": 0, "sells": 0}
 
+        logger.info("🇺🇸 장중 모니터링 시작 (%d 보유, %d 후보)",
+                    len(self.tracker.get_all_open()), len(self._daily_candidates))
+
         # ── 보유 종목 매도 체크 ──
         open_positions = self.tracker.get_all_open()
         if open_positions:
-            holdings_info = [
-                {"ticker": pos["ticker"], "name": pos["name"]}
-                for pos in open_positions
-            ]
-            analyzed = self.analyzer.analyze_holdings(holdings_info)
-            sell_decisions = self.decision.make_sell_decisions(analyzed)
+            try:
+                holdings_info = [
+                    {"ticker": pos["ticker"], "name": pos["name"]}
+                    for pos in open_positions
+                ]
+                analyzed = self.analyzer.analyze_holdings(holdings_info)
+                sell_decisions = self.decision.make_sell_decisions(analyzed)
 
-            for decision in sell_decisions:
-                try:
-                    order = self.executor.execute_sell(
-                        decision["stock_data"],
-                        decision["recommendation"],
-                        decision["position"],
-                    )
-                    if order and order.status in ("filled", "simulated"):
-                        result["sells"] += 1
-                        self.evaluator.send_trade_notification(
-                            side="sell",
-                            name=order.name,
-                            ticker=order.ticker,
-                            quantity=order.quantity,
-                            price=order.price,
-                            reason=decision["recommendation"].get("action", ""),
-                            pnl_pct=decision["recommendation"].get("pnl_pct"),
+                for decision in sell_decisions:
+                    try:
+                        order = self.executor.execute_sell(
+                            decision["stock_data"],
+                            decision["recommendation"],
+                            decision["position"],
                         )
-                except Exception as e:
-                    logger.error(
-                        "매도 실행 실패: %s(%s) — %s",
-                        decision["stock_data"]["name"],
-                        decision["stock_data"]["ticker"], e,
-                    )
+                        if order and order.status in ("filled", "simulated"):
+                            result["sells"] += 1
+                            self.evaluator.send_trade_notification(
+                                side="sell",
+                                name=order.name,
+                                ticker=order.ticker,
+                                quantity=order.quantity,
+                                price=order.price,
+                                reason=decision["recommendation"].get("action", ""),
+                                pnl_pct=decision["recommendation"].get("pnl_pct"),
+                            )
+                    except Exception as e:
+                        logger.error(
+                            "매도 실행 실패: %s(%s) — %s",
+                            decision["stock_data"]["name"],
+                            decision["stock_data"]["ticker"], e,
+                        )
+            except Exception as e:
+                logger.error("보유 종목 매도 분석 실패 — 매수 체크로 진행: %s", e, exc_info=True)
 
         # ── 캐시된 후보 매수 체크 ──
         if self._daily_candidates:
@@ -298,9 +304,8 @@ class USAutonomousPipeline:
                     except Exception as e:
                         logger.error("매수 실행 실패: %s", e)
 
-        if result["buys"] > 0 or result["sells"] > 0:
-            logger.info("🇺🇸 장중 모니터링: 매수 %d건, 매도 %d건",
-                        result["buys"], result["sells"])
+        logger.info("🇺🇸 장중 모니터링: 매수 %d건, 매도 %d건",
+                    result["buys"], result["sells"])
 
         return result
 
