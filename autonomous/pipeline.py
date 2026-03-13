@@ -462,8 +462,8 @@ class AutonomousPipeline:
         """에퀴티 스냅샷을 저장한다."""
         open_positions = self.tracker.get_all_open()
 
-        # 보유 포지션이 있을 때만 API 평가 사용
-        if open_positions and self.executor.portfolio:
+        # dry_run이 아닐 때만 API 평가 사용 (dry_run에서는 모의 계좌 잔고가 가상 자산과 다름)
+        if not AUTO_CONFIG.dry_run and open_positions and self.executor.portfolio:
             evaluation = self.executor.portfolio._get_evaluation()
             if evaluation:
                 summary = evaluation["summary"]
@@ -475,11 +475,16 @@ class AutonomousPipeline:
                 )
                 return
 
-        # 포지션 없음 또는 평가 실패: 가상 에퀴티 사용
+        # dry_run 또는 포지션 없음 또는 평가 실패: 가상 에퀴티 기반 계산
+        invested = sum(
+            p.get("entry_price", 0) * p.get("quantity", 0)
+            for p in open_positions
+        )
+        total_equity = DRY_RUN_VIRTUAL_ASSET  # 미실현 손익은 매도 전까지 반영 안 함
         self.state.save_equity_snapshot(
-            total_equity=DRY_RUN_VIRTUAL_ASSET,
-            invested=0,
-            cash=DRY_RUN_VIRTUAL_ASSET,
+            total_equity=total_equity,
+            invested=invested,
+            cash=total_equity - invested,
             open_positions=len(open_positions),
         )
 

@@ -29,7 +29,7 @@ MACRO_SIGNAL_MAX_SCORE = 1.5
 BB_PCT_B_LOWER = 0.2          # 볼린저밴드 %B 하단 근처 임계값
 BB_PCT_B_UPPER = 0.8          # 볼린저밴드 %B 상단 근처 임계값
 OBV_DIVERGENCE_WEIGHT = 0.8   # OBV 다이버전스 가중치
-CONFLUENCE_MIXED_TOLERANCE = 0.5  # 합류 점수 혼재 판정 허용 오차
+CONFLUENCE_MIXED_TOLERANCE = 1.0  # 합류 점수 혼재 판정 허용 오차 (0.3→0.5→1.0 완화)
 SIGNAL_STRENGTH_STRONG_BUY = 3.5   # 강한 매수 시그널 임계값
 SIGNAL_STRENGTH_BUY = 1.5          # 매수 시그널 임계값
 SIGNAL_STRENGTH_STRONG_SELL = -3.5  # 강한 매도 시그널 임계값
@@ -650,6 +650,8 @@ def analyze_detailed(
             sell_score += weighted
 
     result["signals"] = signals
+    result["buy_score"] = round(buy_score, 2)
+    result["sell_score"] = round(sell_score, 2)
 
     # ── 합류 점수 계산 (방향별 가중 합산) ──────────
     if buy_score > 0 and sell_score > 0 and abs(buy_score - sell_score) < confluence_mixed_tolerance:

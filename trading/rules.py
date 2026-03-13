@@ -199,12 +199,33 @@ class TradeRule:
         }
 
         # 1. 방향 체크: 매수 방향이 아니면 스킵
+        #    단, RSI 과매도/골든크로스 근접/거래량 급증 스캔 종목은
+        #    역추세 매수 허용 (buy_score를 confluence_score로 사용)
+        exempt_scan_types = {"rsi_oversold", "near_golden_cross", "volume_surge"}
+        has_counter_trend_exempt = bool(exempt_scan_types & set(scan_signals))
         if confluence_direction not in ("buy",):
-            result["reason"] = "매수 방향 아님"
-            return result
+            if has_counter_trend_exempt:
+                # 역추세 매수: buy_score를 합류 점수로 대체
+                buy_score = stock_data.get("buy_score", 0)
+                if buy_score > 0:
+                    confluence_score = buy_score
+                    logger.info(
+                        "역추세 매수 허용: %s direction=%s buy_score=%.2f scan=%s",
+                        name, confluence_direction, buy_score, scan_signals,
+                    )
+                else:
+                    result["reason"] = "매수 방향 아님 (역추세 매수 신호 없음)"
+                    return result
+            else:
+                result["reason"] = "매수 방향 아님"
+                return result
 
         # 2. 레짐별 점수 임계값 체크
-        threshold = self._get_entry_threshold(regime)
+        #    역추세 매수 종목은 uptrend 임계값 적용 (buy_score만으로는 downtrend 임계값 도달 불가)
+        if has_counter_trend_exempt and confluence_direction not in ("buy",):
+            threshold = self._get_entry_threshold("uptrend")
+        else:
+            threshold = self._get_entry_threshold(regime)
         if confluence_score < threshold:
             result["reason"] = f"합류 점수 부족 ({confluence_score:.1f} < {threshold})"
             result["details"]["threshold"] = threshold
@@ -212,8 +233,7 @@ class TradeRule:
 
         # 3. 추세 게이트 (MA/MACD 중 하나 이상 필요)
         # RSI 과매도/골든크로스 근접/거래량 급증 스캔 종목은 추세 게이트 면제
-        exempt_scan_types = {"rsi_oversold", "near_golden_cross", "volume_surge"}
-        has_exempt_scan = bool(exempt_scan_types & set(scan_signals))
+        has_exempt_scan = has_counter_trend_exempt
         if has_exempt_scan:
             logger.info("스캔 면제 종목 (추세 게이트 스킵): %s %s", name, scan_signals)
         elif not _has_trend_gate(signals):
