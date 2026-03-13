@@ -23,7 +23,6 @@ export default function PositionCard({
   const currency = market === "KR" ? "\u20A9" : "$";
   const storageKey = `signalight-buyPrice-${ticker}`;
 
-  // localStorage에서 매수가 복원
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
@@ -35,7 +34,6 @@ export default function PositionCard({
     }
   }, [storageKey]);
 
-  // 매수가 변경 시 손익 계산 (즉시) + API 호출 (디바운스 300ms)
   useEffect(() => {
     const price = parseFloat(buyPrice);
     if (!buyPrice || isNaN(price) || price <= 0) {
@@ -50,7 +48,6 @@ export default function PositionCard({
     setPnlPct(pnl);
     onBuyPriceChange?.(price);
 
-    // Recovery API에서 포지션 액션 가져오기 (디바운스)
     const timer = setTimeout(() => {
       fetch(`/api/stock/${ticker}/recovery?buyPrice=${price}`)
         .then((r) => r.json())
@@ -73,19 +70,25 @@ export default function PositionCard({
     onBuyPriceChange?.(null);
   };
 
-  const pnlColor = pnlPct !== null
-    ? pnlPct >= 0 ? "text-red-600 dark:text-red-400" : "text-blue-600 dark:text-blue-400"
-    : "text-gray-400 dark:text-zinc-400";
+  const pnlColor =
+    pnlPct !== null
+      ? pnlPct >= 0
+        ? "var(--buy)"
+        : "var(--sell)"
+      : "var(--text-dim)";
 
   return (
-    <div className="bg-white dark:bg-zinc-800/50 rounded-xl p-4 border border-gray-200 dark:border-zinc-700/50">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-3">
+    <div className="glass-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>
         내 포지션 진단
       </h3>
 
       <div className="flex gap-2 mb-3">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-zinc-500">
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-xs"
+            style={{ color: "var(--text-dim)" }}
+          >
             {currency}
           </span>
           <input
@@ -93,13 +96,21 @@ export default function PositionCard({
             value={buyPrice}
             onChange={(e) => setBuyPrice(e.target.value)}
             placeholder="매수가 입력"
-            className="w-full bg-gray-50 dark:bg-zinc-700/50 border border-gray-300 dark:border-zinc-600 rounded-lg pl-7 pr-3 py-2 text-sm text-gray-900 dark:text-zinc-200 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-blue-400 dark:focus:border-zinc-400"
+            className="w-full rounded-xl pl-7 pr-3 py-2 text-sm focus:outline-none"
+            style={{ color: "var(--foreground)" }}
           />
         </div>
         {buyPrice && (
           <button
             onClick={handleClear}
-            className="px-3 py-2 bg-gray-100 dark:bg-zinc-700/50 border border-gray-300 dark:border-zinc-600 rounded-lg text-xs text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:border-gray-400 dark:hover:border-zinc-500 transition-colors"
+            className="px-3 py-2 rounded-xl text-xs transition-colors"
+            style={{
+              background: "var(--glass)",
+              border: "1px solid var(--glass-border)",
+              color: "var(--text-dim)",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "var(--foreground)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "var(--text-dim)")}
           >
             초기화
           </button>
@@ -109,24 +120,32 @@ export default function PositionCard({
       {pnlPct !== null && (
         <div className="space-y-2">
           <div className="flex justify-between items-baseline">
-            <span className="text-xs text-gray-500 dark:text-zinc-500">손익률</span>
-            <span className={`text-lg font-bold ${pnlColor}`}>
+            <span className="text-xs" style={{ color: "var(--text-dim)" }}>손익률</span>
+            <span className="text-xl font-bold" style={{ color: pnlColor }}>
               {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
             </span>
           </div>
 
-          <div className="flex justify-between text-xs text-gray-500 dark:text-zinc-500">
+          <div className="flex justify-between text-xs" style={{ color: "var(--text-dim)" }}>
             <span>매수가: {currency}{parseFloat(buyPrice).toLocaleString()}</span>
             <span>현재가: {currency}{currentPrice.toLocaleString()}</span>
           </div>
 
           {positionAction && (
-            <div className="mt-3 p-3 bg-amber-50 dark:bg-zinc-700/30 rounded-lg space-y-1.5">
-              <div className="text-sm font-medium text-amber-600 dark:text-amber-300">
+            <div
+              className="mt-3 p-3 rounded-xl space-y-1.5"
+              style={{
+                background: "rgba(255,165,2,0.08)",
+                border: "1px solid rgba(255,165,2,0.2)",
+              }}
+            >
+              <div className="text-sm font-medium" style={{ color: "var(--hold)" }}>
                 {positionAction.action}
               </div>
-              <div className="text-xs text-gray-600 dark:text-zinc-400">{positionAction.reason}</div>
-              <div className="text-xs text-gray-400 dark:text-zinc-500 italic">
+              <div className="text-xs" style={{ color: "var(--text-dim)" }}>
+                {positionAction.reason}
+              </div>
+              <div className="text-xs italic" style={{ color: "var(--text-dim)", opacity: 0.7 }}>
                 {positionAction.caution}
               </div>
             </div>
@@ -135,7 +154,7 @@ export default function PositionCard({
       )}
 
       {!buyPrice && (
-        <p className="text-xs text-gray-400 dark:text-zinc-600">
+        <p className="text-xs" style={{ color: "var(--text-dim)", opacity: 0.6 }}>
           매수가를 입력하면 현재 시그널 기반 맞춤 액션 가이드를 받을 수 있습니다.
         </p>
       )}

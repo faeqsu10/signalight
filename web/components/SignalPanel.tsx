@@ -4,38 +4,50 @@ interface Props {
   signals: Signal[];
 }
 
-const typeStyles = {
-  buy: "text-red-500",
-  sell: "text-blue-500",
-  neutral: "text-[var(--muted)]",
-};
-
-const typeLabels = {
-  buy: "매수",
-  sell: "매도",
-  neutral: "대기",
-};
-
 export default function SignalPanel({ signals }: Props) {
   return (
-    <div className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)] transition-colors">
-      <h3 className="text-sm font-semibold text-[var(--muted)] mb-3">시그널 현황</h3>
+    <div className="glass-card p-4">
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>시그널 현황</h3>
       <div className="space-y-2">
         {signals.map((s, i) => (
           <div key={i} className="flex items-start gap-2 text-sm">
             <span
-              className={`inline-block w-12 text-center rounded px-1 py-0.5 text-xs font-bold ${
+              className="inline-block w-12 text-center rounded px-1 py-0.5 text-xs font-bold flex-shrink-0"
+              style={
                 s.type === "buy"
-                  ? "bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400"
+                  ? {
+                      background: "rgba(0,212,170,0.15)",
+                      color: "var(--buy)",
+                      border: "1px solid rgba(0,212,170,0.25)",
+                    }
                   : s.type === "sell"
-                  ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-              }`}
+                  ? {
+                      background: "rgba(255,71,87,0.15)",
+                      color: "var(--sell)",
+                      border: "1px solid rgba(255,71,87,0.25)",
+                    }
+                  : {
+                      background: "var(--glass)",
+                      color: "var(--text-dim)",
+                      border: "1px solid var(--glass-border)",
+                    }
+              }
             >
-              {typeLabels[s.type]}
+              {s.type === "buy" ? "매수" : s.type === "sell" ? "매도" : "대기"}
             </span>
-            <span className="text-[var(--muted)]">{s.label}:</span>
-            <span className={typeStyles[s.type]}>{s.detail}</span>
+            <span style={{ color: "var(--text-dim)" }}>{s.label}:</span>
+            <span
+              style={{
+                color:
+                  s.type === "buy"
+                    ? "var(--buy)"
+                    : s.type === "sell"
+                    ? "var(--sell)"
+                    : "var(--text-dim)",
+              }}
+            >
+              {s.detail}
+            </span>
           </div>
         ))}
       </div>

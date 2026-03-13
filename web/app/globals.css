@@ -3,40 +3,289 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8f9fa;
-  --foreground: #1a1a1a;
-  --card: #ffffff;
-  --card-border: #e5e7eb;
-  --muted: #6b7280;
-  --chart-bg: #ffffff;
-  --chart-text: #374151;
-  --chart-grid: #e5e7eb;
-  --tooltip-bg: #ffffff;
-  --tooltip-border: #d1d5db;
-  --select-bg: #f3f4f6;
-  --select-border: #d1d5db;
-  --hover-bg: #f3f4f6;
+  --bg: #0a0e1a;
+  --foreground: #e0e0e0;
+  --text-dim: #888;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.15);
+  --buy: #00d4aa;
+  --sell: #ff4757;
+  --hold: #ffa502;
+  --accent: #6c5ce7;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --background: #0a0e1a;
+  --muted: #888;
+  --chart-bg: rgba(255, 255, 255, 0.02);
+  --chart-text: #d1d5db;
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --tooltip-bg: rgba(15, 15, 30, 0.95);
+  --tooltip-border: rgba(255, 255, 255, 0.12);
+  --select-bg: rgba(255, 255, 255, 0.05);
+  --select-border: rgba(255, 255, 255, 0.08);
+  --hover-bg: rgba(255, 255, 255, 0.08);
 }
 
+/* Dark class kept for compatibility — same values */
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #141414;
-  --card-border: #1f2937;
-  --muted: #9ca3af;
-  --chart-bg: #0f0f0f;
+  --bg: #0a0e1a;
+  --foreground: #e0e0e0;
+  --text-dim: #888;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.15);
+  --buy: #00d4aa;
+  --sell: #ff4757;
+  --hold: #ffa502;
+  --accent: #6c5ce7;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --background: #0a0e1a;
+  --muted: #888;
+  --chart-bg: rgba(255, 255, 255, 0.02);
   --chart-text: #d1d5db;
-  --chart-grid: #1f2937;
-  --tooltip-bg: #1a1a1a;
-  --tooltip-border: #374151;
-  --select-bg: #1a1a1a;
-  --select-border: #374151;
-  --hover-bg: #1f2937;
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --tooltip-bg: rgba(15, 15, 30, 0.95);
+  --tooltip-border: rgba(255, 255, 255, 0.12);
+  --select-bg: rgba(255, 255, 255, 0.05);
+  --select-border: rgba(255, 255, 255, 0.08);
+  --hover-bg: rgba(255, 255, 255, 0.08);
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s, color 0.2s;
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Glassmorphism utilities ── */
+
+.glass-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: border-color 0.2s;
+}
+
+.glass-card:hover {
+  border-color: var(--glass-hover);
+}
+
+/* ── Floating orbs (ambient background) ── */
+
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  background: var(--accent);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 350px;
+  height: 350px;
+  background: var(--buy);
+  top: 40%;
+  right: -80px;
+  animation-delay: -7s;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: var(--sell);
+  bottom: -50px;
+  left: 30%;
+  animation-delay: -14s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -40px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 30px) scale(0.9);
+  }
+}
+
+/* ── Signal badges ── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(20px);
+}
+
+.badge-buy {
+  background: rgba(0, 212, 170, 0.12);
+  color: var(--buy);
+  border: 1px solid rgba(0, 212, 170, 0.25);
+}
+
+.badge-sell {
+  background: rgba(255, 71, 87, 0.12);
+  color: var(--sell);
+  border: 1px solid rgba(255, 71, 87, 0.25);
+}
+
+.badge-hold {
+  background: rgba(255, 165, 2, 0.12);
+  color: var(--hold);
+  border: 1px solid rgba(255, 165, 2, 0.25);
+}
+
+.badge-accent {
+  background: rgba(108, 92, 231, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+}
+
+.badge-live {
+  background: rgba(255, 71, 87, 0.12);
+  color: var(--sell);
+  border: 1px solid rgba(255, 71, 87, 0.25);
+}
+
+.badge-paper {
+  background: rgba(0, 212, 170, 0.12);
+  color: var(--buy);
+  border: 1px solid rgba(0, 212, 170, 0.25);
+}
+
+/* ── Pulsing ring animation ── */
+
+.pulse-ring {
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* ── RSI bar ── */
+
+.rsi-bar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--glass-border);
+  overflow: hidden;
+}
+
+.rsi-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* ── Table styles ── */
+
+.glass-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.glass-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--glass-border);
+  text-align: left;
+}
+
+.glass-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 0.85rem;
+}
+
+.glass-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Divider ── */
+
+.glass-divider {
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  margin: 12px 0;
+}
+
+/* ── Price display ── */
+
+.price-big {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Selection / Inputs ── */
+
+input, select {
+  background: var(--select-bg);
+  border: 1px solid var(--select-border);
+  color: var(--foreground);
+  border-radius: 12px;
+  padding: 8px 12px;
+  backdrop-filter: blur(20px);
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
 }

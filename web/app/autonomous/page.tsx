@@ -82,8 +82,8 @@ function fmtPnl(amount: number | null, pct: number | null, market: "kr" | "us") 
 function EquityChart({ equity, market }: { equity: EquityPoint[]; market: "kr" | "us" }) {
   if (equity.length === 0) {
     return (
-      <div className="h-40 flex items-center justify-center text-sm text-[var(--muted)]">
-        데이터 없음
+      <div style={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "var(--text-dim)", fontSize: 14 }}>데이터 없음</span>
       </div>
     );
   }
@@ -100,52 +100,84 @@ function EquityChart({ equity, market }: { equity: EquityPoint[]; market: "kr" |
 
   return (
     <div>
-      <div className="flex items-end gap-0.5 h-40">
+      {/* Overall return badge */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <span
+          className={isPositive ? "badge-buy" : "badge-sell"}
+          style={{ fontSize: 12, fontWeight: 700 }}
+        >
+          {isPositive ? "+" : ""}{overallPct.toFixed(2)}% 누적
+        </span>
+      </div>
+      {/* Bars */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 160, position: "relative" }}>
         {equity.map((e, i) => {
-          const heightPct = ((e.total - minVal) / range) * 85 + 10;
+          const heightPct = ((e.total - minVal) / range) * 80 + 10;
           const isUp = i === 0 || e.total >= equity[i - 1].total;
           return (
             <div
               key={e.date}
-              className="flex-1 flex flex-col justify-end group relative"
-              style={{ height: "100%" }}
+              style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", position: "relative" }}
+              className="group"
             >
               <div
-                className={`rounded-sm transition-opacity group-hover:opacity-80 ${
-                  isUp
-                    ? "bg-red-400 dark:bg-red-500"
-                    : "bg-blue-400 dark:bg-blue-500"
-                }`}
-                style={{ height: `${heightPct}%` }}
+                style={{
+                  height: `${heightPct}%`,
+                  background: isUp ? "var(--buy)" : "var(--sell)",
+                  borderRadius: 3,
+                  opacity: 0.85,
+                  transition: "opacity 0.15s",
+                  boxShadow: isUp
+                    ? "0 0 4px rgba(0,212,170,0.3)"
+                    : "0 0 4px rgba(255,71,87,0.3)",
+                }}
+                onMouseEnter={(ev) => {
+                  (ev.currentTarget as HTMLElement).style.opacity = "1";
+                }}
+                onMouseLeave={(ev) => {
+                  (ev.currentTarget as HTMLElement).style.opacity = "0.85";
+                }}
               />
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 bg-zinc-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap shadow-lg">
-                <div>{e.date}</div>
-                <div>{fmtAmount(e.total, market)}</div>
-                <div className="text-zinc-400">포지션 {e.positions}개</div>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "calc(100% + 6px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "rgba(10,14,26,0.95)",
+                  border: "1px solid var(--glass-border)",
+                  backdropFilter: "blur(12px)",
+                  borderRadius: 8,
+                  padding: "6px 10px",
+                  whiteSpace: "nowrap",
+                  fontSize: 11,
+                  color: "var(--foreground)",
+                  pointerEvents: "none",
+                  display: "none",
+                  zIndex: 20,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                }}
+                className="group-hover:!block"
+              >
+                <div style={{ color: "var(--text-dim)", marginBottom: 2 }}>{e.date}</div>
+                <div style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{fmtAmount(e.total, market)}</div>
+                <div style={{ color: "var(--text-dim)" }}>포지션 {e.positions}개</div>
               </div>
             </div>
           );
         })}
       </div>
-      <div className="flex justify-between text-[10px] text-[var(--muted)] mt-1">
-        <span>{equity[0].date}</span>
-        <span className={isPositive ? "text-red-500" : "text-blue-500"}>
-          {isPositive ? "+" : ""}{overallPct.toFixed(2)}%
-        </span>
-        <span>{equity[equity.length - 1].date}</span>
+      {/* X axis labels */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{equity[0].date}</span>
+        <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{equity[equity.length - 1].date}</span>
       </div>
     </div>
   );
 }
 
-function SummaryCards({
-  data,
-  market,
-}: {
-  data: MarketData;
-  market: "kr" | "us";
-}) {
+function SummaryCards({ data, market }: { data: MarketData; market: "kr" | "us" }) {
   const { summary, equity } = data;
   const latestEquity = equity.length > 0 ? equity[equity.length - 1].total : null;
   const initialEquity = equity.length > 0 ? equity[0].total : null;
@@ -158,46 +190,161 @@ function SummaryCards({
     {
       label: "총 자산",
       value: latestEquity != null ? fmtAmount(latestEquity, market) : "-",
-      color: "",
+      color: "var(--foreground)",
+      size: "1.6rem",
     },
     {
       label: "수익률",
       value: returnPct != null ? `${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(2)}%` : "-",
-      color: returnPct != null ? (returnPct >= 0 ? "text-red-500" : "text-blue-500") : "",
+      color:
+        returnPct != null
+          ? returnPct >= 0
+            ? "var(--buy)"
+            : "var(--sell)"
+          : "var(--foreground)",
+      size: "1.4rem",
     },
     {
       label: "MDD",
       value: `-${summary.max_drawdown.toFixed(2)}%`,
-      color: summary.max_drawdown > 10 ? "text-red-500" : "text-[var(--foreground)]",
+      color: "var(--sell)",
+      size: "1.4rem",
     },
     {
       label: "거래 수",
       value: `${summary.total_trades}회`,
-      color: "",
+      color: "var(--foreground)",
+      size: "1.4rem",
     },
     {
       label: "승률",
       value: summary.total_trades > 0 ? `${summary.win_rate}%` : "-",
-      color: "",
+      color:
+        summary.win_rate >= 55
+          ? "var(--buy)"
+          : summary.win_rate >= 45
+          ? "var(--hold)"
+          : "var(--sell)",
+      size: "1.4rem",
     },
     {
       label: "총 손익",
       value: fmtAmount(summary.total_pnl, market),
-      color: summary.total_pnl >= 0 ? "text-red-500" : "text-blue-500",
+      color: summary.total_pnl >= 0 ? "var(--buy)" : "var(--sell)",
+      size: "1.4rem",
     },
   ];
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: 12,
+      }}
+    >
       {cards.map((c) => (
         <div
           key={c.label}
-          className="bg-[var(--card)] rounded-lg p-3 border border-[var(--card-border)] text-center"
+          className="glass-card"
+          style={{ padding: "16px 12px", textAlign: "center" }}
         >
-          <div className={`text-sm font-bold truncate ${c.color}`}>{c.value}</div>
-          <div className="text-[10px] text-[var(--muted)] mt-0.5">{c.label}</div>
+          <div
+            style={{
+              fontSize: c.size,
+              fontWeight: 800,
+              color: c.color,
+              fontVariantNumeric: "tabular-nums",
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {c.value}
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--text-dim)",
+              marginTop: 5,
+              fontWeight: 500,
+            }}
+          >
+            {c.label}
+          </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function DailyPnlBars({ daily_pnl, market }: { daily_pnl: DailyPnl[]; market: "kr" | "us" }) {
+  if (daily_pnl.length === 0) {
+    return (
+      <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text-dim)", fontSize: 13 }}>
+        데이터 없음
+      </div>
+    );
+  }
+
+  const maxAbs = Math.max(...daily_pnl.map((d) => Math.abs(d.pnl)), 1);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {daily_pnl.slice(-14).map((d) => {
+        const barWidth = (Math.abs(d.pnl) / maxAbs) * 100;
+        const isPos = d.pnl >= 0;
+        return (
+          <div key={d.date} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12 }}>
+            <span style={{ color: "var(--text-dim)", width: 80, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+              {d.date}
+            </span>
+            <div
+              style={{
+                flex: 1,
+                height: 20,
+                background: "rgba(255,255,255,0.04)",
+                borderRadius: 4,
+                overflow: "hidden",
+                border: "1px solid var(--glass-border)",
+              }}
+            >
+              <div
+                style={{
+                  width: `${barWidth}%`,
+                  height: "100%",
+                  background: isPos ? "var(--buy)" : "var(--sell)",
+                  borderRadius: 3,
+                  transition: "width 0.4s ease",
+                  boxShadow: isPos
+                    ? "0 0 8px rgba(0,212,170,0.4)"
+                    : "0 0 8px rgba(255,71,87,0.4)",
+                }}
+              />
+            </div>
+            <span
+              style={{
+                width: 96,
+                textAlign: "right",
+                flexShrink: 0,
+                fontVariantNumeric: "tabular-nums",
+                fontWeight: 600,
+                color: isPos ? "var(--buy)" : d.pnl < 0 ? "var(--sell)" : "var(--text-dim)",
+              }}
+            >
+              {isPos ? "+" : ""}
+              {market === "us"
+                ? "$" + d.pnl.toLocaleString("en-US")
+                : d.pnl.toLocaleString() + "원"}
+            </span>
+            <span style={{ color: "var(--text-dim)", width: 72, textAlign: "right", flexShrink: 0 }}>
+              {d.trades}건 {d.wins}W/{d.losses}L
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -205,22 +352,25 @@ function SummaryCards({
 function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" }) {
   if (trades.length === 0) {
     return (
-      <p className="text-sm text-[var(--muted)] text-center py-6">거래 내역 없음</p>
+      <div style={{ textAlign: "center", padding: "32px 0" }}>
+        <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.4 }}>📋</div>
+        <p style={{ color: "var(--text-dim)", fontSize: 13 }}>거래 내역 없음</p>
+      </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs min-w-[520px]">
+    <div style={{ overflowX: "auto" }}>
+      <table className="glass-table" style={{ minWidth: 560 }}>
         <thead>
-          <tr className="text-[var(--muted)] border-b border-[var(--card-border)]">
-            <th className="text-left py-2 pr-3">날짜</th>
-            <th className="text-left py-2 pr-3">종목</th>
-            <th className="text-center py-2 pr-3">방향</th>
-            <th className="text-right py-2 pr-3">수량</th>
-            <th className="text-right py-2 pr-3">가격</th>
-            <th className="text-right py-2 pr-3">손익</th>
-            <th className="text-left py-2">사유</th>
+          <tr>
+            <th style={{ textAlign: "left" }}>날짜</th>
+            <th style={{ textAlign: "left" }}>종목</th>
+            <th style={{ textAlign: "center" }}>방향</th>
+            <th style={{ textAlign: "right" }}>수량</th>
+            <th style={{ textAlign: "right" }}>가격</th>
+            <th style={{ textAlign: "right" }}>손익</th>
+            <th style={{ textAlign: "left" }}>사유</th>
           </tr>
         </thead>
         <tbody>
@@ -231,44 +381,50 @@ function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" 
               (t.pnl_amount !== null && t.pnl_amount > 0) ||
               (t.pnl_pct !== null && t.pnl_pct > 0);
             return (
-              <tr
-                key={i}
-                className="border-b border-[var(--card-border)] hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-              >
-                <td className="py-2 pr-3 text-[var(--muted)]">{t.date}</td>
-                <td className="py-2 pr-3">
-                  <span className="font-medium">{t.name || t.ticker}</span>
-                  <span className="text-[var(--muted)] ml-1">({t.ticker})</span>
+              <tr key={i}>
+                <td style={{ color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}>{t.date}</td>
+                <td>
+                  <span style={{ fontWeight: 600 }}>{t.name || t.ticker}</span>
+                  <span style={{ color: "var(--text-dim)", marginLeft: 4, fontSize: 11 }}>
+                    ({t.ticker})
+                  </span>
                 </td>
-                <td className="py-2 pr-3 text-center">
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                      isBuy
-                        ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400"
-                        : "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-                    }`}
-                  >
+                <td style={{ textAlign: "center" }}>
+                  <span className={isBuy ? "badge-buy" : "badge-sell"}>
                     {isBuy ? "매수" : "매도"}
                   </span>
                 </td>
-                <td className="py-2 pr-3 text-right">{t.quantity.toLocaleString()}</td>
-                <td className="py-2 pr-3 text-right">
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                  {t.quantity.toLocaleString()}
+                </td>
+                <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
                   {market === "us"
                     ? "$" + t.price.toLocaleString("en-US", { minimumFractionDigits: 2 })
                     : t.price.toLocaleString("ko-KR") + "원"}
                 </td>
                 <td
-                  className={`py-2 pr-3 text-right ${
-                    !hasPnl
-                      ? "text-[var(--muted)]"
+                  style={{
+                    textAlign: "right",
+                    fontVariantNumeric: "tabular-nums",
+                    fontWeight: 600,
+                    color: !hasPnl
+                      ? "var(--text-dim)"
                       : pnlPositive
-                      ? "text-red-500"
-                      : "text-blue-500"
-                  }`}
+                      ? "var(--buy)"
+                      : "var(--sell)",
+                  }}
                 >
                   {fmtPnl(t.pnl_amount, t.pnl_pct, market)}
                 </td>
-                <td className="py-2 text-[var(--muted)] max-w-[160px] truncate">
+                <td
+                  style={{
+                    color: "var(--text-dim)",
+                    maxWidth: 160,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {t.reason ?? "-"}
                 </td>
               </tr>
@@ -276,49 +432,6 @@ function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" 
           })}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-function DailyPnlBars({ daily_pnl }: { daily_pnl: DailyPnl[] }) {
-  if (daily_pnl.length === 0) {
-    return (
-      <p className="text-sm text-[var(--muted)] text-center py-4">데이터 없음</p>
-    );
-  }
-
-  const maxAbs = Math.max(...daily_pnl.map((d) => Math.abs(d.pnl)), 1);
-
-  return (
-    <div className="space-y-1.5">
-      {daily_pnl.slice(-14).map((d) => {
-        const barWidth = (Math.abs(d.pnl) / maxAbs) * 100;
-        const isPos = d.pnl >= 0;
-        return (
-          <div key={d.date} className="flex items-center gap-2 text-xs">
-            <span className="text-[var(--muted)] w-20 flex-shrink-0">{d.date}</span>
-            <div className="flex-1 h-5 bg-gray-100 dark:bg-zinc-800 rounded overflow-hidden">
-              <div
-                className={`h-full rounded transition-all ${
-                  isPos ? "bg-red-400 dark:bg-red-500" : "bg-blue-400 dark:bg-blue-500"
-                }`}
-                style={{ width: `${barWidth}%` }}
-              />
-            </div>
-            <span
-              className={`w-24 text-right flex-shrink-0 ${
-                isPos ? "text-red-500" : d.pnl < 0 ? "text-blue-500" : "text-[var(--muted)]"
-              }`}
-            >
-              {isPos ? "+" : ""}
-              {d.pnl.toLocaleString()}원
-            </span>
-            <span className="text-[var(--muted)] w-14 text-right flex-shrink-0">
-              {d.trades}건 ({d.wins}W/{d.losses}L)
-            </span>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -332,59 +445,155 @@ export default function AutonomousPage() {
   const marketData: MarketData | undefined = data?.[market];
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors">
+    <div
+      style={{
+        minHeight: "100vh",
+        color: "var(--foreground)",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      }}
+    >
       {/* Header */}
-      <header className="border-b border-[var(--card-border)] px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header
+        className="glass-card"
+        style={{
+          margin: "16px 16px 0",
+          borderRadius: 16,
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        {/* Left: Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <a
             href="/"
-            className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors text-sm"
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              color: "var(--foreground)",
+              textDecoration: "none",
+              background: "linear-gradient(135deg, #6c5ce7, #00d4aa)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
           >
-            ← SIGNALIGHT
+            SIGNALIGHT
           </a>
-          <h1 className="text-lg font-bold tracking-tight">자율매매 대시보드</h1>
+          <span className="badge-accent" style={{ fontSize: 11 }}>자율매매</span>
         </div>
-        {marketData?.updated_at && (
-          <span className="text-xs text-[var(--muted)]">
-            갱신: {marketData.updated_at.replace("T", " ")}
-          </span>
-        )}
+
+        {/* Center: Market tab selector */}
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: 999,
+            padding: "4px",
+          }}
+        >
+          {(["kr", "us"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMarket(m)}
+              style={{
+                padding: "6px 18px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
+                transition: "all 0.2s ease",
+                background:
+                  market === m
+                    ? "var(--accent)"
+                    : "transparent",
+                color: market === m ? "#fff" : "var(--text-dim)",
+                boxShadow:
+                  market === m
+                    ? "0 0 16px rgba(108,92,231,0.5)"
+                    : "none",
+              }}
+            >
+              {m === "kr" ? "🇰🇷 KR" : "🇺🇸 US"}
+            </button>
+          ))}
+        </div>
+
+        {/* Right: Timestamp */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {marketData?.updated_at && (
+            <>
+              <span
+                className="pulse-ring"
+                style={{ width: 8, height: 8, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 11, color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}>
+                {marketData.updated_at.replace("T", " ").slice(0, 16)}
+              </span>
+            </>
+          )}
+        </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Market Tab Selector */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setMarket("kr")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-              market === "kr"
-                ? "bg-blue-500 border-blue-500 text-white"
-                : "border-[var(--card-border)] text-[var(--muted)] hover:bg-gray-100 dark:hover:bg-zinc-800"
-            }`}
-          >
-            🇰🇷 한국
-          </button>
-          <button
-            onClick={() => setMarket("us")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
-              market === "us"
-                ? "bg-blue-500 border-blue-500 text-white"
-                : "border-[var(--card-border)] text-[var(--muted)] hover:bg-gray-100 dark:hover:bg-zinc-800"
-            }`}
-          >
-            🇺🇸 미국
-          </button>
-        </div>
-
+      <main
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
+        {/* Loading skeleton */}
         {isLoading && (
-          <div className="space-y-4 animate-pulse">
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 12,
+              }}
+            >
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 dark:bg-zinc-700 rounded-lg" />
+                <div
+                  key={i}
+                  className="glass-card"
+                  style={{
+                    height: 76,
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    opacity: 0.5,
+                  }}
+                />
               ))}
             </div>
-            <div className="h-48 bg-gray-200 dark:bg-zinc-700 rounded-lg" />
-            <div className="h-64 bg-gray-200 dark:bg-zinc-700 rounded-lg" />
+            <div
+              className="glass-card"
+              style={{ height: 220, animation: "pulse 1.5s ease-in-out infinite", opacity: 0.5 }}
+            />
+            <div
+              className="glass-card"
+              style={{ height: 280, animation: "pulse 1.5s ease-in-out infinite", opacity: 0.5 }}
+            />
+          </div>
+        )}
+
+        {!isLoading && !marketData && (
+          <div
+            className="glass-card"
+            style={{ textAlign: "center", padding: "60px 20px" }}
+          >
+            <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>📊</div>
+            <p style={{ color: "var(--text-dim)", fontSize: 14 }}>
+              데이터를 불러올 수 없습니다. API를 확인해주세요.
+            </p>
           </div>
         )}
 
@@ -392,44 +601,80 @@ export default function AutonomousPage() {
           <>
             {/* US placeholder notice */}
             {market === "us" && marketData.equity.length === 0 && (
-              <div className="rounded-lg px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 text-sm">
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  background: "rgba(255,165,2,0.1)",
+                  border: "1px solid rgba(255,165,2,0.3)",
+                  color: "var(--hold)",
+                  fontSize: 13,
+                }}
+              >
                 미국 자율매매 데이터는 준비 중입니다. DB market 컬럼 분리 후 활성화됩니다.
               </div>
             )}
 
             {/* Summary Cards */}
             <section>
-              <h2 className="text-sm font-semibold text-[var(--muted)] mb-3">성과 요약</h2>
+              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  성과 요약
+                </span>
+                <hr className="glass-divider" style={{ flex: 1 }} />
+              </div>
               <SummaryCards data={marketData} market={market} />
             </section>
 
             {/* Equity Curve */}
-            <section className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
-              <h2 className="text-sm font-semibold text-[var(--muted)] mb-4">
-                에퀴티 커브 ({marketData.equity.length}일)
-              </h2>
+            <section className="glass-card" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  에퀴티 커브
+                </span>
+                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
+                  {marketData.equity.length}일 추적
+                </span>
+              </div>
               <EquityChart equity={marketData.equity} market={market} />
             </section>
 
             {/* Daily PnL */}
-            <section className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
-              <h2 className="text-sm font-semibold text-[var(--muted)] mb-4">
-                일별 손익 (최근 14일)
-              </h2>
-              <DailyPnlBars daily_pnl={marketData.daily_pnl} />
+            <section className="glass-card" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  일별 손익
+                </span>
+                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>최근 14일</span>
+              </div>
+              <DailyPnlBars daily_pnl={marketData.daily_pnl} market={market} />
             </section>
 
             {/* Recent Trades */}
-            <section className="bg-[var(--card)] rounded-lg p-4 border border-[var(--card-border)]">
-              <h2 className="text-sm font-semibold text-[var(--muted)] mb-4">
-                최근 거래 ({marketData.trades.length}건)
-              </h2>
+            <section className="glass-card" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  최근 거래
+                </span>
+                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
+                  {marketData.trades.length}건
+                </span>
+              </div>
               <TradesTable trades={marketData.trades} market={market} />
             </section>
           </>
         )}
 
-        <p className="text-[10px] text-[var(--muted)] text-center pb-4">
+        {/* Footer disclaimer */}
+        <p
+          style={{
+            fontSize: 11,
+            color: "var(--text-dim)",
+            textAlign: "center",
+            padding: "8px 0 16px",
+            opacity: 0.6,
+          }}
+        >
           본 대시보드는 자율매매 시스템의 모의(dry-run) 운영 결과입니다. 실제 투자 추천이 아닙니다.
         </p>
       </main>
