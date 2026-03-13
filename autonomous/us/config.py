@@ -48,9 +48,9 @@ class USAutonomousConfig:
     scan_near_golden_cross_proximity: float = 0.98
 
     # ── 진입 임계값 ──
-    initial_entry_threshold_uptrend: float = 1.5
-    initial_entry_threshold_sideways: float = 2.2
-    initial_entry_threshold_downtrend: float = 3.0
+    initial_entry_threshold_uptrend: float = 1.2   # 진입 임계값(상승장, 완화)
+    initial_entry_threshold_sideways: float = 1.8  # 진입 임계값(횡보장, 완화)
+    initial_entry_threshold_downtrend: float = 2.5 # 진입 임계값(하락장, 완화)
     initial_min_volume_ratio: float = 0.5
 
     # ── 매매 설정 ──

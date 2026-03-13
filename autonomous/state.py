@@ -9,21 +9,27 @@ import os
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 
-DB_PATH = os.path.join(
+# 기본 KR DB 경로
+DEFAULT_DB_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "storage", "signalight.db"
 )
 
+# US 전용 DB 경로
+US_DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "storage", "signalight_us.db"
+)
 
-def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+
+def _get_conn(db_path: str = None) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path or DEFAULT_DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
-def _init_tables() -> None:
+def _init_tables(db_path: str = None) -> None:
     """자율 트레이딩 전용 테이블을 생성한다."""
-    conn = _get_conn()
+    conn = _get_conn(db_path)
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS auto_daily_pnl (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,11 +90,25 @@ def _init_tables() -> None:
     conn.close()
 
 
-_init_tables()
+# KR 테이블 초기화
+_init_tables(DEFAULT_DB_PATH)
 
 
 class PipelineState:
-    """자율 트레이딩 파이프라인 상태 관리."""
+    """자율 트레이딩 파이프라인 상태 관리.
+
+    Args:
+        db_path: SQLite DB 경로. 기본값은 KR용 signalight.db.
+                 US는 signalight_us.db를 사용한다.
+    """
+
+    def __init__(self, db_path: str = None):
+        self._db_path = db_path or DEFAULT_DB_PATH
+        if db_path and db_path != DEFAULT_DB_PATH:
+            _init_tables(db_path)
+
+    def _conn(self) -> sqlite3.Connection:
+        return _get_conn(self._db_path)
 
     # ── 일일 PnL ──
 
@@ -97,7 +117,7 @@ class PipelineState:
         trades: int, wins: int, losses: int
     ) -> None:
         """일일 PnL을 기록한다."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """INSERT INTO auto_daily_pnl
                (trade_date, realized_pnl, trades_count, wins, losses)
@@ -115,7 +135,7 @@ class PipelineState:
 
     def get_daily_pnl(self, trade_date: str) -> Optional[Dict]:
         """특정 일자의 PnL을 조회한다."""
-        conn = _get_conn()
+        conn = self._conn()
         row = conn.execute(
             "SELECT * FROM auto_daily_pnl WHERE trade_date = ?",
             (trade_date,),
@@ -129,7 +149,7 @@ class PipelineState:
             end_date = date.today().isoformat()
         start = (date.fromisoformat(end_date) - timedelta(days=7)).isoformat()
 
-        conn = _get_conn()
+        conn = self._conn()
         row = conn.execute(
             """SELECT
                 COALESCE(SUM(realized_pnl), 0) as total_pnl,
@@ -147,7 +167,7 @@ class PipelineState:
 
     def get_consecutive_losses(self) -> int:
         """최근 연속 패배 횟수를 계산한다."""
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             """SELECT side, pnl_amount FROM auto_trade_log
                WHERE side = 'sell' AND pnl_amount IS NOT NULL
@@ -171,7 +191,7 @@ class PipelineState:
     ) -> None:
         """에퀴티 스냅샷을 저장한다."""
         today = date.today().isoformat()
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """INSERT INTO auto_equity_snapshots
                (snapshot_date, total_equity, invested_amount,
@@ -190,7 +210,7 @@ class PipelineState:
 
     def get_max_drawdown(self) -> float:
         """최대 낙폭(%)을 계산한다."""
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             """SELECT total_equity FROM auto_equity_snapshots
                ORDER BY snapshot_date"""
@@ -215,7 +235,7 @@ class PipelineState:
     def get_equity_history(self, days: int = 30) -> List[Dict]:
         """최근 N일 에퀴티 이력을 반환한다."""
         start = (date.today() - timedelta(days=days)).isoformat()
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             """SELECT * FROM auto_equity_snapshots
                WHERE snapshot_date >= ?
@@ -236,7 +256,7 @@ class PipelineState:
         pnl_pct: float = None
     ) -> None:
         """매매를 기록한다."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """INSERT INTO auto_trade_log
                (trade_date, ticker, name, side, quantity, price, amount,
@@ -254,7 +274,7 @@ class PipelineState:
     def get_recent_trades(self, days: int = 30) -> List[Dict]:
         """최근 N일 매매 이력을 반환한다."""
         start = (date.today() - timedelta(days=days)).isoformat()
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             """SELECT * FROM auto_trade_log
                WHERE trade_date >= ?
@@ -271,7 +291,7 @@ class PipelineState:
         detail: str = ""
     ) -> None:
         """서킷 브레이커 발동을 기록한다."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """INSERT INTO auto_circuit_breaker
                (trigger_type, trigger_date, resume_date, detail)
@@ -284,7 +304,7 @@ class PipelineState:
     def is_circuit_breaker_active(self) -> Optional[Dict]:
         """활성 서킷 브레이커가 있으면 반환한다."""
         today = date.today().isoformat()
-        conn = _get_conn()
+        conn = self._conn()
         row = conn.execute(
             """SELECT * FROM auto_circuit_breaker
                WHERE resume_date IS NULL OR resume_date > ?
@@ -299,7 +319,7 @@ class PipelineState:
     def get_performance_summary(self, days: int = 30) -> Dict:
         """기간별 성과 요약을 반환한다."""
         start = (date.today() - timedelta(days=days)).isoformat()
-        conn = _get_conn()
+        conn = self._conn()
 
         trades = conn.execute(
             """SELECT

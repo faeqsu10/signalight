@@ -11,7 +11,7 @@ from typing import Dict, List
 from trading.rules import TradeRule
 from trading.position_tracker import PositionTracker
 from autonomous.us.config import US_AUTO_CONFIG
-from autonomous.state import PipelineState
+from autonomous.state import PipelineState, US_DB_PATH
 from autonomous.us.universe import USUniverseSelector
 from autonomous.us.analyzer import USStockAnalyzer
 from autonomous.decision import DecisionEngine
@@ -27,7 +27,7 @@ class USAutonomousPipeline:
     """미국 주식 자율 트레이딩 파이프라인."""
 
     def __init__(self):
-        self.state = PipelineState()
+        self.state = PipelineState(db_path=US_DB_PATH)
         self.tracker = PositionTracker()
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
