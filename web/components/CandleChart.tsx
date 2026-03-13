@@ -10,6 +10,7 @@ import {
   createSeriesMarkers,
 } from "lightweight-charts";
 import { OHLCVData } from "@/lib/yahoo-finance";
+import { useTheme } from "./ThemeProvider";
 
 interface SignalHistoryEntry {
   index: number;
@@ -28,21 +29,24 @@ interface Props {
 
 export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
+
+    const isDark = theme === "dark";
 
     const chart = createChart(containerRef.current, {
       layout: {
         background: {
           type: ColorType.Solid,
-          color: "#0a0e1a",
+          color: isDark ? "#0a0e1a" : "#f0f2f5",
         },
-        textColor: "#d1d5db",
+        textColor: isDark ? "#d1d5db" : "#374151",
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.06)" },
-        horzLines: { color: "rgba(255,255,255,0.06)" },
+        vertLines: { color: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
+        horzLines: { color: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
       },
       width: containerRef.current.clientWidth,
       height: window.innerWidth < 640 ? 250 : 400,
@@ -180,7 +184,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory]);
+  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory, theme]);
 
   return (
     <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />

@@ -12,6 +12,7 @@ import Tooltip from "@/components/Tooltip";
 import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
 import DisclosurePanel from "@/components/DisclosurePanel";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -303,7 +304,7 @@ export default function Home() {
       <header
         className="px-6 py-4 flex items-center justify-between sticky top-0 z-30"
         style={{
-          background: "rgba(10,14,26,0.8)",
+          background: "var(--header-bg)",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid var(--glass-border)",
         }}
@@ -357,10 +358,10 @@ export default function Home() {
                 <div
                   className="absolute top-full left-0 mt-2 rounded-xl z-50 w-52 max-h-64 overflow-y-auto"
                   style={{
-                    background: "rgba(10,14,26,0.95)",
+                    background: "var(--dropdown-bg)",
                     backdropFilter: "blur(20px)",
                     border: "1px solid var(--glass-border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
                   }}
                 >
                   {ALL_WATCH_LIST
@@ -397,6 +398,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <a
             href="/autonomous"
             className="text-sm hidden sm:inline transition-colors"
@@ -424,7 +426,7 @@ export default function Home() {
               <div
                 className="absolute top-full left-0 right-0 mt-2 rounded-xl z-50 max-h-64 overflow-y-auto"
                 style={{
-                  background: "rgba(10,14,26,0.97)",
+                  background: "var(--dropdown-bg)",
                   backdropFilter: "blur(20px)",
                   border: "1px solid var(--glass-border)",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.5)",

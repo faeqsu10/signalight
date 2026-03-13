@@ -2,32 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light mode (default) — frosted glass on light background */
 :root {
-  --bg: #0a0e1a;
-  --foreground: #e0e0e0;
-  --text-dim: #888;
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(255, 255, 255, 0.15);
-  --buy: #00d4aa;
-  --sell: #ff4757;
-  --hold: #ffa502;
+  --bg: #f0f2f5;
+  --foreground: #1a1a2e;
+  --text-dim: #6b7280;
+  --glass: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(0, 0, 0, 0.12);
+  --buy: #00b894;
+  --sell: #e74c3c;
+  --hold: #f39c12;
   --accent: #6c5ce7;
-  --card: rgba(255, 255, 255, 0.05);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --background: #0a0e1a;
-  --muted: #888;
-  --chart-bg: rgba(255, 255, 255, 0.02);
-  --chart-text: #d1d5db;
-  --chart-grid: rgba(255, 255, 255, 0.06);
-  --tooltip-bg: rgba(15, 15, 30, 0.95);
-  --tooltip-border: rgba(255, 255, 255, 0.12);
-  --select-bg: rgba(255, 255, 255, 0.05);
-  --select-border: rgba(255, 255, 255, 0.08);
-  --hover-bg: rgba(255, 255, 255, 0.08);
+  --card: rgba(255, 255, 255, 0.6);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --background: #f0f2f5;
+  --muted: #6b7280;
+  --chart-bg: rgba(255, 255, 255, 0.5);
+  --chart-text: #374151;
+  --chart-grid: rgba(0, 0, 0, 0.06);
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-border: rgba(0, 0, 0, 0.1);
+  --select-bg: rgba(255, 255, 255, 0.6);
+  --select-border: rgba(0, 0, 0, 0.1);
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --header-bg: rgba(240, 242, 245, 0.8);
+  --dropdown-bg: rgba(240, 242, 245, 0.95);
+  --orb-opacity: 0.08;
 }
 
-/* Dark class kept for compatibility — same values */
+/* Dark mode — frosted glass on deep navy */
 .dark {
   --bg: #0a0e1a;
   --foreground: #e0e0e0;
@@ -51,6 +55,9 @@
   --select-bg: rgba(255, 255, 255, 0.05);
   --select-border: rgba(255, 255, 255, 0.08);
   --hover-bg: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(10, 14, 26, 0.8);
+  --dropdown-bg: rgba(10, 14, 26, 0.95);
+  --orb-opacity: 0.15;
 }
 
 body {
@@ -84,7 +91,7 @@ body {
   position: fixed;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.15;
+  opacity: var(--orb-opacity, 0.15);
   pointer-events: none;
   z-index: 0;
   animation: float 20s infinite ease-in-out;

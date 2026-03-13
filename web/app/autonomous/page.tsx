@@ -1,6 +1,7 @@
 "use client";
 import useSWR from "swr";
 import { useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -145,7 +146,7 @@ function EquityChart({ equity, market }: { equity: EquityPoint[]; market: "kr" |
                   bottom: "calc(100% + 6px)",
                   left: "50%",
                   transform: "translateX(-50%)",
-                  background: "rgba(10,14,26,0.95)",
+                  background: "var(--dropdown-bg)",
                   border: "1px solid var(--glass-border)",
                   backdropFilter: "blur(12px)",
                   borderRadius: 8,
@@ -526,8 +527,9 @@ export default function AutonomousPage() {
           ))}
         </div>
 
-        {/* Right: Timestamp */}
+        {/* Right: ThemeToggle + Timestamp */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <ThemeToggle />
           {marketData?.updated_at && (
             <>
               <span
