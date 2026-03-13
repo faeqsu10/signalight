@@ -15,16 +15,16 @@ from typing import Dict, List, Optional
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage", "signalight.db")
 
 
-def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+def _get_conn(db_path: str = "") -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path or DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
-def _init_tables() -> None:
+def _init_tables(db_path: str = "") -> None:
     """가상 포지션 테이블을 생성한다."""
-    conn = _get_conn()
+    conn = _get_conn(db_path)
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS virtual_positions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +64,13 @@ _init_tables()
 class PositionTracker:
     """가상 포지션 추적기."""
 
+    def __init__(self, db_path: str = ""):
+        self._db_path = db_path
+        _init_tables(db_path)
+
+    def _conn(self) -> sqlite3.Connection:
+        return _get_conn(self._db_path)
+
     def open_position(
         self,
         ticker: str,
@@ -81,7 +88,7 @@ class PositionTracker:
         Returns:
             생성된 포지션 ID
         """
-        conn = _get_conn()
+        conn = self._conn()
         cursor = conn.execute(
             """INSERT INTO virtual_positions
                (ticker, name, phase, entry_price, entry_date, entry_atr,
@@ -98,7 +105,7 @@ class PositionTracker:
 
     def get_position(self, ticker: str) -> Optional[Dict]:
         """해당 종목의 활성 포지션을 조회한다."""
-        conn = _get_conn()
+        conn = self._conn()
         row = conn.execute(
             "SELECT * FROM virtual_positions WHERE ticker = ? AND status = 'open' ORDER BY id DESC LIMIT 1",
             (ticker,),
@@ -111,7 +118,7 @@ class PositionTracker:
 
     def get_all_open(self) -> List[Dict]:
         """모든 활성 포지션을 조회한다."""
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             "SELECT * FROM virtual_positions WHERE status = 'open' ORDER BY entry_date",
         ).fetchall()
@@ -120,7 +127,7 @@ class PositionTracker:
 
     def update_phase(self, ticker: str, new_phase: int, additional_weight: float = 0) -> None:
         """분할 매수 단계를 업데이트한다."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """UPDATE virtual_positions
                SET phase = ?, weight_pct = weight_pct + ?,
@@ -133,7 +140,7 @@ class PositionTracker:
 
     def update_highest_close(self, ticker: str, close_price: int) -> None:
         """최고 종가를 갱신한다 (트레일링 스탑용)."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """UPDATE virtual_positions
                SET highest_close = MAX(highest_close, ?),
@@ -147,7 +154,7 @@ class PositionTracker:
     def mark_target_hit(self, ticker: str, target_num: int) -> None:
         """목표가 도달을 기록한다."""
         col = f"target{target_num}_hit"
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             f"""UPDATE virtual_positions
                 SET {col} = 1, updated_at = datetime('now', 'localtime')
@@ -159,7 +166,7 @@ class PositionTracker:
 
     def update_stop_loss(self, ticker: str, new_stop: int) -> None:
         """손절가를 갱신한다."""
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """UPDATE virtual_positions
                SET stop_loss = ?, updated_at = datetime('now', 'localtime')
@@ -187,7 +194,7 @@ class PositionTracker:
         entry_price = position["entry_price"]
         pnl_pct = ((exit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
 
-        conn = _get_conn()
+        conn = self._conn()
         conn.execute(
             """UPDATE virtual_positions
                SET status = 'closed', exit_price = ?, exit_date = ?,
@@ -208,7 +215,7 @@ class PositionTracker:
 
     def get_closed_positions(self, limit: int = 20) -> List[Dict]:
         """최근 청산된 포지션 이력을 조회한다."""
-        conn = _get_conn()
+        conn = self._conn()
         rows = conn.execute(
             """SELECT * FROM virtual_positions
                WHERE status = 'closed'
@@ -220,7 +227,7 @@ class PositionTracker:
 
     def get_performance_summary(self) -> Dict:
         """전체 가상 매매 성과 요약을 반환한다."""
-        conn = _get_conn()
+        conn = self._conn()
 
         total = conn.execute(
             "SELECT COUNT(*) as cnt FROM virtual_positions WHERE status = 'closed'"

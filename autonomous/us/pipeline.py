@@ -28,7 +28,7 @@ class USAutonomousPipeline:
 
     def __init__(self):
         self.state = PipelineState(db_path=US_DB_PATH)
-        self.tracker = PositionTracker()
+        self.tracker = PositionTracker(db_path=US_DB_PATH)
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
 
@@ -447,7 +447,7 @@ class USAutonomousPipeline:
         """에퀴티 스냅샷을 저장한다."""
         open_positions = self.tracker.get_all_open()
 
-        if open_positions and not self.executor.config.dry_run:
+        if not self.executor.config.dry_run and open_positions:
             acct = self.executor.get_account_info()
             if acct:
                 total_equity = float(acct.get("equity", DRY_RUN_VIRTUAL_ASSET_USD))
@@ -461,11 +461,18 @@ class USAutonomousPipeline:
                 )
                 return
 
-        # 포지션 없음 또는 dry_run: 가상 에퀴티 사용
+        # dry_run 또는 실계좌 포지션 없음: 가상 에퀴티 계산
+        # 보유 포지션 투자금 추정 (entry_price * weight)
+        invested = 0
+        if open_positions:
+            for pos in open_positions:
+                invested += pos.get("entry_price", 0) * pos.get("weight_pct", 0) / 100
+        total_equity = DRY_RUN_VIRTUAL_ASSET_USD
+        cash = total_equity - invested
         self.state.save_equity_snapshot(
-            total_equity=int(DRY_RUN_VIRTUAL_ASSET_USD * 100),
-            invested=0,
-            cash=int(DRY_RUN_VIRTUAL_ASSET_USD * 100),
+            total_equity=int(total_equity * 100),
+            invested=int(invested * 100),
+            cash=int(cash * 100),
             open_positions=len(open_positions),
         )
 
