@@ -1,7 +1,8 @@
 "use client";
 import useSWR from "swr";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import Tooltip from "@/components/Tooltip";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -441,7 +442,18 @@ export default function AutonomousPage() {
   const { data, isLoading } = useSWR<AutonomousData>("/api/autonomous", fetcher, {
     refreshInterval: 60000,
   });
-  const [market, setMarket] = useState<"kr" | "us">("kr");
+  const [market, setMarketState] = useState<"kr" | "us">("kr");
+
+  // URL 해시로 마켓 탭 유지 (F5 새로고침 시 복원)
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash === "us") setMarketState("us");
+  }, []);
+
+  const setMarket = (m: "kr" | "us") => {
+    setMarketState(m);
+    window.location.hash = m;
+  };
 
   const marketData: MarketData | undefined = data?.[market];
 
@@ -620,8 +632,25 @@ export default function AutonomousPage() {
             {/* Summary Cards */}
             <section>
               <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   성과 요약
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold mb-1">성과 요약이란?</p>
+                        <p className="opacity-80">자율매매 봇이 운영한 전체 성과를 한눈에 보여줍니다.</p>
+                        <table className="w-full text-[10px] mt-2">
+                          <tbody>
+                            <tr><td className="pr-2" style={{ color: "var(--buy)" }}>에퀴티</td><td>현재 총 자산(현금+보유 종목 평가액)</td></tr>
+                            <tr><td className="pr-2" style={{ color: "var(--sell)" }}>MDD</td><td>최고점 대비 최대 하락폭 (위험도 지표)</td></tr>
+                            <tr><td className="pr-2">거래 수</td><td>매수+매도 실행 횟수</td></tr>
+                            <tr><td className="pr-2">승률</td><td>이익을 낸 거래의 비율</td></tr>
+                            <tr><td className="pr-2">총 손익</td><td>실현된 누적 손익 금액</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  />
                 </span>
                 <hr className="glass-divider" style={{ flex: 1 }} />
               </div>
@@ -631,8 +660,17 @@ export default function AutonomousPage() {
             {/* Equity Curve */}
             <section className="glass-card" style={{ padding: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   에퀴티 커브
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold mb-1">에퀴티 커브란?</p>
+                        <p className="opacity-80">날마다 총 자산(현금 + 보유 종목 평가)이 어떻게 변했는지 보여주는 그래프입니다.</p>
+                        <p className="mt-1 opacity-70">💡 우상향이면 수익, 우하향이면 손실 구간입니다. 꺾이는 지점이 매매 타이밍과 관련 있습니다.</p>
+                      </div>
+                    }
+                  />
                 </span>
                 <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
                   {marketData.equity.length}일 추적
@@ -644,8 +682,17 @@ export default function AutonomousPage() {
             {/* Daily PnL */}
             <section className="glass-card" style={{ padding: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   일별 손익
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold mb-1">일별 손익이란?</p>
+                        <p className="opacity-80">매일 실현된 손익을 막대그래프로 보여줍니다. 초록색은 이익, 빨간색은 손실입니다.</p>
+                        <p className="mt-1 opacity-70">💡 매도가 완료되어야 손익이 확정됩니다. 보유 중인 종목의 미실현 손익은 포함되지 않습니다.</p>
+                      </div>
+                    }
+                  />
                 </span>
                 <span style={{ fontSize: 11, color: "var(--text-dim)" }}>최근 14일</span>
               </div>
@@ -655,8 +702,24 @@ export default function AutonomousPage() {
             {/* Recent Trades */}
             <section className="glass-card" style={{ padding: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   최근 거래
+                  <Tooltip
+                    content={
+                      <div>
+                        <p className="font-semibold mb-1">최근 거래란?</p>
+                        <p className="opacity-80">자율매매 봇이 실행한 최근 매수·매도 내역입니다.</p>
+                        <table className="w-full text-[10px] mt-2">
+                          <tbody>
+                            <tr><td style={{ color: "var(--buy)" }} className="pr-2">매수(BUY)</td><td>시그널 기반으로 종목을 산 기록</td></tr>
+                            <tr><td style={{ color: "var(--sell)" }} className="pr-2">매도(SELL)</td><td>손절/익절/시그널로 종목을 판 기록</td></tr>
+                            <tr><td className="pr-2">합류점수</td><td>여러 지표가 같은 방향을 가리킨 정도</td></tr>
+                            <tr><td className="pr-2">simulated</td><td>모의투자 (실제 돈 아님)</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  />
                 </span>
                 <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
                   {marketData.trades.length}건
