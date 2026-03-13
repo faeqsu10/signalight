@@ -1,5 +1,6 @@
 import { OHLCVData } from "@/lib/yahoo-finance";
 import { Signal } from "@/lib/strategy";
+import Tooltip from "./Tooltip";
 
 interface Props {
   name: string;
@@ -81,6 +82,15 @@ export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" 
         <span className="text-lg font-semibold" style={{ color: overallColor }}>
           {overallSignal}
         </span>
+        <Tooltip
+          content={
+            <div>
+              <p className="font-semibold mb-1">종합 시그널</p>
+              <p className="opacity-80">모든 기술적 지표(이동평균, RSI, MACD, 볼린저밴드, 거래량 등)를 종합한 최종 판단입니다.</p>
+              <p className="mt-1 opacity-70">💡 매수/매도 시그널이 하나라도 있으면 해당 방향으로 표시됩니다. 매수와 매도가 동시에 있으면 매수가 우선합니다.</p>
+            </div>
+          }
+        />
       </div>
     </div>
   );

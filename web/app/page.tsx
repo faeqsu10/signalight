@@ -85,14 +85,19 @@ function ScannerCategory({
   title,
   items,
   emptyText,
+  tooltip,
 }: {
   title: string;
   items: ScanResult[];
   emptyText: string;
+  tooltip?: React.ReactNode;
 }) {
   return (
     <div className="glass-card p-4">
-      <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>{title}</h4>
+      <h4 className="text-sm font-semibold mb-3 flex items-center" style={{ color: "var(--accent)" }}>
+        {title}
+        {tooltip && <Tooltip content={tooltip} />}
+      </h4>
       {items.length === 0 ? (
         <p className="text-xs" style={{ color: "var(--text-dim)" }}>{emptyText}</p>
       ) : (
@@ -698,15 +703,17 @@ export default function Home() {
                   content={
                     <div>
                       <p className="font-semibold mb-1">캔들차트 + 이동평균선</p>
+                      <p className="mb-2 opacity-80">하루의 시가·고가·저가·종가를 봉 하나로 보여줍니다. 이동평균선은 최근 N일 평균 가격을 이은 선입니다.</p>
                       <table className="w-full text-[10px]">
                         <tbody>
-                          <tr><td style={{ color: "var(--buy)" }} className="pr-2">빨간 봉</td><td>상승일 (시가 &lt; 종가)</td></tr>
-                          <tr><td style={{ color: "var(--sell)" }} className="pr-2">파란 봉</td><td>하락일 (시가 &gt; 종가)</td></tr>
-                          <tr><td className="text-yellow-500 pr-2">빠른 선</td><td>10일 이동평균</td></tr>
-                          <tr><td className="text-orange-400 pr-2">느린 선</td><td>50일 이동평균</td></tr>
-                          <tr><td style={{ color: "var(--text-dim)" }} className="pr-2">교차</td><td>골든크로스(매수) / 데드크로스(매도)</td></tr>
+                          <tr><td style={{ color: "var(--buy)" }} className="pr-2">초록 봉</td><td>상승일 — 종가가 시가보다 높음</td></tr>
+                          <tr><td style={{ color: "var(--sell)" }} className="pr-2">빨간 봉</td><td>하락일 — 종가가 시가보다 낮음</td></tr>
+                          <tr><td className="text-yellow-500 pr-2">노란 선</td><td>10일 이동평균 (단기 추세)</td></tr>
+                          <tr><td className="text-purple-400 pr-2">보라 선</td><td>50일 이동평균 (장기 추세)</td></tr>
+                          <tr><td style={{ color: "var(--text-dim)" }} className="pr-2">점선</td><td>볼린저밴드 상·하단 (변동성 범위)</td></tr>
                         </tbody>
                       </table>
+                      <p className="mt-2 opacity-70">💡 단기선이 장기선을 위로 뚫으면 골든크로스(매수 신호), 아래로 내려가면 데드크로스(매도 신호)라고 합니다.</p>
                     </div>
                   }
                 />
@@ -730,14 +737,15 @@ export default function Home() {
                     content={
                       <div>
                         <p className="font-semibold mb-1">RSI (상대강도지수)</p>
-                        <p className="mb-2">주가가 과매수/과매도 상태인지 0~100으로 나타냅니다.</p>
+                        <p className="mb-2 opacity-80">최근 상승/하락의 힘을 0~100으로 나타내는 지표입니다. 낮을수록 많이 떨어진 상태, 높을수록 많이 오른 상태입니다.</p>
                         <table className="w-full text-[10px]">
                           <tbody>
-                            <tr><td style={{ color: "var(--sell)" }} className="pr-2">70+</td><td>과매수 (너무 올랐음, 매도 고려)</td></tr>
-                            <tr><td style={{ color: "var(--text-dim)" }} className="pr-2">30~70</td><td>중립 구간</td></tr>
-                            <tr><td style={{ color: "var(--buy)" }} className="pr-2">~30</td><td>과매도 (너무 떨어짐, 매수 기회)</td></tr>
+                            <tr><td style={{ color: "var(--sell)" }} className="pr-2">70 이상</td><td>과매수 — 너무 올라서 조정 가능성</td></tr>
+                            <tr><td style={{ color: "var(--hold)" }} className="pr-2">40~60</td><td>중립 — 뚜렷한 방향 없음</td></tr>
+                            <tr><td style={{ color: "var(--buy)" }} className="pr-2">30 이하</td><td>과매도 — 많이 떨어져서 반등 가능성</td></tr>
                           </tbody>
                         </table>
+                        <p className="mt-2 opacity-70">💡 RSI가 30 아래에서 다시 올라오기 시작하면 반등 신호로 봅니다. 차트의 빨간 점선이 70, 파란 점선이 30 기준선입니다.</p>
                       </div>
                     }
                   />
@@ -751,14 +759,15 @@ export default function Home() {
                     content={
                       <div>
                         <p className="font-semibold mb-1">MACD (이동평균수렴확산)</p>
-                        <p className="mb-2">단기/장기 추세의 힘 차이로 전환점을 포착합니다.</p>
+                        <p className="mb-2 opacity-80">단기(12일)와 장기(26일) 이동평균의 차이를 보여주는 지표입니다. 추세 전환점을 포착하는 데 사용합니다.</p>
                         <table className="w-full text-[10px]">
                           <tbody>
-                            <tr><td style={{ color: "var(--buy)" }} className="pr-2">상향돌파</td><td>MACD가 시그널선 위로 → 매수</td></tr>
-                            <tr><td style={{ color: "var(--sell)" }} className="pr-2">하향돌파</td><td>MACD가 시그널선 아래로 → 매도</td></tr>
-                            <tr><td style={{ color: "var(--text-dim)" }} className="pr-2">히스토그램</td><td>두 선의 차이 (막대그래프)</td></tr>
+                            <tr><td style={{ color: "#22d3ee" }} className="pr-2">MACD선</td><td>단기-장기 평균 차이 (파란선)</td></tr>
+                            <tr><td style={{ color: "#f97316" }} className="pr-2">시그널선</td><td>MACD의 9일 평균 (주황선)</td></tr>
+                            <tr><td style={{ color: "var(--text-dim)" }} className="pr-2">히스토그램</td><td>두 선의 차이를 막대로 표시</td></tr>
                           </tbody>
                         </table>
+                        <p className="mt-2 opacity-70">💡 MACD선이 시그널선을 위로 돌파하면 골든크로스(매수), 아래로 내려가면 데드크로스(매도)입니다. 히스토그램이 커지면 추세가 강해지는 것입니다.</p>
                       </div>
                     }
                   />
@@ -830,7 +839,26 @@ export default function Home() {
         {/* Backtest Summary */}
         {backtestData && !backtestData.error && (
           <div className="glass-card p-4">
-            <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-dim)" }}>백테스트 (최근 1년)</h3>
+            <h3 className="text-sm font-semibold mb-4 flex items-center" style={{ color: "var(--text-dim)" }}>
+              백테스트 (최근 1년)
+              <Tooltip
+                content={
+                  <div>
+                    <p className="font-semibold mb-1">백테스트란?</p>
+                    <p className="opacity-80">과거 1년간 데이터에 현재 전략을 적용했을 때 어떤 성과가 나왔을지 시뮬레이션한 결과입니다.</p>
+                    <table className="w-full text-[10px] mt-2">
+                      <tbody>
+                        <tr><td className="pr-2" style={{ color: "var(--buy)" }}>총 수익률</td><td>전체 기간 누적 수익률</td></tr>
+                        <tr><td className="pr-2" style={{ color: "var(--sell)" }}>MDD</td><td>최고점 대비 최대 하락폭 (위험도)</td></tr>
+                        <tr><td className="pr-2">승률</td><td>이익 거래 비율 (높을수록 안정적)</td></tr>
+                        <tr><td className="pr-2">거래 수</td><td>매수·매도 시그널 발생 횟수</td></tr>
+                      </tbody>
+                    </table>
+                    <p className="mt-2 opacity-70">💡 과거 성과가 미래 수익을 보장하지 않습니다. MDD가 낮고 승률이 높을수록 안정적인 전략입니다.</p>
+                  </div>
+                }
+              />
+            </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 text-center">
               <div>
                 <div
@@ -872,16 +900,37 @@ export default function Home() {
                 title="골든크로스"
                 items={scannerData.goldenCross ?? []}
                 emptyText="해당 종목 없음"
+                tooltip={
+                  <div>
+                    <p className="font-semibold mb-1">골든크로스란?</p>
+                    <p className="opacity-80">단기 이동평균선(10일)이 장기 이동평균선(50일)을 아래에서 위로 돌파하는 것입니다.</p>
+                    <p className="mt-1 opacity-70">💡 상승 추세 전환의 대표적 신호로, 많은 투자자가 매수 타이밍으로 활용합니다.</p>
+                  </div>
+                }
               />
               <ScannerCategory
                 title="RSI 과매도"
                 items={scannerData.rsiOversold ?? []}
                 emptyText="해당 종목 없음"
+                tooltip={
+                  <div>
+                    <p className="font-semibold mb-1">RSI 과매도란?</p>
+                    <p className="opacity-80">RSI가 30 이하로 내려간 종목입니다. 최근 하락이 과도해서 반등 가능성이 있다고 봅니다.</p>
+                    <p className="mt-1 opacity-70">💡 단, RSI가 낮다고 반드시 오르는 것은 아닙니다. 다른 지표와 함께 봐야 신뢰도가 높습니다.</p>
+                  </div>
+                }
               />
               <ScannerCategory
                 title="거래량 급증"
                 items={scannerData.volumeSurge ?? []}
                 emptyText="해당 종목 없음"
+                tooltip={
+                  <div>
+                    <p className="font-semibold mb-1">거래량 급증이란?</p>
+                    <p className="opacity-80">최근 거래량이 20일 평균 대비 2배 이상 늘어난 종목입니다. 큰 관심이 몰리고 있다는 뜻입니다.</p>
+                    <p className="mt-1 opacity-70">💡 거래량이 많아야 가격 움직임에 신뢰도가 생깁니다. 호재/악재 뉴스와 함께 확인하세요.</p>
+                  </div>
+                }
               />
             </div>
             <p className="text-xs text-center" style={{ color: "var(--text-dim)" }}>

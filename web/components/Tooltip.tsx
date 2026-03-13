@@ -51,7 +51,7 @@ export default function Tooltip({ content, children }: TooltipProps) {
         <div
           className="absolute top-full left-0 mt-2 z-50 w-64 p-3 rounded-xl text-xs leading-relaxed"
           style={{
-            background: "rgba(10,14,26,0.97)",
+            background: "var(--dropdown-bg)",
             backdropFilter: "blur(20px)",
             border: "1px solid var(--glass-border)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
