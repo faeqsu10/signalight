@@ -475,12 +475,18 @@ class AutonomousPipeline:
                 )
                 return
 
-        # dry_run 또는 포지션 없음 또는 평가 실패: 가상 에퀴티 기반 계산
-        invested = sum(
-            p.get("entry_price", 0) * p.get("quantity", 0)
-            for p in open_positions
-        )
-        total_equity = DRY_RUN_VIRTUAL_ASSET  # 미실현 손익은 매도 전까지 반영 안 함
+        # dry_run 또는 포지션 없음 또는 평가 실패: 마크-투-마켓 가상 에퀴티 계산
+        unrealized_pnl = 0
+        invested = 0
+        for pos in open_positions:
+            entry = pos.get("entry_price", 0)
+            current = pos.get("highest_close") or entry  # 최근 최고가를 현재가 근사값으로 사용
+            weight = pos.get("weight_pct", 0)
+            position_value = DRY_RUN_VIRTUAL_ASSET * weight / 100
+            invested += position_value
+            if entry > 0:
+                unrealized_pnl += position_value * (current - entry) / entry
+        total_equity = DRY_RUN_VIRTUAL_ASSET + unrealized_pnl
         self.state.save_equity_snapshot(
             total_equity=total_equity,
             invested=invested,

@@ -317,9 +317,21 @@ class SafeExecutor:
                 ticker, price, target_weight_pct=weight_pct
             )
 
-        # dry_run: 가상 자산 기준 계산
-        virtual_asset = DRY_RUN_VIRTUAL_ASSET
-        target_amount = int(virtual_asset * weight_pct / 100)
+        # dry_run: 기존 투자금 차감 후 available equity로 계산
+        open_positions = self.tracker.get_all_open()
+        invested = sum(
+            DRY_RUN_VIRTUAL_ASSET * pos.get("weight_pct", 0) / 100
+            for pos in open_positions
+        )
+        max_exposure = DRY_RUN_VIRTUAL_ASSET * AUTO_CONFIG.max_exposure_pct / 100
+        if invested >= max_exposure:
+            logger.info(
+                "최대 노출 한도 도달: 투자금 %s >= 한도 %s", invested, max_exposure
+            )
+            return 0
+        available = DRY_RUN_VIRTUAL_ASSET - invested
+        equity = min(available, max_exposure - invested)
+        target_amount = int(equity * weight_pct / 100)
         return max(0, target_amount // price)
 
     def reset_daily(self) -> None:

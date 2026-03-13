@@ -270,7 +270,20 @@ class USSafeExecutor:
                 acct = self.client.get_account()
                 equity = float(acct.get("equity", DRY_RUN_VIRTUAL_ASSET_USD))
             else:
-                equity = DRY_RUN_VIRTUAL_ASSET_USD
+                # dry_run: 기존 투자금 차감 후 available equity로 계산
+                open_positions = self.tracker.get_all_open()
+                invested = sum(
+                    DRY_RUN_VIRTUAL_ASSET_USD * pos.get("weight_pct", 0) / 100
+                    for pos in open_positions
+                )
+                max_exposure = DRY_RUN_VIRTUAL_ASSET_USD * self.config.max_exposure_pct / 100
+                if invested >= max_exposure:
+                    logger.info(
+                        "최대 노출 한도 도달: 투자금 %s >= 한도 %s", invested, max_exposure
+                    )
+                    return 0
+                available = DRY_RUN_VIRTUAL_ASSET_USD - invested
+                equity = min(available, max_exposure - invested)
 
             target_amount = equity * (weight_pct / 100)
             target_amount = min(target_amount, self.config.max_order_amount)

@@ -546,20 +546,24 @@ class StrategyOptimizer:
                 "avg_candidate_metric": 0.0,
             }
 
+        # 비겹침 walk-forward: 3개 fold
+        # fold 1: train=[0, 33%), val=[33%, 50%)
+        # fold 2: train=[0, 50%), val=[50%, 67%)
+        # fold 3: train=[0, 67%), val=[67%, 100%)
+        folds = [
+            (0.33, 0.50),
+            (0.50, 0.67),
+            (0.67, 1.00),
+        ]
         fold_results = []
-        for idx in range(self.wf_folds):
-            train_ratio = 0.5 + idx * 0.1
-            train_end = int(n * train_ratio)
-            if train_end >= n - self.wf_min_validation:
-                break
-
-            val_size = max(self.wf_min_validation, int(n * 0.2))
-            val_end = min(n, train_end + val_size)
+        for train_end_ratio, val_end_ratio in folds:
+            train_end = int(n * train_end_ratio)
+            val_end = int(n * val_end_ratio)
             train_rows = rows[:train_end]
             val_rows = rows[train_end:val_end]
 
             if (
-                len(train_rows) < self.min_trades // 2
+                len(train_rows) < self.min_trades
                 or len(val_rows) < self.wf_min_validation
             ):
                 continue

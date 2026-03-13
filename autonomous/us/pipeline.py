@@ -461,13 +461,18 @@ class USAutonomousPipeline:
                 )
                 return
 
-        # dry_run 또는 실계좌 포지션 없음: 가상 에퀴티 계산
-        # 보유 포지션 투자금 추정 (entry_price * weight)
-        invested = 0
-        if open_positions:
-            for pos in open_positions:
-                invested += pos.get("entry_price", 0) * pos.get("weight_pct", 0) / 100
-        total_equity = DRY_RUN_VIRTUAL_ASSET_USD
+        # dry_run 또는 실계좌 포지션 없음: 마크-투-마켓 가상 에퀴티 계산
+        unrealized_pnl = 0.0
+        invested = 0.0
+        for pos in open_positions:
+            entry = pos.get("entry_price", 0)
+            current = pos.get("highest_close") or entry  # 최근 최고가를 현재가 근사값으로 사용
+            weight = pos.get("weight_pct", 0)
+            position_value = DRY_RUN_VIRTUAL_ASSET_USD * weight / 100
+            invested += position_value
+            if entry > 0:
+                unrealized_pnl += position_value * (current - entry) / entry
+        total_equity = DRY_RUN_VIRTUAL_ASSET_USD + unrealized_pnl
         cash = total_equity - invested
         self.state.save_equity_snapshot(
             total_equity=int(total_equity * 100),

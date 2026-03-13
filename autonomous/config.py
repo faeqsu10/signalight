@@ -96,7 +96,7 @@ class AutonomousConfig:
     optimizer_weight_max_volume_surge: float = 1.3
 
     optimizer_threshold_adjust_max: float = 0.5
-    optimizer_min_trades: int = 20
+    optimizer_min_trades: int = 50
     optimizer_lookback_days: int = 30
     optimizer_wf_folds: int = 3
     optimizer_wf_min_validation: int = 5

@@ -6,6 +6,7 @@ from signals.indicators import (
     calc_moving_average, calc_rsi, calc_macd, calc_volume_ratio,
     calc_atr, calc_bollinger_bands, calc_obv,
     calc_stochastic_rsi, calc_obv_divergence_strength,
+    calc_obv_bearish_divergence_strength,
 )
 # Local defaults — mirrors config.py values so this module has no dependency on config.py.
 # autonomous/analyzer.py passes overrides via strategy_settings dict at call time.
@@ -29,7 +30,7 @@ MACRO_SIGNAL_MAX_SCORE = 1.5
 BB_PCT_B_LOWER = 0.2          # 볼린저밴드 %B 하단 근처 임계값
 BB_PCT_B_UPPER = 0.8          # 볼린저밴드 %B 상단 근처 임계값
 OBV_DIVERGENCE_WEIGHT = 0.8   # OBV 다이버전스 가중치
-CONFLUENCE_MIXED_TOLERANCE = 1.0  # 합류 점수 혼재 판정 허용 오차 (0.3→0.5→1.0 완화)
+CONFLUENCE_MIXED_TOLERANCE = 0.5  # 합류 점수 혼재 판정 허용 오차 (net_score 방식, 0.5면 충분)
 SIGNAL_STRENGTH_STRONG_BUY = 3.5   # 강한 매수 시그널 임계값
 SIGNAL_STRENGTH_BUY = 1.5          # 매수 시그널 임계값
 SIGNAL_STRENGTH_STRONG_SELL = -3.5  # 강한 매도 시그널 임계값
@@ -337,6 +338,8 @@ def analyze_detailed(
                     sell_score += align_score
 
     # ── 2. RSI (연속 강도 점수) ────────────────────
+    rsi_fired_buy = False
+    rsi_fired_sell = False
     if current_rsi is not None:
         rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought, rsi_extreme_low, rsi_extreme_high)
         if rsi_score > 0:
@@ -350,6 +353,21 @@ def analyze_detailed(
                     "strength": round(weighted, 2),
                 })
                 buy_score += weighted
+                rsi_fired_buy = True
+            elif current_rsi <= 40:
+                # RSI 35~40: graduated buy signal (데드존 해소)
+                # 40에 가까울수록 약한 신호
+                grad_strength = 0.3 * (40 - current_rsi) / (40 - rsi_oversold)
+                weighted = grad_strength * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "RSI 근접 과매도",
+                    "type": "buy",
+                    "source": "RSI",
+                    "detail": f"RSI {current_rsi:.1f} (근접 과매도, 강도: {grad_strength:.2f})",
+                    "strength": round(weighted, 2),
+                })
+                buy_score += weighted
+                rsi_fired_buy = True
             elif current_rsi >= rsi_overbought:
                 weighted = rsi_score * _regime_weight(regime, "sell")
                 signals.append({
@@ -360,6 +378,7 @@ def analyze_detailed(
                     "strength": round(weighted, 2),
                 })
                 sell_score += weighted
+                rsi_fired_sell = True
 
     # ── 3. MACD (연속 강도 점수) ───────────────────
     if not pd.isna(macd_line.iloc[-2]) and not pd.isna(macd_line.iloc[-1]):
@@ -438,62 +457,84 @@ def analyze_detailed(
         })
         buy_score += weighted
 
+    # OBV 약세 다이버전스 (bearish)
+    bearish_div = calc_obv_bearish_divergence_strength(closes, obv, lookback=20)
+    if bearish_div > 0:
+        weighted = bearish_div * obv_divergence_weight * _regime_weight(regime, "sell")
+        signals.append({
+            "trigger": "OBV 약세 다이버전스",
+            "type": "sell",
+            "source": "OBV",
+            "detail": f"가격 상승 중 거래량 감소 (강도: {bearish_div:.2f})",
+            "strength": round(weighted, 2),
+        })
+        sell_score += weighted
+
     # ── 6. Stochastic RSI (신규) ──────────────────
     if current_stoch_k is not None:
         if current_stoch_k <= stoch_rsi_oversold:
             # 연속 점수: 20=0.5, 10=0.75, 0=1.0
             raw = 0.5 + 0.5 * (stoch_rsi_oversold - current_stoch_k) / stoch_rsi_oversold
-            stoch_score = min(1.0, raw) * _regime_weight(regime, "buy")
+            stoch_weighted = min(1.0, raw) * _regime_weight(regime, "buy")
+            # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
+            if rsi_fired_buy:
+                stoch_weighted *= 0.5
             signals.append({
                 "trigger": "StochRSI 과매도",
                 "type": "buy",
                 "source": "STOCH_RSI",
                 "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_oversold:.0f} 이하)",
-                "strength": round(stoch_score, 2),
+                "strength": round(stoch_weighted, 2),
             })
-            buy_score += stoch_score
+            buy_score += stoch_weighted
         elif current_stoch_k >= stoch_rsi_overbought:
             raw = 0.5 + 0.5 * (current_stoch_k - stoch_rsi_overbought) / (100 - stoch_rsi_overbought)
-            stoch_score = min(1.0, raw) * _regime_weight(regime, "sell")
+            stoch_weighted = min(1.0, raw) * _regime_weight(regime, "sell")
+            # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
+            if rsi_fired_sell:
+                stoch_weighted *= 0.5
             signals.append({
                 "trigger": "StochRSI 과매수",
                 "type": "sell",
                 "source": "STOCH_RSI",
                 "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_overbought:.0f} 이상)",
-                "strength": round(stoch_score, 2),
+                "strength": round(stoch_weighted, 2),
             })
-            sell_score += stoch_score
+            sell_score += stoch_weighted
 
     # ── 7. VIX 공포지수 ──────────────────────────
     if vix_value is not None:
         result["indicators"]["vix"] = vix_value
         if vix_value >= vix_extreme_fear:
+            vix_weighted = 1.0 * _regime_weight(regime, "buy")
             signals.append({
                 "trigger": "VIX 공포",
                 "type": "buy",
                 "source": "VIX",
                 "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
-                "strength": 1.0,
+                "strength": round(vix_weighted, 2),
             })
-            buy_score += 1.0
+            buy_score += vix_weighted
         elif vix_value >= vix_fear:
+            vix_weighted = 0.7 * _regime_weight(regime, "buy")
             signals.append({
                 "trigger": "VIX 주의",
                 "type": "buy",
                 "source": "VIX",
                 "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
-                "strength": 0.7,
+                "strength": round(vix_weighted, 2),
             })
-            buy_score += 0.7
+            buy_score += vix_weighted
         elif vix_value <= vix_extreme_greed:
+            vix_weighted = 1.0 * _regime_weight(regime, "sell")
             signals.append({
                 "trigger": "VIX 과열",
                 "type": "sell",
                 "source": "VIX",
                 "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
-                "strength": 1.0,
+                "strength": round(vix_weighted, 2),
             })
-            sell_score += 1.0
+            sell_score += vix_weighted
 
     # ── 8. 매크로 시그널 (유가, 환율, 금리) ──────────
     if macro_data:
@@ -655,11 +696,14 @@ def analyze_detailed(
 
     # ── 합류 점수 계산 (방향별 가중 합산) ──────────
     if buy_score > 0 and sell_score > 0 and abs(buy_score - sell_score) < confluence_mixed_tolerance:
-        result["confluence_score"] = 0
-        result["confluence_direction"] = "mixed"
+        # 혼재 상태: net_score 사용 (이전: score=0으로 소멸)
+        result["confluence_score"] = round(abs(buy_score - sell_score), 1)
+        result["confluence_direction"] = "buy" if buy_score > sell_score else ("sell" if sell_score > buy_score else "neutral")
+        result["confluence_mixed"] = True  # 혼재 플래그 (정보용)
     else:
         result["confluence_score"] = round(max(buy_score, sell_score), 1)
         result["confluence_direction"] = "buy" if buy_score > sell_score else ("sell" if sell_score > buy_score else "neutral")
+        result["confluence_mixed"] = False
 
     # 신호 강도 분류 (가중 점수 기반)
     net_score = buy_score - sell_score

@@ -330,6 +330,13 @@ class TradeRule:
                     result["action"] = "hold"
                     return result
 
+                # Phase 2 시그널 재확인: 현재 합류 점수가 최소 uptrend 임계값 이상
+                min_score_for_phase2 = self._get_entry_threshold("uptrend")
+                if confluence_score < min_score_for_phase2:
+                    result["reason"] = f"Phase 2: 시그널 악화 ({confluence_score:.1f} < {min_score_for_phase2})"
+                    result["action"] = "hold"
+                    return result
+
                 result["action"] = "buy_phase2"
                 result["reason"] = f"Phase 2 분할 매수 추천 (가격 확인 + {split_buy_confirm_days}일 경과)"
 
@@ -498,11 +505,20 @@ class TradeRule:
                     result["reason"] = f"보유 기간 초과 ({days_held}일, 소폭 손실 {pnl_pct:+.1f}%)"
                     result["sell_pct"] = 100
                     return result
+                elif days_held >= max_holding_days + 10:
+                    # 30일 초과 → 손실 무관 강제 청산
+                    result["recommend"] = True
+                    result["action"] = "time_exit_forced"
+                    result["reason"] = f"보유 {days_held}일 초과 (최대 {max_holding_days + 10}일) 강제 청산"
+                    result["sell_pct"] = 100
+                    return result
                 else:
-                    # 큰 손실이면 스탑 타이트하게
-                    result["reason"] = f"보유 {days_held}일, 손실 {pnl_pct:.1f}% — 스탑 타이트닝 권장"
-                    current_atr = indicators.get("atr", entry_atr)
-                    result["details"]["tightened_stop"] = int(price - 1.0 * current_atr)
+                    # 20일 초과 + 손실 3% 이상 → 강제 청산
+                    result["recommend"] = True
+                    result["action"] = "time_exit"
+                    result["reason"] = f"보유 {days_held}일 초과 + 손실 {pnl_pct:.1f}%"
+                    result["sell_pct"] = 100
+                    return result
 
         result["reason"] = result["reason"] or f"보유 유지 ({pnl_pct:+.1f}%)"
         return result

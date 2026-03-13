@@ -102,7 +102,7 @@ VOLUME_RATIO_HIGH = 1.5  # 거래량 급증 판단 배수 (평균 대비)
 VOLUME_RATIO_LOW = 0.5   # 거래량 부족 판단 배수 (평균 대비)
 
 # 합류 점수 혼재 판단
-CONFLUENCE_MIXED_TOLERANCE = 1.0  # 매수/매도 점수 차이가 이 값 미만이면 혼재(mixed) (완화)
+CONFLUENCE_MIXED_TOLERANCE = 0.5  # 매수/매도 점수 차이가 이 값 미만이면 혼재(mixed) (net_score 방식)
 
 # 신호 강도 분류 임계값 (net_score = buy_score - sell_score)
 SIGNAL_STRENGTH_STRONG_BUY = 3.5     # 강한 매수

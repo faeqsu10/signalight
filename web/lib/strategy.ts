@@ -33,6 +33,7 @@ export interface AnalysisResult {
   currentVIX: number | null;
   volumeRatio: number;
   confluenceScore: number;
+  confluenceMixed: boolean;
   signalStrength: SignalStrength;
   marketRegime: MarketRegime;
   shortMA: (number | null)[];
@@ -125,7 +126,7 @@ export function analyze(
   if (n < LONG_MA) {
     return {
       signals, currentRSI, currentVIX, volumeRatio,
-      confluenceScore: 0, signalStrength: "neutral", marketRegime: "sideways",
+      confluenceScore: 0, confluenceMixed: false, signalStrength: "neutral", marketRegime: "sideways",
       shortMA, longMA, macdLine, signalLine, histogram, rsiValues,
       bollingerUpper, bollingerLower, signalHistory: [],
       stochRSIK: currentStochK, stochRSID: currentStochD,
@@ -412,8 +413,10 @@ export function analyze(
   }
 
   // Confluence score
-  const confluenceScore = (buyScore > 0 && sellScore > 0 && Math.abs(buyScore - sellScore) < 0.3)
-    ? 0
+  const isMixed = buyScore > 0 && sellScore > 0 && Math.abs(buyScore - sellScore) < 0.5;
+  const confluenceMixed = isMixed;
+  const confluenceScore = isMixed
+    ? Math.round(Math.abs(buyScore - sellScore) * 10) / 10
     : Math.round(Math.max(buyScore, sellScore) * 10) / 10;
 
   // Signal strength classification
@@ -426,7 +429,7 @@ export function analyze(
   else signalStrength = "neutral";
 
   return {
-    signals, currentRSI, currentVIX, volumeRatio, confluenceScore,
+    signals, currentRSI, currentVIX, volumeRatio, confluenceScore, confluenceMixed,
     signalStrength, marketRegime: regime,
     shortMA, longMA, macdLine, signalLine, histogram, rsiValues,
     bollingerUpper, bollingerLower, signalHistory,

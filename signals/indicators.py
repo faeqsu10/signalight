@@ -190,6 +190,43 @@ def calc_obv_divergence_strength(closes: pd.Series, obv: pd.Series, lookback: in
     return round(max(0.0, min(1.0, strength)), 2)
 
 
+def calc_obv_bearish_divergence_strength(
+    close: pd.Series,
+    obv: pd.Series,
+    lookback: int = 20,
+) -> float:
+    """가격-OBV 약세 다이버전스 강도를 계산한다.
+
+    가격이 higher high를 만드는데 OBV는 lower high → 분배(distribution) 신호.
+
+    Returns:
+        0.0 (다이버전스 없음) ~ 1.0 (강한 약세 다이버전스)
+    """
+    if len(close) < lookback or len(obv) < lookback:
+        return 0.0
+
+    recent_close = close.iloc[-lookback:]
+    recent_obv = obv.iloc[-lookback:]
+
+    half = lookback // 2
+    first_half_close = recent_close.iloc[:half]
+    second_half_close = recent_close.iloc[half:]
+    first_half_obv = recent_obv.iloc[:half]
+    second_half_obv = recent_obv.iloc[half:]
+
+    # 가격 higher high + OBV lower high = bearish divergence
+    price_higher_high = second_half_close.max() > first_half_close.max()
+    obv_lower_high = second_half_obv.max() < first_half_obv.max()
+
+    if price_higher_high and obv_lower_high:
+        # 강도: OBV 하락폭에 비례
+        if first_half_obv.max() != 0:
+            obv_decline = (first_half_obv.max() - second_half_obv.max()) / abs(first_half_obv.max())
+            return min(1.0, max(0.0, obv_decline * 2))
+
+    return 0.0
+
+
 def calc_volume_ratio(volumes: pd.Series, period: int = 20) -> float:
     """현재 거래량 / N일 평균 거래량 비율을 반환한다."""
     if len(volumes) < period:

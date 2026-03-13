@@ -43,6 +43,7 @@ def _init_tables(db_path: str = "") -> None:
             target2_hit INTEGER NOT NULL DEFAULT 0,
             highest_close INTEGER NOT NULL DEFAULT 0,
             weight_pct REAL NOT NULL DEFAULT 0,
+            remaining_pct REAL NOT NULL DEFAULT 100.0,
             exit_price INTEGER,
             exit_date TEXT,
             exit_reason TEXT,
@@ -54,6 +55,12 @@ def _init_tables(db_path: str = "") -> None:
         CREATE INDEX IF NOT EXISTS idx_vp_ticker_status
             ON virtual_positions(ticker, status);
     """)
+    # 기존 DB에 컬럼이 없으면 추가
+    try:
+        conn.execute("ALTER TABLE virtual_positions ADD COLUMN remaining_pct REAL NOT NULL DEFAULT 100.0")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # 이미 존재
     conn.close()
 
 
@@ -92,8 +99,9 @@ class PositionTracker:
         cursor = conn.execute(
             """INSERT INTO virtual_positions
                (ticker, name, phase, entry_price, entry_date, entry_atr,
-                entry_regime, stop_loss, target1, target2, highest_close, weight_pct)
-               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                entry_regime, stop_loss, target1, target2, highest_close, weight_pct,
+                remaining_pct)
+               VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 100.0)""",
             (ticker, name, entry_price, date.today().isoformat(),
              entry_atr, regime, stop_loss, target1, target2,
              entry_price, weight_pct),
@@ -164,6 +172,36 @@ class PositionTracker:
         conn.commit()
         conn.close()
 
+    def partial_sell(self, ticker: str, sell_pct: float) -> Optional[Dict]:
+        """분할 매도 후 잔여 비율을 업데이트한다.
+
+        Args:
+            ticker: 종목 코드
+            sell_pct: 매도 비율 (예: 33 = 33%)
+
+        Returns:
+            업데이트된 포지션 정보 (없으면 None)
+        """
+        position = self.get_position(ticker)
+        if position is None:
+            return None
+
+        current_remaining = position.get("remaining_pct", 100.0)
+        new_remaining = max(0.0, current_remaining - sell_pct)
+
+        conn = self._conn()
+        conn.execute(
+            """UPDATE virtual_positions
+               SET remaining_pct = ?, updated_at = datetime('now', 'localtime')
+               WHERE ticker = ? AND status = 'open'""",
+            (round(new_remaining, 1), ticker),
+        )
+        conn.commit()
+        conn.close()
+
+        position["remaining_pct"] = round(new_remaining, 1)
+        return position
+
     def update_stop_loss(self, ticker: str, new_stop: int) -> None:
         """손절가를 갱신한다."""
         conn = self._conn()
@@ -190,6 +228,11 @@ class PositionTracker:
         position = self.get_position(ticker)
         if position is None:
             return None
+
+        # remaining_pct가 0 이하면 이미 전량 분할매도된 포지션
+        remaining = position.get("remaining_pct", 100.0)
+        if remaining <= 0:
+            exit_reason = exit_reason or "partial_sell_complete"
 
         entry_price = position["entry_price"]
         pnl_pct = ((exit_price - entry_price) / entry_price * 100) if entry_price > 0 else 0
