@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { createChart, ColorType, LineSeries } from "lightweight-charts";
 import { OHLCVData } from "@/lib/yahoo-finance";
-import { useTheme } from "./ThemeProvider";
 
 interface Props {
   ohlcv: OHLCVData[];
@@ -12,24 +11,21 @@ interface Props {
 
 export default function RSIChart({ ohlcv, rsiValues }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
-
-    const isDark = theme === "dark";
 
     const chart = createChart(containerRef.current, {
       layout: {
         background: {
           type: ColorType.Solid,
-          color: isDark ? "#0f0f0f" : "#ffffff",
+          color: "#0a0e1a",
         },
-        textColor: isDark ? "#d1d5db" : "#374151",
+        textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
-        horzLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
+        vertLines: { color: "rgba(255,255,255,0.06)" },
+        horzLines: { color: "rgba(255,255,255,0.06)" },
       },
       width: containerRef.current.clientWidth,
       height: window.innerWidth < 640 ? 150 : 200,
@@ -90,7 +86,7 @@ export default function RSIChart({ ohlcv, rsiValues }: Props) {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [ohlcv, rsiValues, theme]);
+  }, [ohlcv, rsiValues]);
 
   return (
     <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />

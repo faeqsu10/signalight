@@ -10,7 +10,6 @@ import {
   createSeriesMarkers,
 } from "lightweight-charts";
 import { OHLCVData } from "@/lib/yahoo-finance";
-import { useTheme } from "./ThemeProvider";
 
 interface SignalHistoryEntry {
   index: number;
@@ -29,36 +28,33 @@ interface Props {
 
 export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
-
-    const isDark = theme === "dark";
 
     const chart = createChart(containerRef.current, {
       layout: {
         background: {
           type: ColorType.Solid,
-          color: isDark ? "#0f0f0f" : "#ffffff",
+          color: "#0a0e1a",
         },
-        textColor: isDark ? "#d1d5db" : "#374151",
+        textColor: "#d1d5db",
       },
       grid: {
-        vertLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
-        horzLines: { color: isDark ? "#1f2937" : "#e5e7eb" },
+        vertLines: { color: "rgba(255,255,255,0.06)" },
+        horzLines: { color: "rgba(255,255,255,0.06)" },
       },
       width: containerRef.current.clientWidth,
       height: window.innerWidth < 640 ? 250 : 400,
     });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#ef4444",
-      downColor: "#3b82f6",
-      borderUpColor: "#ef4444",
-      borderDownColor: "#3b82f6",
-      wickUpColor: "#ef4444",
-      wickDownColor: "#3b82f6",
+      upColor: "#00d4aa",
+      downColor: "#ff4757",
+      borderUpColor: "#00d4aa",
+      borderDownColor: "#ff4757",
+      wickUpColor: "#00d4aa",
+      wickDownColor: "#ff4757",
     });
 
     candleSeries.setData(
@@ -77,7 +73,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
         .map((e) => ({
           time: ohlcv[e.index].date as string,
           position: e.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
-          color: e.type === "buy" ? "#ef4444" : "#3b82f6",
+          color: e.type === "buy" ? "#00d4aa" : "#ff4757",
           shape: e.type === "buy" ? ("arrowUp" as const) : ("arrowDown" as const),
           text: e.type === "buy" ? "매수" : "매도",
         }))
@@ -118,7 +114,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     // Bollinger Bands overlay
     if (bollingerUpper && bollingerLower) {
       const bbUpperSeries = chart.addSeries(LineSeries, {
-        color: isDark ? "rgba(156,163,175,0.5)" : "rgba(107,114,128,0.5)",
+        color: "rgba(156,163,175,0.5)",
         lineWidth: 1,
         lineStyle: 2, // Dashed
         title: "BB Upper",
@@ -134,7 +130,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       );
 
       const bbLowerSeries = chart.addSeries(LineSeries, {
-        color: isDark ? "rgba(156,163,175,0.5)" : "rgba(107,114,128,0.5)",
+        color: "rgba(156,163,175,0.5)",
         lineWidth: 1,
         lineStyle: 2, // Dashed
         title: "BB Lower",
@@ -163,8 +159,8 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
         time: d.date,
         value: d.volume,
         color: d.close >= d.open
-          ? (isDark ? "rgba(239,68,68,0.3)" : "rgba(239,68,68,0.4)")
-          : (isDark ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.4)"),
+          ? "rgba(0,212,170,0.3)"
+          : "rgba(255,71,87,0.3)",
       }))
     );
 
@@ -184,7 +180,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory, theme]);
+  }, [ohlcv, shortMA, longMA, bollingerUpper, bollingerLower, signalHistory]);
 
   return (
     <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />
