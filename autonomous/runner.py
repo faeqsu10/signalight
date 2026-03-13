@@ -65,10 +65,13 @@ def main():
     # 파이프라인 생성
     pipeline = AutonomousPipeline()
 
-    # 시그널 핸들러 (Ctrl+C 정리 종료)
+    # 시그널 핸들러 (Ctrl+C / SIGTERM — 현재 작업 완료 후 종료)
+    _shutdown_requested = False
+
     def _signal_handler(signum, frame):
-        logger.info("종료 시그널 수신 — 파이프라인 종료")
-        sys.exit(0)
+        nonlocal _shutdown_requested
+        logger.info("종료 시그널 수신 — 현재 작업 완료 후 종료")
+        _shutdown_requested = True
 
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
@@ -104,9 +107,14 @@ def main():
     logger.info("스케줄 등록 완료. 실행 중... (Ctrl+C로 종료)")
 
     # 메인 루프
-    while True:
-        schedule.run_pending()
+    while not _shutdown_requested:
+        try:
+            schedule.run_pending()
+        except Exception as e:
+            logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
         time.sleep(30)
+
+    logger.info("파이프라인 정상 종료")
 
 
 def _register_schedules(pipeline: AutonomousPipeline, monitor_only: bool):

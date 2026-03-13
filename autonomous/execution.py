@@ -155,21 +155,27 @@ class SafeExecutor:
 
         if order and order.status in ("filled", "simulated"):
             # 가상 포지션 생성
-            indicators = stock_data.get("indicators", {})
-            self.tracker.open_position(
-                ticker, name,
-                entry_price=price,
-                entry_atr=indicators.get("atr", 0),
-                regime=stock_data.get("market_regime", "sideways"),
-                stop_loss=recommendation.get("stop_loss", 0),
-                target1=recommendation.get("target1", 0),
-                target2=recommendation.get("target2", 0),
-                weight_pct=weight_pct,
-            )
-            logger.info(
-                "매수 완료: %s(%s) %d주 @ %s원 (비중 %.1f%%)",
-                name, ticker, quantity, f"{price:,}", weight_pct,
-            )
+            try:
+                indicators = stock_data.get("indicators", {})
+                self.tracker.open_position(
+                    ticker, name,
+                    entry_price=price,
+                    entry_atr=indicators.get("atr", 0),
+                    regime=stock_data.get("market_regime", "sideways"),
+                    stop_loss=recommendation.get("stop_loss", 0),
+                    target1=recommendation.get("target1", 0),
+                    target2=recommendation.get("target2", 0),
+                    weight_pct=weight_pct,
+                )
+                logger.info(
+                    "매수 완료: %s(%s) %d주 @ %s원 (비중 %.1f%%)",
+                    name, ticker, quantity, f"{price:,}", weight_pct,
+                )
+            except Exception as e:
+                logger.error(
+                    "포지션 생성 실패 (trade_log는 기록됨): %s(%s) — %s",
+                    name, ticker, e, exc_info=True,
+                )
 
         return order
 
