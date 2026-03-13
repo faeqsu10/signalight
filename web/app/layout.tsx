@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
 
 export const metadata: Metadata = {
   title: "Signalight - 주식 시그널 대시보드",
@@ -31,7 +43,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased relative">
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased relative`}>
         {/* Ambient floating orbs */}
         <div className="orb orb-1" aria-hidden="true" />
         <div className="orb orb-2" aria-hidden="true" />

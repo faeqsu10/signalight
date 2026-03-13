@@ -184,6 +184,8 @@ export function analyze(
   }
 
   // 2. RSI (continuous)
+  let rsiFiredBuy = false;
+  let rsiFiredSell = false;
   if (currentRSI !== null) {
     const rsiScore = continuousRSIScore(currentRSI);
     if (rsiScore > 0 && currentRSI <= RSI_OVERSOLD) {
@@ -194,6 +196,18 @@ export function analyze(
         strength: Math.round(weighted * 100) / 100,
       });
       buyScore += weighted;
+      rsiFiredBuy = true;
+    } else if (currentRSI <= 40) {
+      // RSI 35~40: graduated buy signal (데드존 해소)
+      const gradStrength = 0.3 * (40 - currentRSI) / (40 - RSI_OVERSOLD);
+      const weighted = gradStrength * regimeWeight(regime, "buy");
+      signals.push({
+        type: "buy", label: "RSI",
+        detail: `${currentRSI.toFixed(1)} - 근접 과매도 (강도: ${gradStrength.toFixed(2)})`,
+        strength: Math.round(weighted * 100) / 100,
+      });
+      buyScore += weighted;
+      rsiFiredBuy = true;
     } else if (rsiScore > 0 && currentRSI >= RSI_OVERBOUGHT) {
       const weighted = rsiScore * regimeWeight(regime, "sell");
       signals.push({
@@ -202,6 +216,7 @@ export function analyze(
         strength: Math.round(weighted * 100) / 100,
       });
       sellScore += weighted;
+      rsiFiredSell = true;
     } else {
       signals.push({ type: "neutral", label: "RSI", detail: `${currentRSI.toFixed(1)} - 중립` });
     }
@@ -289,22 +304,24 @@ export function analyze(
   if (currentStochK !== null) {
     if (currentStochK <= STOCH_RSI_OVERSOLD) {
       const raw = 0.5 + 0.5 * (STOCH_RSI_OVERSOLD - currentStochK) / STOCH_RSI_OVERSOLD;
-      const score = Math.min(1.0, raw) * regimeWeight(regime, "buy");
+      let stochWeighted = Math.min(1.0, raw) * regimeWeight(regime, "buy");
+      if (rsiFiredBuy) stochWeighted *= 0.5;
       signals.push({
         type: "buy", label: "StochRSI",
         detail: `K=${currentStochK.toFixed(1)} - 과매도 (${STOCH_RSI_OVERSOLD} 이하)`,
-        strength: Math.round(score * 100) / 100,
+        strength: Math.round(stochWeighted * 100) / 100,
       });
-      buyScore += score;
+      buyScore += stochWeighted;
     } else if (currentStochK >= STOCH_RSI_OVERBOUGHT) {
       const raw = 0.5 + 0.5 * (currentStochK - STOCH_RSI_OVERBOUGHT) / (100 - STOCH_RSI_OVERBOUGHT);
-      const score = Math.min(1.0, raw) * regimeWeight(regime, "sell");
+      let stochWeighted = Math.min(1.0, raw) * regimeWeight(regime, "sell");
+      if (rsiFiredSell) stochWeighted *= 0.5;
       signals.push({
         type: "sell", label: "StochRSI",
         detail: `K=${currentStochK.toFixed(1)} - 과매수 (${STOCH_RSI_OVERBOUGHT} 이상)`,
-        strength: Math.round(score * 100) / 100,
+        strength: Math.round(stochWeighted * 100) / 100,
       });
-      sellScore += score;
+      sellScore += stochWeighted;
     } else {
       signals.push({
         type: "neutral", label: "StochRSI",
