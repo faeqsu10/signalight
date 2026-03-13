@@ -1,6 +1,6 @@
 "use client";
 import useSWR from "swr";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Tooltip from "@/components/Tooltip";
 
@@ -442,13 +442,13 @@ export default function AutonomousPage() {
   const { data, isLoading } = useSWR<AutonomousData>("/api/autonomous", fetcher, {
     refreshInterval: 60000,
   });
-  const [market, setMarketState] = useState<"kr" | "us">("kr");
-
-  // URL 해시로 마켓 탭 유지 (F5 새로고침 시 복원)
-  useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash === "us") setMarketState("us");
-  }, []);
+  const [market, setMarketState] = useState<"kr" | "us">(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.replace("#", "");
+      if (hash === "us") return "us";
+    }
+    return "kr";
+  });
 
   const setMarket = (m: "kr" | "us") => {
     setMarketState(m);
