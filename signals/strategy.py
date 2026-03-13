@@ -29,7 +29,7 @@ MACRO_SIGNAL_MAX_SCORE = 1.5
 BB_PCT_B_LOWER = 0.2          # 볼린저밴드 %B 하단 근처 임계값
 BB_PCT_B_UPPER = 0.8          # 볼린저밴드 %B 상단 근처 임계값
 OBV_DIVERGENCE_WEIGHT = 0.8   # OBV 다이버전스 가중치
-CONFLUENCE_MIXED_TOLERANCE = 0.3  # 합류 점수 혼재 판정 허용 오차
+CONFLUENCE_MIXED_TOLERANCE = 1.0  # 합류 점수 혼재 판정 허용 오차
 SIGNAL_STRENGTH_STRONG_BUY = 3.5   # 강한 매수 시그널 임계값
 SIGNAL_STRENGTH_BUY = 1.5          # 매수 시그널 임계값
 SIGNAL_STRENGTH_STRONG_SELL = -3.5  # 강한 매도 시그널 임계값
@@ -316,10 +316,24 @@ def analyze_detailed(
                 if cur_short_val > cur_long_val and current_price > cur_short_val:
                     # 강한 상승 정렬 (가격 > 단기 > 장기)
                     align_score = 0.4 * _regime_weight(regime, "buy")
+                    signals.append({
+                        "trigger": "MA 상승 정렬",
+                        "type": "buy",
+                        "source": "MA_ALIGN",
+                        "detail": f"가격({current_price:,}) > {short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 강한 상승 정렬",
+                        "strength": round(align_score, 2),
+                    })
                     buy_score += align_score
                 elif cur_short_val < cur_long_val and current_price < cur_short_val:
                     # 강한 하락 정렬 (가격 < 단기 < 장기)
                     align_score = 0.4 * _regime_weight(regime, "sell")
+                    signals.append({
+                        "trigger": "MA 하락 정렬",
+                        "type": "sell",
+                        "source": "MA_ALIGN",
+                        "detail": f"가격({current_price:,}) < {short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 강한 하락 정렬",
+                        "strength": round(align_score, 2),
+                    })
                     sell_score += align_score
 
     # ── 2. RSI (연속 강도 점수) ────────────────────

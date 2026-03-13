@@ -120,7 +120,7 @@ class USSafeExecutor:
             logger.warning("매수 실패: %s 가격 0", ticker)
             return None
 
-        qty = self._calculate_quantity(ticker, weight_pct)
+        qty = self._calculate_quantity(ticker, weight_pct, fallback_price=price)
         if qty <= 0:
             logger.warning("매수 실패: %s 수량 0", ticker)
             return None
@@ -255,8 +255,16 @@ class USSafeExecutor:
 
     # ── 내부 메서드 ──
 
-    def _calculate_quantity(self, ticker: str, weight_pct: float) -> int:
-        """매수 수량을 계산한다 (USD 기반)."""
+    def _calculate_quantity(
+        self, ticker: str, weight_pct: float, fallback_price: float = 0
+    ) -> int:
+        """매수 수량을 계산한다 (USD 기반).
+
+        Args:
+            ticker: 종목 티커
+            weight_pct: 목표 비중 (%)
+            fallback_price: client가 None이거나 최신 체결가 조회 실패 시 사용할 가격
+        """
         try:
             if self.client and not self.config.dry_run:
                 acct = self.client.get_account()
@@ -267,13 +275,19 @@ class USSafeExecutor:
             target_amount = equity * (weight_pct / 100)
             target_amount = min(target_amount, self.config.max_order_amount)
 
+            price = 0
             if self.client:
-                trade = self.client.get_latest_trade(ticker)
-                price = float(trade.get("trade", {}).get("p", 0))
-            else:
-                price = 0
+                try:
+                    trade = self.client.get_latest_trade(ticker)
+                    price = float(trade.get("trade", {}).get("p", 0))
+                except Exception:
+                    pass
 
             if price <= 0:
+                price = fallback_price
+
+            if price <= 0:
+                logger.warning("수량 계산 실패 (%s): 가격 정보 없음", ticker)
                 return 0
 
             return max(0, math.floor(target_amount / price))

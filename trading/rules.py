@@ -211,10 +211,11 @@ class TradeRule:
             return result
 
         # 3. 추세 게이트 (MA/MACD 중 하나 이상 필요)
-        # RSI 과매도 스캔 종목은 평균회귀 전략이므로 추세 게이트 면제
-        has_rsi_scan = "rsi_oversold" in scan_signals
-        if has_rsi_scan:
-            logger.info("RSI 과매도 스캔 종목: 추세 게이트 면제 (%s)", name)
+        # RSI 과매도/골든크로스 근접/거래량 급증 스캔 종목은 추세 게이트 면제
+        exempt_scan_types = {"rsi_oversold", "near_golden_cross", "volume_surge"}
+        has_exempt_scan = bool(exempt_scan_types & set(scan_signals))
+        if has_exempt_scan:
+            logger.info("스캔 면제 종목 (추세 게이트 스킵): %s %s", name, scan_signals)
         elif not _has_trend_gate(signals):
             result["reason"] = "추세 확인 신호 없음 (MA/MACD 필요)"
             return result
