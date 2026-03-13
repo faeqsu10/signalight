@@ -87,12 +87,14 @@ def main():
                 AUTO_CONFIG.max_consecutive_losses,
                 AUTO_CONFIG.max_drawdown_pct)
 
-    # --once: 1회 실행
+    # --once: 1회 실행 (스캔 + 모니터링 1회)
     if args.once:
         logger.info("1회 실행 모드")
         if args.monitor_only:
             pipeline.run_intraday_monitor()
         else:
+            pipeline.run_morning_scan()
+            pipeline.run_intraday_monitor()
             pipeline.run_daily_cycle()
         return
 
@@ -108,23 +110,36 @@ def main():
 
 
 def _register_schedules(pipeline: AutonomousPipeline, monitor_only: bool):
-    """스케줄을 등록한다."""
+    """스케줄을 등록한다.
+
+    흐름:
+        09:05 — 장 시작 유니버스 스캔 (후보 캐싱)
+        09:10~15:20 — 장중 실시간 모니터링 (매수 + 매도, 5분 간격)
+        15:25 — 장 마감 일일 마무리 (에퀴티, PnL, 요약)
+    """
     weekdays = ("monday", "tuesday", "wednesday", "thursday", "friday")
 
     if not monitor_only:
-        # 평일 16:00 — 일일 매매 사이클
+        # 평일 09:05 — 장 시작 유니버스 스캔
         for day in weekdays:
-            getattr(schedule.every(), day).at(
-                AUTO_CONFIG.daily_scan_time
-            ).do(pipeline.run_daily_cycle)
-        logger.info("스케줄: 평일 %s — 일일 매매 사이클", AUTO_CONFIG.daily_scan_time)
+            getattr(schedule.every(), day).at("09:05").do(
+                pipeline.run_morning_scan
+            )
+        logger.info("스케줄: 평일 09:05 — 장 시작 유니버스 스캔")
 
-    # 평일 장중 — 보유종목 모니터링 (5분 간격, 09:05~15:20)
+        # 평일 15:25 — 장 마감 일일 마무리
+        for day in weekdays:
+            getattr(schedule.every(), day).at("15:25").do(
+                pipeline.run_daily_cycle
+            )
+        logger.info("스케줄: 평일 15:25 — 장 마감 일일 마무리")
+
+    # 평일 장중 — 실시간 모니터링 (매수 + 매도, 5분 간격, 09:10~15:20)
     for day in weekdays:
         for hour in range(9, 16):
             for minute in range(0, 60, AUTO_CONFIG.monitor_interval_min):
-                # 09:00~09:04 제외
-                if hour == 9 and minute < 5:
+                # 09:00~09:09 제외 (09:05에 스캔이 돌기 때문)
+                if hour == 9 and minute < 10:
                     continue
                 # 15:21 이후 제외
                 if hour == 15 and minute > 20:
@@ -136,7 +151,7 @@ def _register_schedules(pipeline: AutonomousPipeline, monitor_only: bool):
                 getattr(schedule.every(), day).at(t).do(
                     pipeline.run_intraday_monitor
                 )
-    logger.info("스케줄: 평일 09:05~15:20 — 보유종목 모니터링 (%d분 간격)",
+    logger.info("스케줄: 평일 09:10~15:20 — 장중 실시간 모니터링 (매수+매도, %d분 간격)",
                 AUTO_CONFIG.monitor_interval_min)
 
     # 주간 성과 평가 (금요일 17:00)

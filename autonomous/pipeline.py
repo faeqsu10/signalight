@@ -48,6 +48,8 @@ class AutonomousPipeline:
             position_tracker=self.tracker,
         )
         self._optimizer_status = None
+        self._daily_candidates = []   # 장 시작 스캔 후보 캐시
+        self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
         self._base_thresholds = {
             "uptrend": AUTO_CONFIG.initial_entry_threshold_uptrend,
             "sideways": AUTO_CONFIG.initial_entry_threshold_sideways,
@@ -82,114 +84,41 @@ class AutonomousPipeline:
         }
 
     def run_daily_cycle(self) -> Dict:
-        """일일 매매 사이클을 실행한다.
+        """장 마감 후 일일 마무리.
 
-        1. 보유 종목 매도 판단
-        2. 유니버스 스캔
-        3. 후보 분석
-        4. 매수 결정
-        5. 주문 실행
-        6. 에퀴티 스냅샷
+        에퀴티 스냅샷, PnL 기록, 일일 요약 전송, 웹 데이터 export.
+        매수/매도는 장중 모니터링(run_intraday_monitor)에서 실시간 처리됨.
 
         Returns:
-            사이클 결과 요약
+            일일 결과 요약
         """
-        logger.info("=== 일일 매매 사이클 시작 (%s) ===", date.today())
+        logger.info("=== 일일 마무리 시작 (%s) ===", date.today())
 
         result = {
             "date": date.today().isoformat(),
-            "sells": 0,
-            "buys": 0,
             "errors": [],
-            "scan_count": 0,
-            "analyze_count": 0,
-            "top_candidates": [],
         }
 
-        # VIX 캐시 초기화 (매 사이클마다 새로 조회)
-        self.analyzer.clear_cache()
-        self.executor.reset_daily()
-
-        # ── Phase 0: 최적화 파라미터 적용 ──
-        try:
-            # 시작은 느슨한 기본 기준으로 고정
-            self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
-            self.trade_rule.set_min_volume_ratio_override(self._base_min_volume_ratio)
-            self.trade_rule.set_rule_overrides(self._base_rule_overrides)
-
-            opt_params = self.optimizer.get_optimized_params()
-            self._optimizer_status = opt_params
-            # 항상 최신 가중치는 반영 (비활성이면 기본값)
-            self.universe.scan_weights = opt_params["scan_weights"]
-            if opt_params["active"]:
-                self.trade_rule.set_entry_threshold_overrides(
-                    opt_params["buy_thresholds"]
-                )
-                logger.info(
-                    "최적화 파라미터 적용 — 가중치: %s, 임계값: %s",
-                    opt_params["scan_weights"], opt_params["buy_thresholds"],
-                )
-        except Exception as e:
-            logger.warning("최적화 파라미터 로드 실패: %s", e)
-            self._optimizer_status = None
-            self.universe.scan_weights = dict(self.universe.DEFAULT_WEIGHTS)
-            self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
-            self.trade_rule.set_min_volume_ratio_override(
-                self._base_min_volume_ratio
-            )
-            self.trade_rule.set_rule_overrides(self._base_rule_overrides)
-
-        # ── Phase 1: 보유 종목 매도 판단 ──
-        try:
-            result["sells"] = self._phase_sell()
-        except Exception as e:
-            logger.error("매도 판단 실패: %s", e)
-            result["errors"].append(f"sell: {e}")
-
-        # ── Phase 2: 유니버스 스캔 + 분석 + 매수 ──
-        try:
-            buy_result = self._phase_buy()
-            result["buys"] = buy_result["buys"]
-            result["scan_count"] = buy_result["scan_count"]
-            result["analyze_count"] = buy_result["analyze_count"]
-            result["top_candidates"] = buy_result["top_candidates"]
-        except Exception as e:
-            logger.error("매수 판단 실패: %s", e)
-            result["errors"].append(f"buy: {e}")
-
-        # ── Phase 3: 에퀴티 스냅샷 ──
+        # ── 에퀴티 스냅샷 ──
         try:
             self._save_equity_snapshot()
         except Exception as e:
             logger.warning("에퀴티 스냅샷 실패: %s", e)
+            result["errors"].append(f"equity: {e}")
 
-        # ── Phase 4: 일일 PnL 기록 ──
+        # ── 일일 PnL 기록 ──
         try:
             self._record_daily_pnl()
         except Exception as e:
             logger.warning("일일 PnL 기록 실패: %s", e)
 
-        # ── Phase 5: 스캔 결과 요약 전송 ──
-        try:
-            self.evaluator.send_cycle_summary(
-                flag="🇰🇷",
-                scan_count=result["scan_count"],
-                analyze_count=result["analyze_count"],
-                buy_count=result["buys"],
-                sell_count=result["sells"],
-                top_candidates=result["top_candidates"],
-                currency="KRW",
-            )
-        except Exception as e:
-            logger.warning("스캔 요약 전송 실패: %s", e)
-
-        # ── Phase 6: 일일 요약 전송 ──
+        # ── 일일 요약 전송 ──
         try:
             self.evaluator.daily_summary(optimizer_status=self._optimizer_status)
         except Exception as e:
             logger.warning("일일 요약 전송 실패: %s", e)
 
-        # ── Phase 7: 웹 대시보드 데이터 export ──
+        # ── 웹 대시보드 데이터 export ──
         try:
             import subprocess
             subprocess.Popen(
@@ -199,65 +128,174 @@ class AutonomousPipeline:
         except Exception as e:
             logger.warning("웹 데이터 export 실패: %s", e)
 
-        logger.info(
-            "=== 일일 매매 사이클 완료: 매수 %d건, 매도 %d건 ===",
-            result["buys"], result["sells"],
-        )
+        # 내일 스캔을 위해 캐시 초기화
+        self._daily_candidates = []
+        self._daily_scan_date = None
+
+        logger.info("=== 일일 마무리 완료 ===")
         return result
 
-    def run_intraday_monitor(self) -> int:
-        """장중 보유종목 손절 모니터링.
+    def run_morning_scan(self) -> int:
+        """장 시작 시 유니버스 스캔 + 후보 캐싱.
 
-        보유 종목의 현재가를 확인하고 손절/목표가 도달 시 매도한다.
+        매일 1회 실행. 후보 종목을 분석하고 캐시에 저장한다.
+        장중 모니터링에서 이 캐시를 사용하여 매수를 시도한다.
 
         Returns:
-            매도 실행 건수
+            스캔된 후보 종목 수
         """
-        open_positions = self.tracker.get_all_open()
-        if not open_positions:
+        today = date.today()
+        if self._daily_scan_date == today:
+            logger.info("오늘 스캔 이미 완료 — 스킵")
+            return len(self._daily_candidates)
+
+        logger.info("=== 장 시작 유니버스 스캔 (%s) ===", today)
+
+        # VIX/매크로 캐시 초기화
+        self.analyzer.clear_cache()
+        self.executor.reset_daily()
+
+        # 최적화 파라미터 적용
+        try:
+            self.trade_rule.set_entry_threshold_overrides(self._base_thresholds)
+            self.trade_rule.set_min_volume_ratio_override(self._base_min_volume_ratio)
+            self.trade_rule.set_rule_overrides(self._base_rule_overrides)
+
+            opt_params = self.optimizer.get_optimized_params()
+            self._optimizer_status = opt_params
+            self.universe.scan_weights = opt_params["scan_weights"]
+            if opt_params["active"]:
+                self.trade_rule.set_entry_threshold_overrides(
+                    opt_params["entry_thresholds"]
+                )
+        except Exception as e:
+            logger.warning("옵티마이저 파라미터 적용 실패: %s", e)
+
+        # 유니버스 스캔
+        held = set(pos["ticker"] for pos in self.tracker.get_all_open())
+        candidates = self.universe.select_universe(held_tickers=held)
+
+        if not candidates:
+            logger.info("매수 후보 없음")
+            self._daily_candidates = []
+            self._daily_scan_date = today
             return 0
 
-        # 보유 종목 분석
-        holdings_info = [
-            {"ticker": pos["ticker"], "name": pos["name"]}
-            for pos in open_positions
-        ]
-        analyzed = self.analyzer.analyze_holdings(holdings_info)
+        logger.info("매수 후보 스캔: %d종목", len(candidates))
 
-        # 매도 판단
-        sell_decisions = self.decision.make_sell_decisions(analyzed)
+        # 후보 분석
+        analyzed = self.analyzer.analyze_candidates(candidates)
+        self._daily_candidates = analyzed or []
+        self._daily_scan_date = today
 
-        # 매도 실행
-        sell_count = 0
-        for decision in sell_decisions:
-            try:
-                order = self.executor.execute_sell(
-                    decision["stock_data"],
-                    decision["recommendation"],
-                    decision["position"],
-                )
-                if order and order.status in ("filled", "simulated"):
-                    sell_count += 1
-                    self.evaluator.send_trade_notification(
-                        side="sell",
-                        name=order.name,
-                        ticker=order.ticker,
-                        quantity=order.quantity,
-                        price=order.price,
-                        reason=decision["recommendation"].get("action", ""),
-                        pnl_pct=decision["recommendation"].get("pnl_pct"),
+        logger.info("분석 완료: %d종목 캐시됨", len(self._daily_candidates))
+
+        # 스캔 요약 알림
+        try:
+            self.evaluator.send_cycle_summary(
+                flag="🇰🇷",
+                scan_count=len(candidates),
+                analyze_count=len(self._daily_candidates),
+                buy_count=0,
+                sell_count=0,
+                top_candidates=self._daily_candidates,
+                currency="KRW",
+            )
+        except Exception as e:
+            logger.warning("스캔 요약 전송 실패: %s", e)
+
+        return len(self._daily_candidates)
+
+    def run_intraday_monitor(self) -> Dict:
+        """장중 실시간 모니터링 — 매수 + 매도.
+
+        1. 캐시된 후보 종목 중 매수 조건 충족 시 매수
+        2. 보유 종목 손절/목표가 도달 시 매도
+
+        Returns:
+            {"buys": int, "sells": int}
+        """
+        result = {"buys": 0, "sells": 0}
+
+        # ── 보유 종목 매도 체크 ──
+        open_positions = self.tracker.get_all_open()
+        if open_positions:
+            holdings_info = [
+                {"ticker": pos["ticker"], "name": pos["name"]}
+                for pos in open_positions
+            ]
+            analyzed = self.analyzer.analyze_holdings(holdings_info)
+            sell_decisions = self.decision.make_sell_decisions(analyzed)
+
+            for decision in sell_decisions:
+                try:
+                    order = self.executor.execute_sell(
+                        decision["stock_data"],
+                        decision["recommendation"],
+                        decision["position"],
                     )
-            except Exception as e:
-                logger.error(
-                    "매도 실행 실패: %s(%s) — %s",
-                    decision["stock_data"]["name"],
-                    decision["stock_data"]["ticker"], e,
-                )
+                    if order and order.status in ("filled", "simulated"):
+                        result["sells"] += 1
+                        self.evaluator.send_trade_notification(
+                            side="sell",
+                            name=order.name,
+                            ticker=order.ticker,
+                            quantity=order.quantity,
+                            price=order.price,
+                            reason=decision["recommendation"].get("action", ""),
+                            pnl_pct=decision["recommendation"].get("pnl_pct"),
+                        )
+                except Exception as e:
+                    logger.error(
+                        "매도 실행 실패: %s(%s) — %s",
+                        decision["stock_data"]["name"],
+                        decision["stock_data"]["ticker"], e,
+                    )
 
-        if sell_count > 0:
-            logger.info("장중 모니터링: %d건 매도", sell_count)
+        # ── 캐시된 후보 매수 체크 ──
+        if self._daily_candidates:
+            # 이미 보유 중인 종목 제외
+            held = set(pos["ticker"] for pos in self.tracker.get_all_open())
+            remaining = [
+                c for c in self._daily_candidates
+                if c.get("ticker") not in held
+            ]
 
-        return sell_count
+            if remaining:
+                buy_decisions = self.decision.make_buy_decisions(remaining)
+                for decision in buy_decisions:
+                    try:
+                        order = self.executor.execute_buy(
+                            decision["stock_data"],
+                            decision["recommendation"],
+                        )
+                        if order and order.status in ("filled", "simulated"):
+                            result["buys"] += 1
+                            scan_sigs = decision.get("scan_signals", [])
+                            reason_parts = [f"score={decision['confluence_score']:.1f}"]
+                            if scan_sigs:
+                                reason_parts.append("scans=" + ",".join(scan_sigs))
+                            self.evaluator.send_trade_notification(
+                                side="buy",
+                                name=order.name,
+                                ticker=order.ticker,
+                                quantity=order.quantity,
+                                price=order.price,
+                                reason=" ".join(reason_parts),
+                            )
+                            # 매수 완료된 종목은 캐시에서 제거
+                            self._daily_candidates = [
+                                c for c in self._daily_candidates
+                                if c.get("ticker") != order.ticker
+                            ]
+                    except Exception as e:
+                        logger.error("매수 실행 실패: %s", e)
+
+        if result["buys"] > 0 or result["sells"] > 0:
+            logger.info("장중 모니터링: 매수 %d건, 매도 %d건",
+                        result["buys"], result["sells"])
+
+        return result
 
     def run_weekly_evaluation(self) -> Dict:
         """주간 성과 평가를 실행한다."""

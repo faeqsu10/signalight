@@ -21,3 +21,4 @@ storage/signalight.db
 storage/signalight.db-wal
 storage/signalight.db-shm
 web/public/data/
+.vercel

@@ -62,10 +62,10 @@ class AutonomousConfig:
     universe_max_relaxation_rounds: int = 2    # 적응형 완화 최대 라운드
     universe_rsi_relaxation_step: float = 5.0  # 라운드당 RSI 완화 폭
     universe_volume_relaxation_step: float = 0.3  # 라운드당 거래량 비율 완화 폭
-    initial_entry_threshold_uptrend: float = 1.2   # 초기 진입 임계값(상승장, 완화)
-    initial_entry_threshold_sideways: float = 1.8  # 초기 진입 임계값(횡보장, 완화)
-    initial_entry_threshold_downtrend: float = 2.5 # 초기 진입 임계값(하락장, 완화)
-    initial_min_volume_ratio: float = 0.5          # 초기 거래량 필터(완화)
+    initial_entry_threshold_uptrend: float = 0.8   # 초기 진입 임계값(상승장, 적극적)
+    initial_entry_threshold_sideways: float = 1.2  # 초기 진입 임계값(횡보장, 적극적)
+    initial_entry_threshold_downtrend: float = 1.8 # 초기 진입 임계값(하락장, 적극적)
+    initial_min_volume_ratio: float = 0.3          # 초기 거래량 필터(적극적)
     split_buy_phases: int = 3
     split_buy_confirm_days: int = 2
     split_buy_phase3_bonus: float = 1.0
