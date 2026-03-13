@@ -94,18 +94,74 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-13T16:03:56"
+    "updated_at": "2026-03-14T00:21:10"
   },
   "us": {
-    "equity": [],
-    "daily_pnl": [],
-    "trades": [],
+    "equity": [
+      {
+        "date": "2026-03-14",
+        "total": 9996494,
+        "invested": 546711,
+        "cash": 9449782,
+        "positions": 3
+      }
+    ],
+    "daily_pnl": [
+      {
+        "date": "2026-03-14",
+        "pnl": 0,
+        "trades": 0,
+        "wins": 0,
+        "losses": 0
+      }
+    ],
+    "trades": [
+      {
+        "date": "2026-03-13",
+        "ticker": "ADBE",
+        "name": "Adobe",
+        "side": "buy",
+        "quantity": 7,
+        "price": 25300,
+        "amount": 177100,
+        "status": "filled",
+        "reason": "confluence=0.0",
+        "pnl_pct": null,
+        "pnl_amount": null
+      },
+      {
+        "date": "2026-03-13",
+        "ticker": "META",
+        "name": "Meta",
+        "side": "buy",
+        "quantity": 3,
+        "price": 62600,
+        "amount": 187800,
+        "status": "filled",
+        "reason": "confluence=1.9",
+        "pnl_pct": null,
+        "pnl_amount": null
+      },
+      {
+        "date": "2026-03-13",
+        "ticker": "GS",
+        "name": "GoldmanSachs",
+        "side": "buy",
+        "quantity": 2,
+        "price": 79600,
+        "amount": 159200,
+        "status": "filled",
+        "reason": "confluence=2.8",
+        "pnl_pct": null,
+        "pnl_amount": null
+      }
+    ],
     "summary": {
       "total_trades": 0,
       "win_rate": 0.0,
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-13T16:03:56"
+    "updated_at": "2026-03-14T00:21:10"
   }
 }
