@@ -23,3 +23,6 @@ storage/signalight.db-shm
 web/public/data/*
 !web/public/data/autonomous.json
 .vercel
+
+# 테스트 스위트 (보안 자산 - 비공개)
+tests/
