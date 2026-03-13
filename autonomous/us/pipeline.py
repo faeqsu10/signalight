@@ -46,6 +46,7 @@ class USAutonomousPipeline:
         self.evaluator = PerformanceEvaluator(
             state=self.state,
             position_tracker=self.tracker,
+            currency="$",
         )
         self._optimizer_status = None
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시

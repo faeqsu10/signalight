@@ -23,9 +23,11 @@ class PerformanceEvaluator:
         self,
         state: PipelineState = None,
         position_tracker: PositionTracker = None,
+        currency: str = "원",
     ):
         self.state = state or PipelineState()
         self.tracker = position_tracker or PositionTracker()
+        self._currency = currency
 
     def weekly_report(self) -> Dict:
         """주간 성과 리포트를 생성하고 텔레그램으로 전송한다."""
@@ -81,7 +83,7 @@ class PerformanceEvaluator:
                 f"거래: {trades_count}건 "
                 f"(승 {wins} / 패 {losses})"
             )
-            msg_lines.append(f"실현 PnL: {realized_pnl:+,}원")
+            msg_lines.append(f"실현 PnL: {realized_pnl:+,}{self._currency}")
         else:
             msg_lines.append("거래: 0건 (시그널 충족 종목 없음)")
 
@@ -94,7 +96,7 @@ class PerformanceEvaluator:
                 entry = pos["entry_price"]
                 name = pos["name"]
                 ticker = pos["ticker"]
-                msg_lines.append(f"  {name}({ticker}) 진입가 {entry:,}원")
+                msg_lines.append(f"  {name}({ticker}) 진입가 {self._fmt_price(entry)}")
 
         if optimizer_status:
             msg_lines.append("")
@@ -107,6 +109,15 @@ class PerformanceEvaluator:
             send_message(msg, chat_id=chat_id)
 
         return msg
+
+    def _fmt_price(self, value, sign: bool = False) -> str:
+        """통화에 맞게 가격을 포맷한다. KR: 1,000원 / US: $1,000"""
+        if self._currency == "$":
+            fmt = f"{value:+,.2f}" if sign else f"{value:,.2f}"
+            return f"${fmt}"
+        else:
+            fmt = f"{value:+,}" if sign else f"{value:,}"
+            return f"{fmt}{self._currency}"
 
     def _format_optimizer_status(self, status: Dict) -> List[str]:
         """피드백 루프(optimizer) 상태를 초보자 친화적으로 포맷한다."""
@@ -334,8 +345,8 @@ class PerformanceEvaluator:
         lines = [
             f"{emoji} <b>[자율매매] {action} 체결</b>",
             f"종목: {name} ({ticker})",
-            f"수량: {quantity}주 @ {price:,}원",
-            f"금액: {quantity * price:,}원",
+            f"수량: {quantity}주 @ {self._fmt_price(price)}",
+            f"금액: {self._fmt_price(quantity * price)}",
         ]
 
         if reason:
@@ -367,7 +378,7 @@ class PerformanceEvaluator:
         lines.append(f"  거래: {perf_7d['total_trades']}건 "
                       f"(승 {perf_7d['wins']} / 패 {perf_7d['losses']})")
         lines.append(f"  승률: {perf_7d['win_rate']}%")
-        lines.append(f"  누적 PnL: {perf_7d['total_pnl']:+,}원")
+        lines.append(f"  누적 PnL: {self._fmt_price(perf_7d['total_pnl'], sign=True)}")
         lines.append(f"  평균 PnL: {perf_7d['avg_pnl_pct']:+.2f}%")
         if perf_7d['total_trades'] > 0:
             lines.append(f"  최고: {perf_7d['best_trade_pct']:+.2f}% "
@@ -378,7 +389,7 @@ class PerformanceEvaluator:
         lines.append("<b>▸ 30일 누적</b>")
         lines.append(f"  거래: {perf_30d['total_trades']}건 "
                       f"| 승률: {perf_30d['win_rate']}%")
-        lines.append(f"  누적 PnL: {perf_30d['total_pnl']:+,}원")
+        lines.append(f"  누적 PnL: {self._fmt_price(perf_30d['total_pnl'], sign=True)}")
         lines.append(f"  최대 낙폭: {perf_30d['max_drawdown_pct']:.1f}%")
         lines.append(f"  연속 패배: {perf_30d['consecutive_losses']}연패")
         lines.append("")
@@ -389,7 +400,7 @@ class PerformanceEvaluator:
             for pos in open_positions[:10]:
                 name = pos["name"]
                 entry = pos["entry_price"]
-                lines.append(f"  {name} | 진입 {entry:,}원")
+                lines.append(f"  {name} | 진입 {self._fmt_price(entry)}")
         else:
             lines.append("  (보유 종목 없음)")
         lines.append("")
