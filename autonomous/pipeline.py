@@ -130,11 +130,11 @@ class AutonomousPipeline:
             # autonomous.json을 커밋+푸시하여 Vercel 자동 배포
             data_file = "web/public/data/autonomous.json"
             subprocess.run(["git", "add", data_file], cwd=project_root, timeout=10)
-            result = subprocess.run(
+            diff_result = subprocess.run(
                 ["git", "diff", "--cached", "--quiet", data_file],
                 cwd=project_root, timeout=10,
             )
-            if result.returncode != 0:  # 변경사항이 있을 때만 커밋
+            if diff_result.returncode != 0:  # 변경사항이 있을 때만 커밋
                 subprocess.run(
                     ["git", "commit", "-m", "auto: update autonomous trading data"],
                     cwd=project_root, timeout=15,
@@ -182,7 +182,7 @@ class AutonomousPipeline:
             self.universe.scan_weights = opt_params["scan_weights"]
             if opt_params["active"]:
                 self.trade_rule.set_entry_threshold_overrides(
-                    opt_params["entry_thresholds"]
+                    opt_params["buy_thresholds"]
                 )
         except Exception as e:
             logger.warning("옵티마이저 파라미터 적용 실패: %s", e)
@@ -510,7 +510,7 @@ class AutonomousPipeline:
         position_tracker의 closed 포지션 중 optimizer에 아직
         기록되지 않은 거래를 찾아서 update_trade_result()를 호출한다.
         """
-        closed = self.tracker.get_all_closed()
+        closed = self.tracker.get_closed_positions()
         recent_trades = self.state.get_recent_trades(days=7)
 
         # 최근 7일 매도 거래 (pnl_pct 존재)
@@ -533,7 +533,7 @@ class AutonomousPipeline:
             scan_signals = []
             for bt in buy_trades:
                 reason = bt.get("reason", "") or ""
-                for sig in ["golden_cross", "rsi_oversold", "volume_surge"]:
+                for sig in ["golden_cross", "near_golden_cross", "rsi_oversold", "volume_surge"]:
                     if sig in reason and sig not in scan_signals:
                         scan_signals.append(sig)
 
