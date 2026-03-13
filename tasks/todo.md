@@ -173,6 +173,18 @@
 - [x] US 워치리스트 확장 (S&P 500 상위 30종목, 8개 섹터)
 - [x] US 텔레그램 인터랙티브 명령어 (/us_status, /us_scan, /us_positions, /us_config)
 
+## Phase 12 - 글래스모피즘 UI 리디자인 (완료)
+- [x] 글로벌 CSS 시스템 구축 (글래스모피즘 변수, 오브 애니메이션, 뱃지 클래스)
+- [x] 자율매매 대시보드 리디자인 (에퀴티, 거래내역, 요약 카드)
+- [x] 메인 대시보드 리디자인 (검색, 스크리너, VIX, 차트)
+- [x] 6개 컴포넌트 스타일 업데이트 (SignalPanel, PriceInfo, Recovery, Position, Disclosure, Tooltip)
+- [x] 차트 컴포넌트 테마 통합 (CandleChart, RSIChart, MACDChart — 다크모드 전용)
+- [x] 캔들 색상 crypto 컨벤션 적용 (teal up / red down)
+- [x] 자율매매 파이프라인 3단계 분리 (스캔→실시간 매수매도→마무리)
+- [x] KR/US 진입 임계값 적극적 완화 (0.8/1.2/1.8)
+- [x] KR/US DB 분리 (MDD 킬스위치 오탐 해결)
+- [x] export 스크립트 KR/US 분리 지원
+
 ## Backlog
 - [x] Vercel 배포
 - [x] OpenDART 시범 도입 (공시 정보, 외인/기관은 미제공)
