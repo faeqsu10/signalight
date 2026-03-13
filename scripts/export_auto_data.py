@@ -10,12 +10,9 @@ JSON 구조:
     {
       "kr": { "equity": [...], "daily_pnl": [...], "trades": [...],
                "summary": {...}, "updated_at": "..." },
-      "us": { "equity": [], "daily_pnl": [], "trades": [],
+      "us": { "equity": [...], "daily_pnl": [...], "trades": [...],
                "summary": {...}, "updated_at": "..." }
     }
-
-TODO: DB에 market 컬럼이 추가되면 KR/US 데이터를 분리해서 export한다.
-      현재는 모든 데이터를 "kr"에, "us"는 빈 값으로 export한다.
 """
 
 import json
@@ -23,12 +20,14 @@ import os
 import sqlite3
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage", "signalight.db")
-OUT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web", "public", "data", "autonomous.json")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+KR_DB_PATH = os.path.join(BASE_DIR, "storage", "signalight.db")
+US_DB_PATH = os.path.join(BASE_DIR, "storage", "signalight_us.db")
+OUT_PATH = os.path.join(BASE_DIR, "web", "public", "data", "autonomous.json")
 
 
-def _connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+def _connect(db_path: str) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -66,10 +65,19 @@ def _calc_summary(equity, daily_pnl):
     }
 
 
-def export() -> None:
-    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+def _export_market(db_path: str, label: str) -> dict:
+    """하나의 DB에서 equity, daily_pnl, trades를 추출한다."""
+    if not os.path.exists(db_path):
+        print(f"  {label}: DB 없음 ({db_path})")
+        return {
+            "equity": [],
+            "daily_pnl": [],
+            "trades": [],
+            "summary": _calc_summary([], []),
+            "updated_at": datetime.now().isoformat(timespec="seconds"),
+        }
 
-    conn = _connect()
+    conn = _connect(db_path)
 
     # ── equity snapshots ──
     equity = []
@@ -144,35 +152,33 @@ def export() -> None:
 
     conn.close()
 
-    now_iso = datetime.now().isoformat(timespec="seconds")
+    summary = _calc_summary(equity, daily_pnl)
+    print(f"  {label} equity: {len(equity)}건, daily_pnl: {len(daily_pnl)}건, trades: {len(recent_trades)}건")
 
-    # TODO: market 컬럼이 생기면 여기서 KR/US 분리
-    kr_summary = _calc_summary(equity, daily_pnl)
-    us_summary = _calc_summary([], [])
+    return {
+        "equity": equity,
+        "daily_pnl": daily_pnl,
+        "trades": recent_trades,
+        "summary": summary,
+        "updated_at": datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+def export() -> None:
+    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+
+    kr_data = _export_market(KR_DB_PATH, "KR")
+    us_data = _export_market(US_DB_PATH, "US")
 
     data = {
-        "kr": {
-            "equity": equity,
-            "daily_pnl": daily_pnl,
-            "trades": recent_trades,
-            "summary": kr_summary,
-            "updated_at": now_iso,
-        },
-        "us": {
-            "equity": [],
-            "daily_pnl": [],
-            "trades": [],
-            "summary": us_summary,
-            "updated_at": now_iso,
-        },
+        "kr": kr_data,
+        "us": us_data,
     }
 
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"[export_auto_data] 저장 완료: {OUT_PATH}")
-    print(f"  KR equity: {len(equity)}건, daily_pnl: {len(daily_pnl)}건, trades: {len(recent_trades)}건")
-    print(f"  US: (empty, TODO: market 컬럼 분리 후 구현)")
 
 
 if __name__ == "__main__":
