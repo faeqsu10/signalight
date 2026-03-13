@@ -118,13 +118,29 @@ class AutonomousPipeline:
         except Exception as e:
             logger.warning("일일 요약 전송 실패: %s", e)
 
-        # ── 웹 대시보드 데이터 export ──
+        # ── 웹 대시보드 데이터 export + 자동 배포 ──
         try:
             import subprocess
-            subprocess.Popen(
+            project_root = os.path.dirname(os.path.dirname(__file__))
+            subprocess.run(
                 ["python3", "scripts/export_auto_data.py"],
-                cwd=os.path.dirname(os.path.dirname(__file__)),
+                cwd=project_root,
+                timeout=30,
             )
+            # autonomous.json을 커밋+푸시하여 Vercel 자동 배포
+            data_file = "web/public/data/autonomous.json"
+            subprocess.run(["git", "add", data_file], cwd=project_root, timeout=10)
+            result = subprocess.run(
+                ["git", "diff", "--cached", "--quiet", data_file],
+                cwd=project_root, timeout=10,
+            )
+            if result.returncode != 0:  # 변경사항이 있을 때만 커밋
+                subprocess.run(
+                    ["git", "commit", "-m", "auto: update autonomous trading data"],
+                    cwd=project_root, timeout=15,
+                )
+                subprocess.Popen(["git", "push"], cwd=project_root)
+                logger.info("웹 데이터 export + push 완료")
         except Exception as e:
             logger.warning("웹 데이터 export 실패: %s", e)
 

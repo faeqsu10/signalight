@@ -1,0 +1,111 @@
+{
+  "kr": {
+    "equity": [
+      {
+        "date": "2026-03-10",
+        "total": 50000000,
+        "invested": 0,
+        "cash": 50000000,
+        "positions": 0
+      },
+      {
+        "date": "2026-03-11",
+        "total": 50000000,
+        "invested": 0,
+        "cash": 50000000,
+        "positions": 0
+      },
+      {
+        "date": "2026-03-12",
+        "total": 50000000,
+        "invested": 0,
+        "cash": 50000000,
+        "positions": 0
+      },
+      {
+        "date": "2026-03-13",
+        "total": 50000000,
+        "invested": 0,
+        "cash": 50000000,
+        "positions": 2
+      }
+    ],
+    "daily_pnl": [
+      {
+        "date": "2026-03-10",
+        "pnl": 0,
+        "trades": 0,
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "date": "2026-03-11",
+        "pnl": 0,
+        "trades": 0,
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "date": "2026-03-12",
+        "pnl": 0,
+        "trades": 0,
+        "wins": 0,
+        "losses": 0
+      },
+      {
+        "date": "2026-03-13",
+        "pnl": 0,
+        "trades": 2,
+        "wins": 0,
+        "losses": 0
+      }
+    ],
+    "trades": [
+      {
+        "date": "2026-03-13",
+        "ticker": "036460",
+        "name": "한국가스공사",
+        "side": "buy",
+        "quantity": 13,
+        "price": 36000,
+        "amount": 468000,
+        "status": "simulated",
+        "reason": "confluence=2.1",
+        "pnl_pct": null,
+        "pnl_amount": null
+      },
+      {
+        "date": "2026-03-13",
+        "ticker": "003670",
+        "name": "포스코퓨처엠",
+        "side": "buy",
+        "quantity": 2,
+        "price": 191100,
+        "amount": 382200,
+        "status": "simulated",
+        "reason": "confluence=2.4",
+        "pnl_pct": null,
+        "pnl_amount": null
+      }
+    ],
+    "summary": {
+      "total_trades": 2,
+      "win_rate": 0.0,
+      "total_pnl": 0,
+      "max_drawdown": 0.0
+    },
+    "updated_at": "2026-03-13T13:29:14"
+  },
+  "us": {
+    "equity": [],
+    "daily_pnl": [],
+    "trades": [],
+    "summary": {
+      "total_trades": 0,
+      "win_rate": 0.0,
+      "total_pnl": 0,
+      "max_drawdown": 0.0
+    },
+    "updated_at": "2026-03-13T13:29:14"
+  }
+}
