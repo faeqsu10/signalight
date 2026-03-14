@@ -47,8 +47,8 @@ def parse_args():
         help="장중 모니터링만 실행 (매수 없음)",
     )
     parser.add_argument(
-        "--mode", choices=["swing", "position"], default="swing",
-        help="봇 모드: swing (단타) 또는 position (장기)",
+        "--mode", choices=["swing", "position", "meanrev"], default="swing",
+        help="봇 모드: swing (단타) 또는 position (장기) 또는 meanrev (평균회귀)",
     )
     return parser.parse_args()
 
@@ -63,6 +63,9 @@ def main():
     if args.mode == "position":
         from autonomous.config import POSITION_CONFIG
         config = POSITION_CONFIG
+    elif args.mode == "meanrev":
+        from autonomous.config import MEANREV_CONFIG
+        config = MEANREV_CONFIG
     else:
         from autonomous.config import SWING_CONFIG
         config = SWING_CONFIG

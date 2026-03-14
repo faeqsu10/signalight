@@ -234,7 +234,10 @@ class TradeRule:
         # 3. 추세 게이트 (MA/MACD 중 하나 이상 필요)
         # RSI 과매도/골든크로스 근접/거래량 급증 스캔 종목은 추세 게이트 면제
         has_exempt_scan = has_counter_trend_exempt
-        if has_exempt_scan:
+        skip_trend_gate = bool(self._get_rule_value("skip_trend_gate", False))
+        if skip_trend_gate:
+            logger.info("추세 게이트 스킵 (룰 오버라이드): %s", name)
+        elif has_exempt_scan:
             logger.info("스캔 면제 종목 (추세 게이트 스킵): %s %s", name, scan_signals)
         elif not _has_trend_gate(signals):
             result["reason"] = "추세 확인 신호 없음 (MA/MACD 필요)"
@@ -291,6 +294,12 @@ class TradeRule:
         )
         target1 = int(price + target1_atr_mult * atr)
         target2 = int(price + target2_atr_mult * atr)
+
+        # 고정 퍼센트 목표가 (평균회귀용)
+        fixed_target = float(self._get_rule_value("fixed_target_pct", 0))
+        if fixed_target > 0:
+            target1 = int(price * (1 + fixed_target / 100))
+            target2 = int(price * (1 + fixed_target * 1.5 / 100))
 
         # 7. VIX 기반 포지션 크기 조절
         vix = indicators.get("vix")

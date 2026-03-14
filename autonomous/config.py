@@ -89,6 +89,8 @@ class AutonomousConfig:
     enabled_indicators: list = field(default_factory=lambda: None)
     bot_token: str = field(default_factory=lambda: "")
     db_name: str = "signalight_swing.db"
+    fixed_target_pct: float = 0.0  # 0이면 ATR 기반, >0이면 고정 퍼센트 목표
+    skip_trend_gate: bool = False  # True이면 추세 게이트 스킵 (평균회귀용)
 
     # ── 피드백 루프(optimizer) ──
     optimizer_default_weight_golden_cross: float = 3.0
@@ -184,4 +186,36 @@ POSITION_CONFIG = AutonomousConfig(
     target_weight_pct=7.0,
     max_positions=8,
     max_sector_positions=2,
+)
+
+# ── 평균회귀 (Mean Reversion) 봇 설정 ──
+MEANREV_CONFIG = AutonomousConfig(
+    bot_mode="meanrev",
+    bot_label="🔄 평균회귀",
+    enabled_indicators=["RSI"],  # RSI만 사용
+    bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
+    auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
+    db_name="signalight_meanrev.db",
+    # 평균회귀 전용: 단순한 진입/청산
+    initial_entry_threshold_uptrend=0.3,    # 매우 낮은 임계값 (RSI만으로 충분)
+    initial_entry_threshold_sideways=0.3,
+    initial_entry_threshold_downtrend=0.5,  # 하락장에서도 약간 까다롭게
+    initial_min_volume_ratio=0.3,
+    max_holding_days=15,           # 최대 15일 (평균회귀는 빨리 발생해야 함)
+    split_buy_phases=1,            # 분할매수 없음 — 한 번에 매수
+    split_buy_confirm_days=0,
+    target1_atr_mult=1.5,          # 5% 목표 (ATR 보조, 실제는 고정 5%)
+    target2_atr_mult=3.0,
+    trailing_stop_atr_mult=1.0,
+    stop_loss_atr_uptrend=2.0,
+    stop_loss_atr_sideways=2.0,
+    stop_loss_atr_downtrend=2.0,
+    max_loss_pct=8.0,              # 8% 손절
+    target_weight_pct=5.0,         # 종목당 5%
+    max_positions=10,              # 최대 10종목
+    max_sector_positions=3,
+    indicator_rsi_oversold=30.0,   # RSI 30 이하에서만 매수
+    scan_rsi_oversold_threshold=35.0,  # 스캔은 35 이하로 넓게
+    fixed_target_pct=5.0,          # 5% 고정 목표
+    skip_trend_gate=True,          # 추세 게이트 스킵
 )

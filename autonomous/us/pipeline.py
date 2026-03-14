@@ -10,7 +10,7 @@ from typing import Dict, List
 
 from trading.rules import TradeRule
 from trading.position_tracker import PositionTracker
-from autonomous.us.config import US_AUTO_CONFIG
+from autonomous.us.config import US_AUTO_CONFIG, USAutonomousConfig
 from autonomous.state import PipelineState, US_DB_PATH
 from autonomous.us.universe import USUniverseSelector
 from autonomous.us.analyzer import USStockAnalyzer
@@ -26,9 +26,16 @@ logger = logging.getLogger("signalight.us")
 class USAutonomousPipeline:
     """미국 주식 자율 트레이딩 파이프라인."""
 
-    def __init__(self):
-        self.state = PipelineState(db_path=US_DB_PATH)
-        self.tracker = PositionTracker(db_path=US_DB_PATH)
+    def __init__(self, config: USAutonomousConfig = None):
+        self.config = config or US_AUTO_CONFIG
+        db_path = US_DB_PATH
+        if self.config.db_name != "signalight_us_auto.db":
+            # 모드별 별도 DB 사용
+            db_path = os.path.join(
+                os.path.dirname(US_DB_PATH), self.config.db_name
+            )
+        self.state = PipelineState(db_path=db_path)
+        self.tracker = PositionTracker(db_path=db_path)
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
 
@@ -52,36 +59,36 @@ class USAutonomousPipeline:
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시
         self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
         self._base_thresholds = {
-            "uptrend": US_AUTO_CONFIG.initial_entry_threshold_uptrend,
-            "sideways": US_AUTO_CONFIG.initial_entry_threshold_sideways,
-            "downtrend": US_AUTO_CONFIG.initial_entry_threshold_downtrend,
+            "uptrend": self.config.initial_entry_threshold_uptrend,
+            "sideways": self.config.initial_entry_threshold_sideways,
+            "downtrend": self.config.initial_entry_threshold_downtrend,
         }
-        self._base_min_volume_ratio = US_AUTO_CONFIG.initial_min_volume_ratio
+        self._base_min_volume_ratio = self.config.initial_min_volume_ratio
         self._base_rule_overrides = {
-            "split_buy_phases": US_AUTO_CONFIG.split_buy_phases,
-            "split_buy_confirm_days": US_AUTO_CONFIG.split_buy_confirm_days,
-            "split_buy_phase3_bonus": US_AUTO_CONFIG.split_buy_phase3_bonus,
+            "split_buy_phases": self.config.split_buy_phases,
+            "split_buy_confirm_days": self.config.split_buy_confirm_days,
+            "split_buy_phase3_bonus": self.config.split_buy_phase3_bonus,
             "stop_loss_atr": {
-                "uptrend": US_AUTO_CONFIG.stop_loss_atr_uptrend,
-                "sideways": US_AUTO_CONFIG.stop_loss_atr_sideways,
-                "downtrend": US_AUTO_CONFIG.stop_loss_atr_downtrend,
+                "uptrend": self.config.stop_loss_atr_uptrend,
+                "sideways": self.config.stop_loss_atr_sideways,
+                "downtrend": self.config.stop_loss_atr_downtrend,
             },
-            "max_loss_pct": US_AUTO_CONFIG.max_loss_pct,
-            "target1_atr_mult": US_AUTO_CONFIG.target1_atr_mult,
-            "target2_atr_mult": US_AUTO_CONFIG.target2_atr_mult,
-            "trailing_stop_atr_mult": US_AUTO_CONFIG.trailing_stop_atr_mult,
-            "max_holding_days": US_AUTO_CONFIG.max_holding_days,
-            "max_positions": US_AUTO_CONFIG.max_positions,
-            "max_sector_positions": US_AUTO_CONFIG.max_sector_positions,
-            "target_weight_pct": US_AUTO_CONFIG.target_weight_pct,
-            "max_single_position_pct": US_AUTO_CONFIG.max_single_position_pct,
+            "max_loss_pct": self.config.max_loss_pct,
+            "target1_atr_mult": self.config.target1_atr_mult,
+            "target2_atr_mult": self.config.target2_atr_mult,
+            "trailing_stop_atr_mult": self.config.trailing_stop_atr_mult,
+            "max_holding_days": self.config.max_holding_days,
+            "max_positions": self.config.max_positions,
+            "max_sector_positions": self.config.max_sector_positions,
+            "target_weight_pct": self.config.target_weight_pct,
+            "max_single_position_pct": self.config.max_single_position_pct,
             "vix_position_mult": {
-                "calm": US_AUTO_CONFIG.vix_position_mult_calm,
-                "normal": US_AUTO_CONFIG.vix_position_mult_normal,
-                "fear": US_AUTO_CONFIG.vix_position_mult_fear,
-                "extreme": US_AUTO_CONFIG.vix_position_mult_extreme,
+                "calm": self.config.vix_position_mult_calm,
+                "normal": self.config.vix_position_mult_normal,
+                "fear": self.config.vix_position_mult_fear,
+                "extreme": self.config.vix_position_mult_extreme,
             },
-            "sector_map": US_AUTO_CONFIG.sector_map,
+            "sector_map": self.config.sector_map,
         }
 
     def run_morning_scan(self) -> int:

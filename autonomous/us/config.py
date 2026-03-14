@@ -108,5 +108,40 @@ class USAutonomousConfig:
     # ── 섹터 매핑 ──
     sector_map: dict = field(default_factory=lambda: dict(US_SECTOR_MAP))
 
+    # ── 봇 모드 ──
+    bot_mode: str = "swing"
+    bot_label: str = "🔵🇺🇸 US 단타"
+    enabled_indicators: list = field(default_factory=lambda: None)
+    bot_token: str = field(default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", ""))
+    db_name: str = "signalight_us_auto.db"
+    fixed_target_pct: float = 0.0  # 0이면 ATR 기반, >0이면 고정 퍼센트 목표
+    skip_trend_gate: bool = False   # True이면 추세 게이트 스킵 (평균회귀용)
+
 
 US_AUTO_CONFIG = USAutonomousConfig()
+
+# ── 평균회귀 (MeanRev) 봇 설정 ──
+US_MEANREV_CONFIG = USAutonomousConfig(
+    bot_mode="meanrev",
+    bot_label="🔄🇺🇸 평균회귀",
+    enabled_indicators=["RSI"],
+    bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
+    auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
+    db_name="signalight_us_meanrev.db",
+    # 평균회귀 전용: RSI 과매도 진입, 빠른 청산
+    indicator_rsi_oversold=30.0,
+    scan_rsi_oversold_threshold=35.0,
+    fixed_target_pct=5.0,
+    skip_trend_gate=True,
+    max_loss_pct=8.0,
+    max_holding_days=15,
+    split_buy_phases=1,
+    split_buy_confirm_days=1,
+    max_positions=8,
+    target_weight_pct=10.0,
+    max_single_position_pct=15.0,
+    # 적극적 진입 (추세 무관)
+    initial_entry_threshold_uptrend=0.5,
+    initial_entry_threshold_sideways=0.7,
+    initial_entry_threshold_downtrend=1.0,
+)

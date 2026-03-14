@@ -88,6 +88,8 @@ class AutonomousPipeline:
                 "extreme": self.config.vix_position_mult_extreme,
             },
             "sector_map": self.config.sector_map,
+            "fixed_target_pct": self.config.fixed_target_pct,
+            "skip_trend_gate": self.config.skip_trend_gate,
         }
 
     def run_daily_cycle(self) -> Dict:
