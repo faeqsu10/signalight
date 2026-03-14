@@ -227,52 +227,89 @@ def _cmd_history(chat_id: str) -> None:
 
 
 def _cmd_config(chat_id: str) -> None:
-    """/config — 현재 설정 및 옵티마이저 상태."""
+    """/config — 현재 설정 + 기본값 비교 + 개선 루프 상태."""
     from autonomous.optimizer import StrategyOptimizer
 
     opt = StrategyOptimizer(state=_state)
     params = opt.get_optimized_params()
 
     cfg = AUTO_CONFIG
+
+    # 기본값 (AutonomousConfig 디폴트)
+    from autonomous.config import AutonomousConfig
+    defaults = AutonomousConfig()
+
+    mode_label = cfg.bot_label or cfg.bot_mode
     lines = [
-        "<b>[자율매매] 현재 설정</b>",
+        f"<b>[{mode_label}] 설정 현황</b>",
         "",
-        "<b>▸ 진입 임계값</b>",
-        f"  상승장: {params['buy_thresholds']['uptrend']} "
-        f"/ 횡보장: {params['buy_thresholds']['sideways']} "
-        f"/ 하락장: {params['buy_thresholds']['downtrend']}",
+        "<b>▸ 진입 임계값</b> (현재 ← 기본값)",
+        f"  상승장: {cfg.initial_entry_threshold_uptrend} ← {defaults.initial_entry_threshold_uptrend}",
+        f"  횡보장: {cfg.initial_entry_threshold_sideways} ← {defaults.initial_entry_threshold_sideways}",
+        f"  하락장: {cfg.initial_entry_threshold_downtrend} ← {defaults.initial_entry_threshold_downtrend}",
+        "",
+        "<b>▸ 지표 설정</b>",
+        f"  사용 지표: {', '.join(cfg.enabled_indicators) if cfg.enabled_indicators else '전체'}",
+        f"  RSI 매수: {cfg.indicator_rsi_oversold} ← {defaults.indicator_rsi_oversold}",
+        f"  RSI 스캔: {cfg.scan_rsi_oversold_threshold} ← {defaults.scan_rsi_oversold_threshold}",
+    ]
+
+    if cfg.fixed_target_pct > 0:
+        lines.append(f"  고정 목표: +{cfg.fixed_target_pct}%")
+    if cfg.skip_trend_gate:
+        lines.append("  추세 게이트: 스킵")
+
+    lines += [
+        "",
+        "<b>▸ 포지션 관리</b> (현재 ← 기본값)",
+        f"  종목 비중: {cfg.target_weight_pct:.1f}% ← {defaults.target_weight_pct:.1f}%",
+        f"  최대 포지션: {cfg.max_positions}종목 ← {defaults.max_positions}종목",
+        f"  섹터 한도: {cfg.max_sector_positions}종목 ← {defaults.max_sector_positions}종목",
+        f"  최대 손절: {cfg.max_loss_pct:.1f}%",
+        f"  최대 보유: {cfg.max_holding_days}일",
         "",
         "<b>▸ 스캔 가중치</b>",
-        f"  골든크로스: {params['scan_weights']['golden_cross']} "
-        f"/ RSI과매도: {params['scan_weights']['rsi_oversold']} "
-        f"/ 거래량급증: {params['scan_weights']['volume_surge']}",
+        f"  골든크로스: {params['scan_weights']['golden_cross']}",
+        f"  RSI과매도: {params['scan_weights']['rsi_oversold']}",
+        f"  거래량급증: {params['scan_weights']['volume_surge']}",
         "",
-        "<b>▸ 거래량 필터</b>",
-        f"  최소 거래량 비율: {cfg.initial_min_volume_ratio}",
-        "",
-        "<b>▸ 리스크 파라미터</b>",
-        f"  종목 비중: {cfg.target_weight_pct:.1f}% / 최대: {cfg.max_single_position_pct:.1f}%",
-        f"  포지션 한도: {cfg.max_positions}종목 / 섹터 {cfg.max_sector_positions}종목",
-        f"  손절: 상승 {cfg.stop_loss_atr_uptrend}ATR "
-        f"/ 횡보 {cfg.stop_loss_atr_sideways}ATR "
-        f"/ 하락 {cfg.stop_loss_atr_downtrend}ATR",
-        "",
-        "<b>▸ 옵티마이저</b>",
+        "<b>▸ 개선 루프 (옵티마이저)</b>",
     ]
 
     if params["active"]:
         lines.append(
-            f"  상태: 활성 (총 {params['total_trades']}건, "
+            f"  상태: ✅ 활성 (총 {params['total_trades']}건, "
             f"승률 {params['overall_win_rate']:.0f}%)"
         )
-        lines.append(f"  조정 가중치: {params['scan_weights']}")
-        lines.append(f"  조정 임계값: {params['buy_thresholds']}")
+        lines.append(f"  WF 통과: {params['wf_passes']}/{params['wf_valid_folds']} folds")
+        lines.append(f"  Sharpe 개선: {params['avg_improvement']:+.3f}")
+        # 기본값 대비 변경
+        d_thresh = params.get("default_buy_thresholds", {})
+        c_thresh = params.get("buy_thresholds", {})
+        if d_thresh != c_thresh:
+            lines.append("  조정된 임계값:")
+            for regime in ("uptrend", "sideways", "downtrend"):
+                d = d_thresh.get(regime, "?")
+                c = c_thresh.get(regime, "?")
+                label = {"uptrend": "상승", "sideways": "횡보", "downtrend": "하락"}[regime]
+                lines.append(f"    {label}: {d} → {c}")
     else:
         total = params["total_trades"]
         min_t = params["min_trades"]
         lines.append(
-            f"  상태: 비활성 (거래 {total}/{min_t}건 미만)"
+            f"  상태: ⏳ 대기 (거래 {total}/{min_t}건)"
         )
+        lines.append(f"  조건: {min_t}건 거래 후 자동 최적화 시작")
+        lines.append(f"  주기: 매주 {cfg.evaluation_day} {cfg.evaluation_time}")
+
+    # 마지막 최적화 이력
+    latest = params.get("latest_change")
+    if latest:
+        applied = "적용" if latest.get("applied") else "유지"
+        lines.append(f"\n  마지막 판단: {latest.get('evaluated_at', '?')} ({applied})")
+        reason = latest.get("reason", "")
+        if reason:
+            lines.append(f"  사유: {reason[:80]}")
 
     send_message("\n".join(lines), chat_id=chat_id)
 

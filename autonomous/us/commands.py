@@ -230,48 +230,58 @@ def _cmd_us_positions(chat_id: str) -> None:
 
 
 def _cmd_us_config(chat_id: str) -> None:
-    """/us_config — US 자율매매 현재 설정값 표시."""
+    """/us_config — US 자율매매 설정 + 기본값 비교 + 개선 루프 상태."""
     cfg = US_AUTO_CONFIG
     mode = "Paper Trading" if not cfg.dry_run else "Dry Run"
 
+    # 기본값 (USAutonomousConfig 디폴트)
+    from autonomous.us.config import USAutonomousConfig
+    defaults = USAutonomousConfig()
+
+    mode_label = getattr(cfg, "bot_label", "") or "US"
+
     lines = [
-        "🇺🇸 <b>[US 자율매매] 현재 설정</b>",
+        f"<b>[{mode_label}] 설정 현황</b>",
         f"모드: {mode}",
         "",
-        "<b>▸ 포지션 사이징</b>",
-        f"  종목당 목표 비중: {cfg.target_weight_pct:.1f}%",
-        f"  종목당 최대 비중: {cfg.max_single_position_pct:.1f}%",
-        f"  최대 동시 포지션: {cfg.max_positions}종목",
-        f"  최대 총 투자 비중: {cfg.max_exposure_pct:.1f}%",
-        f"  섹터별 최대: {cfg.max_sector_positions}종목",
+        "<b>▸ 진입 임계값</b> (현재 ← 기본값)",
+        f"  상승장: {cfg.initial_entry_threshold_uptrend} ← {defaults.initial_entry_threshold_uptrend}",
+        f"  횡보장: {cfg.initial_entry_threshold_sideways} ← {defaults.initial_entry_threshold_sideways}",
+        f"  하락장: {cfg.initial_entry_threshold_downtrend} ← {defaults.initial_entry_threshold_downtrend}",
         "",
-        "<b>▸ 진입 임계값</b>",
-        f"  상승장: {cfg.initial_entry_threshold_uptrend} "
-        f"/ 횡보장: {cfg.initial_entry_threshold_sideways} "
-        f"/ 하락장: {cfg.initial_entry_threshold_downtrend}",
+        "<b>▸ 지표 설정</b>",
+        f"  사용 지표: {', '.join(cfg.enabled_indicators) if cfg.enabled_indicators else '전체'}",
+        f"  RSI 매수: {cfg.indicator_rsi_oversold} ← {defaults.indicator_rsi_oversold}",
+        f"  RSI 스캔: {cfg.scan_rsi_oversold_threshold} ← {defaults.scan_rsi_oversold_threshold}",
+    ]
+
+    if cfg.fixed_target_pct > 0:
+        lines.append(f"  고정 목표: +{cfg.fixed_target_pct}%")
+    if cfg.skip_trend_gate:
+        lines.append("  추세 게이트: 스킵")
+
+    lines += [
         "",
-        "<b>▸ 리스크 파라미터</b>",
-        f"  손절: 상승 {cfg.stop_loss_atr_uptrend}ATR "
-        f"/ 횡보 {cfg.stop_loss_atr_sideways}ATR "
-        f"/ 하락 {cfg.stop_loss_atr_downtrend}ATR",
-        f"  최대 손실: {cfg.max_loss_pct:.1f}%",
-        f"  최대 보유 기간: {cfg.max_holding_days}일",
+        "<b>▸ 포지션 관리</b> (현재 ← 기본값)",
+        f"  종목 비중: {cfg.target_weight_pct:.1f}% ← {defaults.target_weight_pct:.1f}%",
+        f"  최대 포지션: {cfg.max_positions}종목 ← {defaults.max_positions}종목",
+        f"  섹터 한도: {cfg.max_sector_positions}종목 ← {defaults.max_sector_positions}종목",
+        f"  최대 손절: {cfg.max_loss_pct:.1f}%",
+        f"  최대 보유: {cfg.max_holding_days}일",
         "",
         "<b>▸ 서킷 브레이커</b>",
-        f"  일일 손실 한도: {cfg.daily_loss_limit_pct:.1f}%",
-        f"  주간 손실 한도: {cfg.weekly_loss_limit_pct:.1f}%",
-        f"  최대 연속 패배: {cfg.max_consecutive_losses}연패",
-        f"  최대 낙폭: {cfg.max_drawdown_pct:.1f}%",
+        f"  일일 손실: {cfg.daily_loss_limit_pct:.1f}% / 주간: {cfg.weekly_loss_limit_pct:.1f}%",
+        f"  연속 패배: {cfg.max_consecutive_losses}연패 / MDD: {cfg.max_drawdown_pct:.1f}%",
         "",
-        "<b>▸ 스캔 설정</b>",
-        f"  RSI 과매도 기준: {cfg.scan_rsi_oversold_threshold}",
-        f"  거래량 급증 배수: {cfg.scan_volume_surge_ratio}x",
-        f"  유니버스 최대 후보: {cfg.universe_max_candidates}종목",
+        "<b>▸ 개선 루프</b>",
+        f"  상태: ⏳ 데이터 수집 중",
+        f"  주기: 매주 {cfg.evaluation_day} {cfg.evaluation_time} ET",
+        f"  현재 설정은 공격적 초기값 — 거래 데이터 축적 후 자동 최적화",
         "",
         "<b>▸ 실행 타이밍 (ET)</b>",
-        f"  일일 스캔: {cfg.daily_scan_time} ET",
         f"  장 시작: {cfg.market_open_hour:02d}:{cfg.market_open_minute:02d} ET",
         f"  장 마감: {cfg.market_close_hour:02d}:{cfg.market_close_minute:02d} ET",
+        f"  모니터링: {cfg.monitor_interval_min}분 간격",
     ]
 
     send_message("\n".join(lines), chat_id=chat_id)
