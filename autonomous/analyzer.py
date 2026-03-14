@@ -6,7 +6,6 @@
 import logging
 from typing import List, Dict, Optional
 
-from autonomous.config import AUTO_CONFIG
 from config import MACRO_EVENT_RULES, MACRO_SECTOR_IMPACT, MACRO_SIGNAL_MAX_SCORE
 from data.fetcher import fetch_stock_data, fetch_vix
 from data.investor import fetch_investor_trading
@@ -19,30 +18,34 @@ logger = logging.getLogger("signalight.auto")
 class StockAnalyzer:
     """종목 분석기 — 기존 analyze_detailed를 래핑."""
 
-    def __init__(self):
+    def __init__(self, config=None):
+        from autonomous.config import AUTO_CONFIG
+        cfg = config or AUTO_CONFIG
         self._vix_cache = None  # type: Optional[float]
         self._macro_cache = None  # type: Optional[Dict]
         self._strategy_settings = {
-            "short_ma": AUTO_CONFIG.indicator_short_ma,
-            "long_ma": AUTO_CONFIG.indicator_long_ma,
-            "rsi_period": AUTO_CONFIG.indicator_rsi_period,
-            "rsi_oversold": AUTO_CONFIG.indicator_rsi_oversold,
-            "rsi_overbought": AUTO_CONFIG.indicator_rsi_overbought,
-            "stoch_rsi_period": AUTO_CONFIG.indicator_stoch_rsi_period,
-            "stoch_rsi_smooth_k": AUTO_CONFIG.indicator_stoch_rsi_smooth_k,
-            "stoch_rsi_smooth_d": AUTO_CONFIG.indicator_stoch_rsi_smooth_d,
-            "stoch_rsi_oversold": AUTO_CONFIG.indicator_stoch_rsi_oversold,
-            "stoch_rsi_overbought": AUTO_CONFIG.indicator_stoch_rsi_overbought,
-            "investor_consec_days": AUTO_CONFIG.investor_consec_days,
-            "vix_extreme_fear": AUTO_CONFIG.vix_extreme_fear,
-            "vix_fear": AUTO_CONFIG.vix_fear,
-            "vix_extreme_greed": AUTO_CONFIG.vix_extreme_greed,
+            "short_ma": cfg.indicator_short_ma,
+            "long_ma": cfg.indicator_long_ma,
+            "rsi_period": cfg.indicator_rsi_period,
+            "rsi_oversold": cfg.indicator_rsi_oversold,
+            "rsi_overbought": cfg.indicator_rsi_overbought,
+            "stoch_rsi_period": cfg.indicator_stoch_rsi_period,
+            "stoch_rsi_smooth_k": cfg.indicator_stoch_rsi_smooth_k,
+            "stoch_rsi_smooth_d": cfg.indicator_stoch_rsi_smooth_d,
+            "stoch_rsi_oversold": cfg.indicator_stoch_rsi_oversold,
+            "stoch_rsi_overbought": cfg.indicator_stoch_rsi_overbought,
+            "investor_consec_days": cfg.investor_consec_days,
+            "vix_extreme_fear": cfg.vix_extreme_fear,
+            "vix_fear": cfg.vix_fear,
+            "vix_extreme_greed": cfg.vix_extreme_greed,
             # 매크로 시그널 설정 (config.py에서 가져옴)
             "macro_signal_max_score": MACRO_SIGNAL_MAX_SCORE,
             "macro_event_rules": dict(MACRO_EVENT_RULES),
             "macro_sector_impact": dict(MACRO_SECTOR_IMPACT),
-            "sector_map": AUTO_CONFIG.sector_map,
+            "sector_map": cfg.sector_map,
         }
+        if cfg.enabled_indicators is not None:
+            self._strategy_settings["enabled_indicators"] = list(cfg.enabled_indicators)
 
     def analyze_candidates(
         self, candidates: List[Dict]

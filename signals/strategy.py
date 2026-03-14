@@ -276,419 +276,438 @@ def analyze_detailed(
     regime = _detect_market_regime(closes, short_ma, long_ma, current_rsi)
     result["market_regime"] = regime
 
+    enabled_indicators = settings.get("enabled_indicators", None)  # None = all indicators
+    if enabled_indicators is not None:
+        indicator_count_map = {
+            "MA": 1, "RSI": 1, "MACD": 1, "BB": 1, "OBV": 1,
+            "STOCH_RSI": 1, "VIX": 1, "MACRO": 1, "INVESTOR": 2,
+        }
+        result["total_indicators"] = sum(
+            indicator_count_map.get(k, 1) for k in enabled_indicators
+        )
+
     # ── 1. 이동평균선 (연속 점수) ──────────────────
-    vol_note = ""
-    if volume_ratio >= volume_ratio_high:
-        vol_note = " [거래량 확인 ↑]"
-    elif volume_ratio < volume_ratio_low:
-        vol_note = " [거래량 부족 주의]"
+    if enabled_indicators is None or "MA" in enabled_indicators:
+        vol_note = ""
+        if volume_ratio >= volume_ratio_high:
+            vol_note = " [거래량 확인 ↑]"
+        elif volume_ratio < volume_ratio_low:
+            vol_note = " [거래량 부족 주의]"
 
-    cur_short_val = float(short_ma.iloc[-1]) if not pd.isna(short_ma.iloc[-1]) else None
-    cur_long_val = float(long_ma.iloc[-1]) if not pd.isna(long_ma.iloc[-1]) else None
+        cur_short_val = float(short_ma.iloc[-1]) if not pd.isna(short_ma.iloc[-1]) else None
+        cur_long_val = float(long_ma.iloc[-1]) if not pd.isna(long_ma.iloc[-1]) else None
 
-    if cur_short_val is not None and cur_long_val is not None:
-        prev_short_val = float(short_ma.iloc[-2]) if not pd.isna(short_ma.iloc[-2]) else None
-        prev_long_val = float(long_ma.iloc[-2]) if not pd.isna(long_ma.iloc[-2]) else None
+        if cur_short_val is not None and cur_long_val is not None:
+            prev_short_val = float(short_ma.iloc[-2]) if not pd.isna(short_ma.iloc[-2]) else None
+            prev_long_val = float(long_ma.iloc[-2]) if not pd.isna(long_ma.iloc[-2]) else None
 
-        if prev_short_val is not None and prev_long_val is not None:
-            # 크로스오버: 1.0점
-            if prev_short_val <= prev_long_val and cur_short_val > cur_long_val:
-                ma_score = 1.0 * _regime_weight(regime, "buy")
-                signals.append({
-                    "trigger": "골든크로스",
-                    "type": "buy",
-                    "source": "MA_CROSS",
-                    "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 상향 돌파{vol_note}",
-                    "strength": round(ma_score, 2),
-                })
-                buy_score += ma_score
-            elif prev_short_val >= prev_long_val and cur_short_val < cur_long_val:
-                ma_score = 1.0 * _regime_weight(regime, "sell")
-                signals.append({
-                    "trigger": "데드크로스",
-                    "type": "sell",
-                    "source": "MA_CROSS",
-                    "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 하향 돌파{vol_note}",
-                    "strength": round(ma_score, 2),
-                })
-                sell_score += ma_score
-            else:
-                # 추세 정렬: 크로스 없어도 정렬 방향에 보조 점수
-                if cur_short_val > cur_long_val and current_price > cur_short_val:
-                    # 강한 상승 정렬 (가격 > 단기 > 장기)
-                    align_score = 0.4 * _regime_weight(regime, "buy")
+            if prev_short_val is not None and prev_long_val is not None:
+                # 크로스오버: 1.0점
+                if prev_short_val <= prev_long_val and cur_short_val > cur_long_val:
+                    ma_score = 1.0 * _regime_weight(regime, "buy")
                     signals.append({
-                        "trigger": "MA 상승 정렬",
+                        "trigger": "골든크로스",
                         "type": "buy",
-                        "source": "MA_ALIGN",
-                        "detail": f"가격({current_price:,}) > {short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 강한 상승 정렬",
-                        "strength": round(align_score, 2),
+                        "source": "MA_CROSS",
+                        "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 상향 돌파{vol_note}",
+                        "strength": round(ma_score, 2),
                     })
-                    buy_score += align_score
-                elif cur_short_val < cur_long_val and current_price < cur_short_val:
-                    # 강한 하락 정렬 (가격 < 단기 < 장기)
-                    align_score = 0.4 * _regime_weight(regime, "sell")
+                    buy_score += ma_score
+                elif prev_short_val >= prev_long_val and cur_short_val < cur_long_val:
+                    ma_score = 1.0 * _regime_weight(regime, "sell")
                     signals.append({
-                        "trigger": "MA 하락 정렬",
+                        "trigger": "데드크로스",
                         "type": "sell",
-                        "source": "MA_ALIGN",
-                        "detail": f"가격({current_price:,}) < {short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 강한 하락 정렬",
-                        "strength": round(align_score, 2),
+                        "source": "MA_CROSS",
+                        "detail": f"{short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 하향 돌파{vol_note}",
+                        "strength": round(ma_score, 2),
                     })
-                    sell_score += align_score
+                    sell_score += ma_score
+                else:
+                    # 추세 정렬: 크로스 없어도 정렬 방향에 보조 점수
+                    if cur_short_val > cur_long_val and current_price > cur_short_val:
+                        # 강한 상승 정렬 (가격 > 단기 > 장기)
+                        align_score = 0.4 * _regime_weight(regime, "buy")
+                        signals.append({
+                            "trigger": "MA 상승 정렬",
+                            "type": "buy",
+                            "source": "MA_ALIGN",
+                            "detail": f"가격({current_price:,}) > {short_ma_days}일선({cur_short_val:,.0f}) > {long_ma_days}일선({cur_long_val:,.0f}) 강한 상승 정렬",
+                            "strength": round(align_score, 2),
+                        })
+                        buy_score += align_score
+                    elif cur_short_val < cur_long_val and current_price < cur_short_val:
+                        # 강한 하락 정렬 (가격 < 단기 < 장기)
+                        align_score = 0.4 * _regime_weight(regime, "sell")
+                        signals.append({
+                            "trigger": "MA 하락 정렬",
+                            "type": "sell",
+                            "source": "MA_ALIGN",
+                            "detail": f"가격({current_price:,}) < {short_ma_days}일선({cur_short_val:,.0f}) < {long_ma_days}일선({cur_long_val:,.0f}) 강한 하락 정렬",
+                            "strength": round(align_score, 2),
+                        })
+                        sell_score += align_score
 
     # ── 2. RSI (연속 강도 점수) ────────────────────
     rsi_fired_buy = False
     rsi_fired_sell = False
-    if current_rsi is not None:
-        rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought, rsi_extreme_low, rsi_extreme_high)
-        if rsi_score > 0:
-            if current_rsi <= rsi_oversold:
-                weighted = rsi_score * _regime_weight(regime, "buy")
+    if enabled_indicators is None or "RSI" in enabled_indicators:
+        if current_rsi is not None:
+            rsi_score = _continuous_rsi_score(current_rsi, rsi_oversold, rsi_overbought, rsi_extreme_low, rsi_extreme_high)
+            if rsi_score > 0:
+                if current_rsi <= rsi_oversold:
+                    weighted = rsi_score * _regime_weight(regime, "buy")
+                    signals.append({
+                        "trigger": "RSI 과매도",
+                        "type": "buy",
+                        "source": "RSI",
+                        "detail": f"RSI {current_rsi:.1f} (강도: {rsi_score:.1f})",
+                        "strength": round(weighted, 2),
+                    })
+                    buy_score += weighted
+                    rsi_fired_buy = True
+                elif current_rsi <= 40:
+                    # RSI 35~40: graduated buy signal (데드존 해소)
+                    # 40에 가까울수록 약한 신호
+                    grad_strength = 0.5 * (40 - current_rsi) / (40 - rsi_oversold)
+                    weighted = grad_strength * _regime_weight(regime, "buy")
+                    signals.append({
+                        "trigger": "RSI 근접 과매도",
+                        "type": "buy",
+                        "source": "RSI",
+                        "detail": f"RSI {current_rsi:.1f} (근접 과매도, 강도: {grad_strength:.2f})",
+                        "strength": round(weighted, 2),
+                    })
+                    buy_score += weighted
+                    rsi_fired_buy = True
+                elif current_rsi >= rsi_overbought:
+                    weighted = rsi_score * _regime_weight(regime, "sell")
+                    signals.append({
+                        "trigger": "RSI 과매수",
+                        "type": "sell",
+                        "source": "RSI",
+                        "detail": f"RSI {current_rsi:.1f} (강도: {rsi_score:.1f})",
+                        "strength": round(weighted, 2),
+                    })
+                    sell_score += weighted
+                    rsi_fired_sell = True
+
+    # ── 3. MACD (연속 강도 점수) ───────────────────
+    if enabled_indicators is None or "MACD" in enabled_indicators:
+        if not pd.isna(macd_line.iloc[-2]) and not pd.isna(macd_line.iloc[-1]):
+            prev_macd = float(macd_line.iloc[-2])
+            prev_sig = float(signal_line.iloc[-2])
+            cur_macd = float(macd_line.iloc[-1])
+            cur_sig = float(signal_line.iloc[-1])
+
+            if prev_macd <= prev_sig and cur_macd > cur_sig:
+                # 크로스오버: 1.0
+                macd_score = 1.0 * _regime_weight(regime, "buy")
                 signals.append({
-                    "trigger": "RSI 과매도",
+                    "trigger": "MACD 매수",
                     "type": "buy",
-                    "source": "RSI",
-                    "detail": f"RSI {current_rsi:.1f} (강도: {rsi_score:.1f})",
-                    "strength": round(weighted, 2),
+                    "source": "MACD",
+                    "detail": "MACD 라인이 시그널 라인을 상향 돌파",
+                    "strength": round(macd_score, 2),
                 })
-                buy_score += weighted
-                rsi_fired_buy = True
-            elif current_rsi <= 40:
-                # RSI 35~40: graduated buy signal (데드존 해소)
-                # 40에 가까울수록 약한 신호
-                grad_strength = 0.5 * (40 - current_rsi) / (40 - rsi_oversold)
-                weighted = grad_strength * _regime_weight(regime, "buy")
+                buy_score += macd_score
+            elif prev_macd >= prev_sig and cur_macd < cur_sig:
+                macd_score = 1.0 * _regime_weight(regime, "sell")
                 signals.append({
-                    "trigger": "RSI 근접 과매도",
-                    "type": "buy",
-                    "source": "RSI",
-                    "detail": f"RSI {current_rsi:.1f} (근접 과매도, 강도: {grad_strength:.2f})",
-                    "strength": round(weighted, 2),
-                })
-                buy_score += weighted
-                rsi_fired_buy = True
-            elif current_rsi >= rsi_overbought:
-                weighted = rsi_score * _regime_weight(regime, "sell")
-                signals.append({
-                    "trigger": "RSI 과매수",
+                    "trigger": "MACD 매도",
                     "type": "sell",
-                    "source": "RSI",
-                    "detail": f"RSI {current_rsi:.1f} (강도: {rsi_score:.1f})",
+                    "source": "MACD",
+                    "detail": "MACD 라인이 시그널 라인을 하향 돌파",
+                    "strength": round(macd_score, 2),
+                })
+                sell_score += macd_score
+            else:
+                # 히스토그램 방향 보조 점수
+                if current_histogram is not None:
+                    prev_hist = float(histogram.iloc[-2]) if not pd.isna(histogram.iloc[-2]) else 0
+                    if current_histogram > 0 and current_histogram > prev_hist:
+                        # 양수 히스토그램 확대 → 매수 보조
+                        buy_score += 0.3 * _regime_weight(regime, "buy")
+                    elif current_histogram < 0 and current_histogram < prev_hist:
+                        # 음수 히스토그램 확대 → 매도 보조
+                        sell_score += 0.3 * _regime_weight(regime, "sell")
+
+    # ── 4. 볼린저밴드 (%B 기반 연속 점수) ──────────
+    if enabled_indicators is None or "BB" in enabled_indicators:
+        if current_bb_lower is not None and current_bb_upper is not None and current_bb_middle is not None:
+            bb_score = _continuous_bb_score(current_price, current_bb_lower, current_bb_upper, current_bb_middle, bb_pct_b_lower, bb_pct_b_upper)
+            if bb_score > 0:
+                weighted = bb_score * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "볼린저밴드 하단",
+                    "type": "buy",
+                    "source": "BB",
+                    "detail": f"현재가({current_price:,}) ≤ 하단밴드({current_bb_lower:,.0f}), 반등 가능성 (강도: {bb_score:.1f})",
+                    "strength": round(weighted, 2),
+                })
+                buy_score += weighted
+            elif bb_score < 0:
+                abs_score = abs(bb_score)
+                weighted = abs_score * _regime_weight(regime, "sell")
+                signals.append({
+                    "trigger": "볼린저밴드 상단",
+                    "type": "sell",
+                    "source": "BB",
+                    "detail": f"현재가({current_price:,}) ≥ 상단밴드({current_bb_upper:,.0f}), 과열 주의 (강도: {abs_score:.1f})",
                     "strength": round(weighted, 2),
                 })
                 sell_score += weighted
-                rsi_fired_sell = True
-
-    # ── 3. MACD (연속 강도 점수) ───────────────────
-    if not pd.isna(macd_line.iloc[-2]) and not pd.isna(macd_line.iloc[-1]):
-        prev_macd = float(macd_line.iloc[-2])
-        prev_sig = float(signal_line.iloc[-2])
-        cur_macd = float(macd_line.iloc[-1])
-        cur_sig = float(signal_line.iloc[-1])
-
-        if prev_macd <= prev_sig and cur_macd > cur_sig:
-            # 크로스오버: 1.0
-            macd_score = 1.0 * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "MACD 매수",
-                "type": "buy",
-                "source": "MACD",
-                "detail": "MACD 라인이 시그널 라인을 상향 돌파",
-                "strength": round(macd_score, 2),
-            })
-            buy_score += macd_score
-        elif prev_macd >= prev_sig and cur_macd < cur_sig:
-            macd_score = 1.0 * _regime_weight(regime, "sell")
-            signals.append({
-                "trigger": "MACD 매도",
-                "type": "sell",
-                "source": "MACD",
-                "detail": "MACD 라인이 시그널 라인을 하향 돌파",
-                "strength": round(macd_score, 2),
-            })
-            sell_score += macd_score
-        else:
-            # 히스토그램 방향 보조 점수
-            if current_histogram is not None:
-                prev_hist = float(histogram.iloc[-2]) if not pd.isna(histogram.iloc[-2]) else 0
-                if current_histogram > 0 and current_histogram > prev_hist:
-                    # 양수 히스토그램 확대 → 매수 보조
-                    buy_score += 0.3 * _regime_weight(regime, "buy")
-                elif current_histogram < 0 and current_histogram < prev_hist:
-                    # 음수 히스토그램 확대 → 매도 보조
-                    sell_score += 0.3 * _regime_weight(regime, "sell")
-
-    # ── 4. 볼린저밴드 (%B 기반 연속 점수) ──────────
-    if current_bb_lower is not None and current_bb_upper is not None and current_bb_middle is not None:
-        bb_score = _continuous_bb_score(current_price, current_bb_lower, current_bb_upper, current_bb_middle, bb_pct_b_lower, bb_pct_b_upper)
-        if bb_score > 0:
-            weighted = bb_score * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "볼린저밴드 하단",
-                "type": "buy",
-                "source": "BB",
-                "detail": f"현재가({current_price:,}) ≤ 하단밴드({current_bb_lower:,.0f}), 반등 가능성 (강도: {bb_score:.1f})",
-                "strength": round(weighted, 2),
-            })
-            buy_score += weighted
-        elif bb_score < 0:
-            abs_score = abs(bb_score)
-            weighted = abs_score * _regime_weight(regime, "sell")
-            signals.append({
-                "trigger": "볼린저밴드 상단",
-                "type": "sell",
-                "source": "BB",
-                "detail": f"현재가({current_price:,}) ≥ 상단밴드({current_bb_upper:,.0f}), 과열 주의 (강도: {abs_score:.1f})",
-                "strength": round(weighted, 2),
-            })
-            sell_score += weighted
 
     # ── 5. OBV 다이버전스 (신규) ──────────────────
-    obv_strength = calc_obv_divergence_strength(closes, obv, lookback=20)
-    if obv_strength > 0:
-        weighted = obv_strength * obv_divergence_weight * _regime_weight(regime, "buy")
-        signals.append({
-            "trigger": "OBV 상승 다이버전스",
-            "type": "buy",
-            "source": "OBV",
-            "detail": f"가격 하락 중 OBV 상승 — 매집 가능성 (강도: {obv_strength:.1f})",
-            "strength": round(weighted, 2),
-        })
-        buy_score += weighted
+    if enabled_indicators is None or "OBV" in enabled_indicators:
+        obv_strength = calc_obv_divergence_strength(closes, obv, lookback=20)
+        if obv_strength > 0:
+            weighted = obv_strength * obv_divergence_weight * _regime_weight(regime, "buy")
+            signals.append({
+                "trigger": "OBV 상승 다이버전스",
+                "type": "buy",
+                "source": "OBV",
+                "detail": f"가격 하락 중 OBV 상승 — 매집 가능성 (강도: {obv_strength:.1f})",
+                "strength": round(weighted, 2),
+            })
+            buy_score += weighted
 
-    # OBV 약세 다이버전스 (bearish)
-    bearish_div = calc_obv_bearish_divergence_strength(closes, obv, lookback=20)
-    if bearish_div > 0:
-        weighted = bearish_div * obv_divergence_weight * _regime_weight(regime, "sell")
-        signals.append({
-            "trigger": "OBV 약세 다이버전스",
-            "type": "sell",
-            "source": "OBV",
-            "detail": f"가격 상승 중 거래량 감소 (강도: {bearish_div:.2f})",
-            "strength": round(weighted, 2),
-        })
-        sell_score += weighted
+        # OBV 약세 다이버전스 (bearish)
+        bearish_div = calc_obv_bearish_divergence_strength(closes, obv, lookback=20)
+        if bearish_div > 0:
+            weighted = bearish_div * obv_divergence_weight * _regime_weight(regime, "sell")
+            signals.append({
+                "trigger": "OBV 약세 다이버전스",
+                "type": "sell",
+                "source": "OBV",
+                "detail": f"가격 상승 중 거래량 감소 (강도: {bearish_div:.2f})",
+                "strength": round(weighted, 2),
+            })
+            sell_score += weighted
 
     # ── 6. Stochastic RSI (신규) ──────────────────
-    if current_stoch_k is not None:
-        if current_stoch_k <= stoch_rsi_oversold:
-            # 연속 점수: 20=0.5, 10=0.75, 0=1.0
-            raw = 0.5 + 0.5 * (stoch_rsi_oversold - current_stoch_k) / stoch_rsi_oversold
-            stoch_weighted = min(1.0, raw) * _regime_weight(regime, "buy")
-            # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
-            if rsi_fired_buy:
-                stoch_weighted *= 0.7
-            signals.append({
-                "trigger": "StochRSI 과매도",
-                "type": "buy",
-                "source": "STOCH_RSI",
-                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_oversold:.0f} 이하)",
-                "strength": round(stoch_weighted, 2),
-            })
-            buy_score += stoch_weighted
-        elif current_stoch_k >= stoch_rsi_overbought:
-            raw = 0.5 + 0.5 * (current_stoch_k - stoch_rsi_overbought) / (100 - stoch_rsi_overbought)
-            stoch_weighted = min(1.0, raw) * _regime_weight(regime, "sell")
-            # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
-            if rsi_fired_sell:
-                stoch_weighted *= 0.7
-            signals.append({
-                "trigger": "StochRSI 과매수",
-                "type": "sell",
-                "source": "STOCH_RSI",
-                "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_overbought:.0f} 이상)",
-                "strength": round(stoch_weighted, 2),
-            })
-            sell_score += stoch_weighted
+    if enabled_indicators is None or "STOCH_RSI" in enabled_indicators:
+        if current_stoch_k is not None:
+            if current_stoch_k <= stoch_rsi_oversold:
+                # 연속 점수: 20=0.5, 10=0.75, 0=1.0
+                raw = 0.5 + 0.5 * (stoch_rsi_oversold - current_stoch_k) / stoch_rsi_oversold
+                stoch_weighted = min(1.0, raw) * _regime_weight(regime, "buy")
+                # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
+                if rsi_fired_buy:
+                    stoch_weighted *= 0.7
+                signals.append({
+                    "trigger": "StochRSI 과매도",
+                    "type": "buy",
+                    "source": "STOCH_RSI",
+                    "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_oversold:.0f} 이하)",
+                    "strength": round(stoch_weighted, 2),
+                })
+                buy_score += stoch_weighted
+            elif current_stoch_k >= stoch_rsi_overbought:
+                raw = 0.5 + 0.5 * (current_stoch_k - stoch_rsi_overbought) / (100 - stoch_rsi_overbought)
+                stoch_weighted = min(1.0, raw) * _regime_weight(regime, "sell")
+                # RSI가 같은 방향으로 이미 fire했으면 중복 부풀림 방지 (0.5배 할인)
+                if rsi_fired_sell:
+                    stoch_weighted *= 0.7
+                signals.append({
+                    "trigger": "StochRSI 과매수",
+                    "type": "sell",
+                    "source": "STOCH_RSI",
+                    "detail": f"StochRSI K={current_stoch_k:.1f} (기준: {stoch_rsi_overbought:.0f} 이상)",
+                    "strength": round(stoch_weighted, 2),
+                })
+                sell_score += stoch_weighted
 
     # ── 7. VIX 공포지수 ──────────────────────────
-    if vix_value is not None:
-        result["indicators"]["vix"] = vix_value
-        if vix_value >= vix_extreme_fear:
-            vix_weighted = 1.0 * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "VIX 공포",
-                "type": "buy",
-                "source": "VIX",
-                "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
-                "strength": round(vix_weighted, 2),
-            })
-            buy_score += vix_weighted
-        elif vix_value >= vix_fear:
-            vix_weighted = 0.7 * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "VIX 주의",
-                "type": "buy",
-                "source": "VIX",
-                "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
-                "strength": round(vix_weighted, 2),
-            })
-            buy_score += vix_weighted
-        elif vix_value <= vix_extreme_greed:
-            vix_weighted = 1.0 * _regime_weight(regime, "sell")
-            signals.append({
-                "trigger": "VIX 과열",
-                "type": "sell",
-                "source": "VIX",
-                "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
-                "strength": round(vix_weighted, 2),
-            })
-            sell_score += vix_weighted
+    if enabled_indicators is None or "VIX" in enabled_indicators:
+        if vix_value is not None:
+            result["indicators"]["vix"] = vix_value
+            if vix_value >= vix_extreme_fear:
+                vix_weighted = 1.0 * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "VIX 공포",
+                    "type": "buy",
+                    "source": "VIX",
+                    "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 공포 구간, 역발상 매수 기회",
+                    "strength": round(vix_weighted, 2),
+                })
+                buy_score += vix_weighted
+            elif vix_value >= vix_fear:
+                vix_weighted = 0.7 * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "VIX 주의",
+                    "type": "buy",
+                    "source": "VIX",
+                    "detail": f"시장 공포지수 {vix_value:.1f} - 공포 구간",
+                    "strength": round(vix_weighted, 2),
+                })
+                buy_score += vix_weighted
+            elif vix_value <= vix_extreme_greed:
+                vix_weighted = 1.0 * _regime_weight(regime, "sell")
+                signals.append({
+                    "trigger": "VIX 과열",
+                    "type": "sell",
+                    "source": "VIX",
+                    "detail": f"시장 공포지수 {vix_value:.1f} - 극단적 낙관, 과열 경고",
+                    "strength": round(vix_weighted, 2),
+                })
+                sell_score += vix_weighted
 
     # ── 8. 매크로 시그널 (유가, 환율, 금리) ──────────
-    if macro_data:
-        macro_max = float(settings.get("macro_signal_max_score", MACRO_SIGNAL_MAX_SCORE))
-        macro_buy = 0.0
-        macro_sell = 0.0
+    if enabled_indicators is None or "MACRO" in enabled_indicators:
+        if macro_data:
+            macro_max = float(settings.get("macro_signal_max_score", MACRO_SIGNAL_MAX_SCORE))
+            macro_buy = 0.0
+            macro_sell = 0.0
 
-        for key, mdata in macro_data.items():
-            if not isinstance(mdata, dict):
-                continue
-            change_pct = mdata.get("change_pct", 0)
-            threshold = mdata.get("threshold_pct", 5.0)
-            name_str = mdata.get("name", key)
+            for key, mdata in macro_data.items():
+                if not isinstance(mdata, dict):
+                    continue
+                change_pct = mdata.get("change_pct", 0)
+                threshold = mdata.get("threshold_pct", 5.0)
+                name_str = mdata.get("name", key)
 
-            if abs(change_pct) < threshold * 0.5:
-                continue  # 임계치의 50% 미만이면 무시
+                if abs(change_pct) < threshold * 0.5:
+                    continue  # 임계치의 50% 미만이면 무시
 
-            # 변동 강도 (0.0~1.0): 임계치의 50%에서 0.0, 100%에서 1.0
-            intensity = min(1.0, (abs(change_pct) - threshold * 0.5) / (threshold * 0.5))
+                # 변동 강도 (0.0~1.0): 임계치의 50%에서 0.0, 100%에서 1.0
+                intensity = min(1.0, (abs(change_pct) - threshold * 0.5) / (threshold * 0.5))
 
-            # 섹터 연관성 확인 (현재 종목의 섹터)
-            stock_sector = settings.get("sector_map", {}).get(ticker, "")
+                # 섹터 연관성 확인 (현재 종목의 섹터)
+                stock_sector = settings.get("sector_map", {}).get(ticker, "")
 
-            # 이벤트 판단 규칙 및 섹터 임팩트
-            event_rules = settings.get("macro_event_rules", {}).get(key, {})
-            sector_impact = settings.get("macro_sector_impact", {})
+                # 이벤트 판단 규칙 및 섹터 임팩트
+                event_rules = settings.get("macro_event_rules", {}).get(key, {})
+                sector_impact = settings.get("macro_sector_impact", {})
 
-            if change_pct > 0 and event_rules.get("surge_pct") and change_pct >= event_rules["surge_pct"] * 0.5:
-                event = event_rules.get("surge_event")
-                if event and event in sector_impact:
-                    impact = sector_impact[event]
-                    if stock_sector in impact.get("buy", []):
-                        score = intensity * 0.5
-                        macro_buy += score
-                        signals.append({
-                            "trigger": f"매크로 수혜 ({name_str})",
-                            "type": "buy",
-                            "source": "MACRO",
-                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
-                            "strength": round(score, 2),
-                        })
-                    elif stock_sector in impact.get("sell", []):
-                        score = intensity * 0.5
-                        macro_sell += score
-                        signals.append({
-                            "trigger": f"매크로 리스크 ({name_str})",
-                            "type": "sell",
-                            "source": "MACRO",
-                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
-                            "strength": round(score, 2),
-                        })
+                if change_pct > 0 and event_rules.get("surge_pct") and change_pct >= event_rules["surge_pct"] * 0.5:
+                    event = event_rules.get("surge_event")
+                    if event and event in sector_impact:
+                        impact = sector_impact[event]
+                        if stock_sector in impact.get("buy", []):
+                            score = intensity * 0.5
+                            macro_buy += score
+                            signals.append({
+                                "trigger": f"매크로 수혜 ({name_str})",
+                                "type": "buy",
+                                "source": "MACRO",
+                                "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
+                                "strength": round(score, 2),
+                            })
+                        elif stock_sector in impact.get("sell", []):
+                            score = intensity * 0.5
+                            macro_sell += score
+                            signals.append({
+                                "trigger": f"매크로 리스크 ({name_str})",
+                                "type": "sell",
+                                "source": "MACRO",
+                                "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
+                                "strength": round(score, 2),
+                            })
 
-            elif change_pct < 0 and event_rules.get("crash_pct") and change_pct <= event_rules["crash_pct"] * 0.5:
-                event = event_rules.get("crash_event")
-                if event and event in sector_impact:
-                    impact = sector_impact[event]
-                    if stock_sector in impact.get("buy", []):
-                        score = intensity * 0.5
-                        macro_buy += score
-                        signals.append({
-                            "trigger": f"매크로 수혜 ({name_str})",
-                            "type": "buy",
-                            "source": "MACRO",
-                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
-                            "strength": round(score, 2),
-                        })
-                    elif stock_sector in impact.get("sell", []):
-                        score = intensity * 0.5
-                        macro_sell += score
-                        signals.append({
-                            "trigger": f"매크로 리스크 ({name_str})",
-                            "type": "sell",
-                            "source": "MACRO",
-                            "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
-                            "strength": round(score, 2),
-                        })
+                elif change_pct < 0 and event_rules.get("crash_pct") and change_pct <= event_rules["crash_pct"] * 0.5:
+                    event = event_rules.get("crash_event")
+                    if event and event in sector_impact:
+                        impact = sector_impact[event]
+                        if stock_sector in impact.get("buy", []):
+                            score = intensity * 0.5
+                            macro_buy += score
+                            signals.append({
+                                "trigger": f"매크로 수혜 ({name_str})",
+                                "type": "buy",
+                                "source": "MACRO",
+                                "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 수혜",
+                                "strength": round(score, 2),
+                            })
+                        elif stock_sector in impact.get("sell", []):
+                            score = intensity * 0.5
+                            macro_sell += score
+                            signals.append({
+                                "trigger": f"매크로 리스크 ({name_str})",
+                                "type": "sell",
+                                "source": "MACRO",
+                                "detail": f"{name_str} {change_pct:+.1f}% → {stock_sector} 부정적",
+                                "strength": round(score, 2),
+                            })
 
-        # cap 적용
-        macro_buy = min(macro_buy, macro_max)
-        macro_sell = min(macro_sell, macro_max)
-        buy_score += macro_buy
-        sell_score += macro_sell
+            # cap 적용
+            macro_buy = min(macro_buy, macro_max)
+            macro_sell = min(macro_sell, macro_max)
+            buy_score += macro_buy
+            sell_score += macro_sell
 
-        # 매크로 데이터를 indicators에 저장
-        result["indicators"]["macro"] = {
-            k: {"price": v.get("price"), "change_pct": v.get("change_pct")}
-            for k, v in macro_data.items() if isinstance(v, dict)
-        }
+            # 매크로 데이터를 indicators에 저장
+            result["indicators"]["macro"] = {
+                k: {"price": v.get("price"), "change_pct": v.get("change_pct")}
+                for k, v in macro_data.items() if isinstance(v, dict)
+            }
 
     # ── 9. 외인/기관 매매동향 (OR 분리) ────────────
-    if investor_df is not None and len(investor_df) >= investor_consec_days:
-        frgn = investor_df["외인순매수"]
-        inst = investor_df["기관순매수"]
+    if enabled_indicators is None or "INVESTOR" in enabled_indicators:
+        if investor_df is not None and len(investor_df) >= investor_consec_days:
+            frgn = investor_df["외인순매수"]
+            inst = investor_df["기관순매수"]
 
-        foreign_consec = _count_consecutive(frgn)
-        institutional_consec = _count_consecutive(inst)
+            foreign_consec = _count_consecutive(frgn)
+            institutional_consec = _count_consecutive(inst)
 
-        recent = investor_df.tail(investor_consec_days)
-        foreign_net = int(recent["외인순매수"].sum())
-        institutional_net = int(recent["기관순매수"].sum())
+            recent = investor_df.tail(investor_consec_days)
+            foreign_net = int(recent["외인순매수"].sum())
+            institutional_net = int(recent["기관순매수"].sum())
 
-        result["investor"] = {
-            "foreign_net": foreign_net,
-            "institutional_net": institutional_net,
-            "foreign_consec_days": foreign_consec,
-            "institutional_consec_days": institutional_consec,
-        }
+            result["investor"] = {
+                "foreign_net": foreign_net,
+                "institutional_net": institutional_net,
+                "foreign_consec_days": foreign_consec,
+                "institutional_consec_days": institutional_consec,
+            }
 
-        recent_frgn = recent["외인순매수"]
-        recent_inst = recent["기관순매수"]
+            recent_frgn = recent["외인순매수"]
+            recent_inst = recent["기관순매수"]
 
-        # 외인 개별 (0.75점)
-        if (recent_frgn > 0).all():
-            weighted = 0.75 * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "외인 연속 매수",
-                "type": "buy",
-                "source": "FOREIGN",
-                "detail": f"외국인 {investor_consec_days}일 연속 순매수 ({foreign_net:+,}주)",
-                "strength": round(weighted, 2),
-            })
-            buy_score += weighted
-        elif (recent_frgn < 0).all():
-            weighted = 0.75 * _regime_weight(regime, "sell")
-            signals.append({
-                "trigger": "외인 연속 매도",
-                "type": "sell",
-                "source": "FOREIGN",
-                "detail": f"외국인 {investor_consec_days}일 연속 순매도 ({foreign_net:+,}주)",
-                "strength": round(weighted, 2),
-            })
-            sell_score += weighted
+            # 외인 개별 (0.75점)
+            if (recent_frgn > 0).all():
+                weighted = 0.75 * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "외인 연속 매수",
+                    "type": "buy",
+                    "source": "FOREIGN",
+                    "detail": f"외국인 {investor_consec_days}일 연속 순매수 ({foreign_net:+,}주)",
+                    "strength": round(weighted, 2),
+                })
+                buy_score += weighted
+            elif (recent_frgn < 0).all():
+                weighted = 0.75 * _regime_weight(regime, "sell")
+                signals.append({
+                    "trigger": "외인 연속 매도",
+                    "type": "sell",
+                    "source": "FOREIGN",
+                    "detail": f"외국인 {investor_consec_days}일 연속 순매도 ({foreign_net:+,}주)",
+                    "strength": round(weighted, 2),
+                })
+                sell_score += weighted
 
-        # 기관 개별 (0.75점)
-        if (recent_inst > 0).all():
-            weighted = 0.75 * _regime_weight(regime, "buy")
-            signals.append({
-                "trigger": "기관 연속 매수",
-                "type": "buy",
-                "source": "INSTITUTIONAL",
-                "detail": f"기관 {investor_consec_days}일 연속 순매수 ({institutional_net:+,}주)",
-                "strength": round(weighted, 2),
-            })
-            buy_score += weighted
-        elif (recent_inst < 0).all():
-            weighted = 0.75 * _regime_weight(regime, "sell")
-            signals.append({
-                "trigger": "기관 연속 매도",
-                "type": "sell",
-                "source": "INSTITUTIONAL",
-                "detail": f"기관 {investor_consec_days}일 연속 순매도 ({institutional_net:+,}주)",
-                "strength": round(weighted, 2),
-            })
-            sell_score += weighted
+            # 기관 개별 (0.75점)
+            if (recent_inst > 0).all():
+                weighted = 0.75 * _regime_weight(regime, "buy")
+                signals.append({
+                    "trigger": "기관 연속 매수",
+                    "type": "buy",
+                    "source": "INSTITUTIONAL",
+                    "detail": f"기관 {investor_consec_days}일 연속 순매수 ({institutional_net:+,}주)",
+                    "strength": round(weighted, 2),
+                })
+                buy_score += weighted
+            elif (recent_inst < 0).all():
+                weighted = 0.75 * _regime_weight(regime, "sell")
+                signals.append({
+                    "trigger": "기관 연속 매도",
+                    "type": "sell",
+                    "source": "INSTITUTIONAL",
+                    "detail": f"기관 {investor_consec_days}일 연속 순매도 ({institutional_net:+,}주)",
+                    "strength": round(weighted, 2),
+                })
+                sell_score += weighted
 
     result["signals"] = signals
     result["buy_score"] = round(buy_score, 2)

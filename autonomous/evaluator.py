@@ -10,7 +10,6 @@ from typing import Dict, Optional, List
 
 from bot.telegram import send_message
 from trading.position_tracker import PositionTracker
-from autonomous.config import AUTO_CONFIG
 from autonomous.state import PipelineState
 
 logger = logging.getLogger("signalight.auto")
@@ -24,10 +23,13 @@ class PerformanceEvaluator:
         state: PipelineState = None,
         position_tracker: PositionTracker = None,
         currency: str = "원",
+        config=None,
     ):
         self.state = state or PipelineState()
         self.tracker = position_tracker or PositionTracker()
         self._currency = currency
+        from autonomous.config import AUTO_CONFIG
+        self._config = config or AUTO_CONFIG
 
     def weekly_report(self) -> Dict:
         """주간 성과 리포트를 생성하고 텔레그램으로 전송한다."""
@@ -45,9 +47,10 @@ class PerformanceEvaluator:
         )
 
         # 텔레그램 전송
-        chat_id = AUTO_CONFIG.auto_trade_chat_id
+        chat_id = self._config.auto_trade_chat_id
         if chat_id:
-            if send_message(msg, chat_id=chat_id):
+            bot_token = self._config.bot_token if self._config.bot_token else None
+            if send_message(msg, chat_id=chat_id, bot_token=bot_token):
                 logger.info("주간 성과 리포트 전송 완료")
             else:
                 logger.error("주간 성과 리포트 전송 실패")
@@ -70,10 +73,12 @@ class PerformanceEvaluator:
         losses = daily["losses"] if daily else 0
         realized_pnl = daily["realized_pnl"] if daily else 0
 
-        mode = "시뮬레이션" if AUTO_CONFIG.dry_run else "실전"
+        mode = "시뮬레이션" if self._config.dry_run else "실전"
 
+        bot_label = self._config.bot_label if self._config.bot_label else ""
+        label_prefix = f"{bot_label} " if bot_label else ""
         msg_lines = [
-            f"<b>[자율매매] 일일 요약 ({mode})</b>",
+            f"<b>{label_prefix}[자율매매] 일일 요약 ({mode})</b>",
             f"날짜: {today}",
             "",
         ]
@@ -104,9 +109,10 @@ class PerformanceEvaluator:
 
         msg = "\n".join(msg_lines)
 
-        chat_id = AUTO_CONFIG.auto_trade_chat_id
+        chat_id = self._config.auto_trade_chat_id
         if chat_id:
-            send_message(msg, chat_id=chat_id)
+            bot_token = self._config.bot_token if self._config.bot_token else None
+            send_message(msg, chat_id=chat_id, bot_token=bot_token)
 
         return msg
 
@@ -255,7 +261,7 @@ class PerformanceEvaluator:
             top_candidates: 상위 후보 리스트 (analyze_candidates 결과)
             currency: "KRW" 또는 "USD"
         """
-        chat_id = AUTO_CONFIG.auto_trade_chat_id
+        chat_id = self._config.auto_trade_chat_id
         if not chat_id:
             return
 
@@ -313,11 +319,12 @@ class PerformanceEvaluator:
         lines.append(f"• 보유: {len(open_positions)}종목")
         lines.append(f"• MDD: {mdd_pct:.1f}%")
 
-        if AUTO_CONFIG.dry_run:
+        if self._config.dry_run:
             lines.append("")
             lines.append("<i>(시뮬레이션 모드)</i>")
 
-        send_message("\n".join(lines), chat_id=chat_id)
+        bot_token = self._config.bot_token if self._config.bot_token else None
+        send_message("\n".join(lines), chat_id=chat_id, bot_token=bot_token)
 
     def _scan_signal_short(self, signal: str) -> str:
         """스캔 시그널 코드를 짧은 한글 라벨로 변환한다."""
@@ -335,7 +342,7 @@ class PerformanceEvaluator:
         reason: str = "", pnl_pct: float = None,
     ) -> None:
         """매매 체결 알림을 전송한다."""
-        chat_id = AUTO_CONFIG.auto_trade_chat_id
+        chat_id = self._config.auto_trade_chat_id
         if not chat_id:
             return
 
@@ -356,10 +363,11 @@ class PerformanceEvaluator:
             pnl_emoji = "📈" if pnl_pct > 0 else "📉"
             lines.append(f"{pnl_emoji} 수익률: {pnl_pct:+.1f}%")
 
-        if AUTO_CONFIG.dry_run:
+        if self._config.dry_run:
             lines.append("\n<i>(시뮬레이션 모드)</i>")
 
-        send_message("\n".join(lines), chat_id=chat_id)
+        bot_token = self._config.bot_token if self._config.bot_token else None
+        send_message("\n".join(lines), chat_id=chat_id, bot_token=bot_token)
 
     def _format_weekly_report(
         self, perf_7d: Dict, perf_30d: Dict,
@@ -367,8 +375,10 @@ class PerformanceEvaluator:
         recent_trades: list,
     ) -> str:
         """주간 리포트 메시지를 포맷한다."""
+        bot_label = self._config.bot_label if self._config.bot_label else ""
+        label_prefix = f"{bot_label} " if bot_label else ""
         lines = [
-            "<b>📊 [자율매매] 주간 성과 리포트</b>",
+            f"<b>📊 {label_prefix}[자율매매] 주간 성과 리포트</b>",
             f"기간: 최근 7일 | 날짜: {date.today().isoformat()}",
             "",
         ]
@@ -421,8 +431,8 @@ class PerformanceEvaluator:
 
         # 모드 표시
         lines.append("")
-        mode = "시뮬레이션" if AUTO_CONFIG.dry_run else "실전"
-        env = "모의투자" if getattr(AUTO_CONFIG, 'use_mock', False) else "실전투자"
+        mode = "시뮬레이션" if self._config.dry_run else "실전"
+        env = "모의투자" if getattr(self._config, 'use_mock', False) else "실전투자"
         lines.append(f"<i>모드: {mode} ({env})</i>")
 
         return "\n".join(lines)

@@ -83,6 +83,13 @@ class AutonomousConfig:
     vix_position_mult_extreme: float = 0.5
     sector_map: dict = field(default_factory=lambda: dict(SECTOR_MAP))
 
+    # ── 봇 모드 ──
+    bot_mode: str = "swing"
+    bot_label: str = "🇰🇷 단타"
+    enabled_indicators: list = field(default_factory=lambda: None)
+    bot_token: str = field(default_factory=lambda: "")
+    db_name: str = "signalight_swing.db"
+
     # ── 피드백 루프(optimizer) ──
     optimizer_default_weight_golden_cross: float = 3.0
     optimizer_default_weight_rsi_oversold: float = 2.0
@@ -127,3 +134,54 @@ class AutonomousConfig:
 
 # 모듈 레벨 싱글턴
 AUTO_CONFIG = AutonomousConfig()
+
+# ── 단타 (Swing) 봇 설정 ──
+SWING_CONFIG = AutonomousConfig(
+    bot_mode="swing",
+    bot_label="🇰🇷 단타",
+    enabled_indicators=["MA", "RSI", "STOCH_RSI"],
+    db_name="signalight_swing.db",
+    # 단타 전용: 낮은 임계값, 짧은 보유
+    initial_entry_threshold_uptrend=0.5,
+    initial_entry_threshold_sideways=0.7,
+    initial_entry_threshold_downtrend=1.0,
+    max_holding_days=10,
+    split_buy_phases=2,
+    split_buy_confirm_days=1,
+    target1_atr_mult=1.5,
+    target2_atr_mult=2.5,
+    trailing_stop_atr_mult=1.0,
+    stop_loss_atr_uptrend=2.0,
+    stop_loss_atr_sideways=1.5,
+    stop_loss_atr_downtrend=1.2,
+    target_weight_pct=3.0,
+    max_positions=15,
+    max_sector_positions=4,
+)
+
+# ── 장기 (Position) 봇 설정 ──
+POSITION_CONFIG = AutonomousConfig(
+    bot_mode="position",
+    bot_label="🇰🇷 장기",
+    enabled_indicators=["MA", "MACD", "INVESTOR", "VIX"],
+    bot_token=os.getenv("LONG_BOT_TOKEN", ""),
+    auto_trade_chat_id=os.getenv("LONG_TRADE_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
+    db_name="signalight_position.db",
+    # 장기 전용: 높은 임계값, 긴 보유
+    initial_entry_threshold_uptrend=1.0,
+    initial_entry_threshold_sideways=1.2,
+    initial_entry_threshold_downtrend=1.5,
+    max_holding_days=60,
+    split_buy_phases=3,
+    split_buy_confirm_days=3,
+    target1_atr_mult=3.0,
+    target2_atr_mult=5.0,
+    trailing_stop_atr_mult=2.0,
+    stop_loss_atr_uptrend=3.0,
+    stop_loss_atr_sideways=2.5,
+    stop_loss_atr_downtrend=2.0,
+    max_loss_pct=10.0,
+    target_weight_pct=7.0,
+    max_positions=8,
+    max_sector_positions=2,
+)

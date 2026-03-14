@@ -10,7 +10,6 @@ from typing import List, Dict
 
 from trading.rules import TradeRule
 from trading.position_tracker import PositionTracker
-from autonomous.config import AUTO_CONFIG
 from autonomous.state import PipelineState
 from autonomous.universe import UniverseSelector
 from autonomous.analyzer import StockAnalyzer
@@ -26,14 +25,21 @@ logger = logging.getLogger("signalight.auto")
 class AutonomousPipeline:
     """자율 트레이딩 파이프라인."""
 
-    def __init__(self):
-        self.state = PipelineState()
-        self.tracker = PositionTracker()
+    def __init__(self, config=None):
+        from autonomous.config import AUTO_CONFIG
+        self.config = config or AUTO_CONFIG
+
+        # DB path for state and tracker
+        db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage")
+        db_path = os.path.join(db_dir, self.config.db_name)
+
+        self.state = PipelineState(db_path=db_path)
+        self.tracker = PositionTracker(db_path=db_path)
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
 
         self.universe = UniverseSelector()
-        self.analyzer = StockAnalyzer()
+        self.analyzer = StockAnalyzer(config=self.config)
         self.decision = DecisionEngine(
             trade_rule=self.trade_rule,
             position_tracker=self.tracker,
@@ -46,41 +52,42 @@ class AutonomousPipeline:
         self.evaluator = PerformanceEvaluator(
             state=self.state,
             position_tracker=self.tracker,
+            config=self.config,
         )
         self._optimizer_status = None
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시
         self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
         self._base_thresholds = {
-            "uptrend": AUTO_CONFIG.initial_entry_threshold_uptrend,
-            "sideways": AUTO_CONFIG.initial_entry_threshold_sideways,
-            "downtrend": AUTO_CONFIG.initial_entry_threshold_downtrend,
+            "uptrend": self.config.initial_entry_threshold_uptrend,
+            "sideways": self.config.initial_entry_threshold_sideways,
+            "downtrend": self.config.initial_entry_threshold_downtrend,
         }
-        self._base_min_volume_ratio = AUTO_CONFIG.initial_min_volume_ratio
+        self._base_min_volume_ratio = self.config.initial_min_volume_ratio
         self._base_rule_overrides = {
-            "split_buy_phases": AUTO_CONFIG.split_buy_phases,
-            "split_buy_confirm_days": AUTO_CONFIG.split_buy_confirm_days,
-            "split_buy_phase3_bonus": AUTO_CONFIG.split_buy_phase3_bonus,
+            "split_buy_phases": self.config.split_buy_phases,
+            "split_buy_confirm_days": self.config.split_buy_confirm_days,
+            "split_buy_phase3_bonus": self.config.split_buy_phase3_bonus,
             "stop_loss_atr": {
-                "uptrend": AUTO_CONFIG.stop_loss_atr_uptrend,
-                "sideways": AUTO_CONFIG.stop_loss_atr_sideways,
-                "downtrend": AUTO_CONFIG.stop_loss_atr_downtrend,
+                "uptrend": self.config.stop_loss_atr_uptrend,
+                "sideways": self.config.stop_loss_atr_sideways,
+                "downtrend": self.config.stop_loss_atr_downtrend,
             },
-            "max_loss_pct": AUTO_CONFIG.max_loss_pct,
-            "target1_atr_mult": AUTO_CONFIG.target1_atr_mult,
-            "target2_atr_mult": AUTO_CONFIG.target2_atr_mult,
-            "trailing_stop_atr_mult": AUTO_CONFIG.trailing_stop_atr_mult,
-            "max_holding_days": AUTO_CONFIG.max_holding_days,
-            "max_positions": AUTO_CONFIG.max_positions,
-            "max_sector_positions": AUTO_CONFIG.max_sector_positions,
-            "target_weight_pct": AUTO_CONFIG.target_weight_pct,
-            "max_single_position_pct": AUTO_CONFIG.max_single_position_pct,
+            "max_loss_pct": self.config.max_loss_pct,
+            "target1_atr_mult": self.config.target1_atr_mult,
+            "target2_atr_mult": self.config.target2_atr_mult,
+            "trailing_stop_atr_mult": self.config.trailing_stop_atr_mult,
+            "max_holding_days": self.config.max_holding_days,
+            "max_positions": self.config.max_positions,
+            "max_sector_positions": self.config.max_sector_positions,
+            "target_weight_pct": self.config.target_weight_pct,
+            "max_single_position_pct": self.config.max_single_position_pct,
             "vix_position_mult": {
-                "calm": AUTO_CONFIG.vix_position_mult_calm,
-                "normal": AUTO_CONFIG.vix_position_mult_normal,
-                "fear": AUTO_CONFIG.vix_position_mult_fear,
-                "extreme": AUTO_CONFIG.vix_position_mult_extreme,
+                "calm": self.config.vix_position_mult_calm,
+                "normal": self.config.vix_position_mult_normal,
+                "fear": self.config.vix_position_mult_fear,
+                "extreme": self.config.vix_position_mult_extreme,
             },
-            "sector_map": AUTO_CONFIG.sector_map,
+            "sector_map": self.config.sector_map,
         }
 
     def run_daily_cycle(self) -> Dict:
@@ -468,7 +475,7 @@ class AutonomousPipeline:
         open_positions = self.tracker.get_all_open()
 
         # dry_run이 아닐 때만 API 평가 사용 (dry_run에서는 모의 계좌 잔고가 가상 자산과 다름)
-        if not AUTO_CONFIG.dry_run and open_positions and self.executor.portfolio:
+        if not self.config.dry_run and open_positions and self.executor.portfolio:
             evaluation = self.executor.portfolio._get_evaluation()
             if evaluation:
                 summary = evaluation["summary"]
