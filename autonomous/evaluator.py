@@ -5,7 +5,7 @@ PositionTracker와 PipelineState의 데이터를 기반으로
 """
 
 import logging
-from datetime import date
+from datetime import date, datetime
 from typing import Dict, Optional, List
 
 from bot.telegram import send_message
@@ -78,8 +78,8 @@ class PerformanceEvaluator:
         bot_label = self._config.bot_label if self._config.bot_label else ""
         label_prefix = f"{bot_label} " if bot_label else ""
         msg_lines = [
-            f"<b>{label_prefix}[자율매매] 일일 요약 ({mode})</b>",
-            f"날짜: {today}",
+            f"<b>━━━ {label_prefix}일일 요약 ({mode}) ━━━</b>",
+            f"날짜: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             "",
         ]
 
@@ -142,7 +142,7 @@ class PerformanceEvaluator:
             if total < min_trades:
                 lines.append(f"적용: OFF (샘플 부족 {total}/{min_trades}건)")
             else:
-                lines.append(f"적용: OFF (WF 기준 미충족, 샘플 {total}건)")
+                lines.append(f"적용: OFF (교차검증 기준 미충족, 샘플 {total}건)")
             lines.append("현재는 기본 기준으로 매매합니다.")
 
         reason = status.get("adjustment_reason", "")
@@ -156,8 +156,8 @@ class PerformanceEvaluator:
             avg_imp = float(status.get("avg_improvement", 0.0) or 0.0)
             imp_th = float(status.get("improvement_threshold", 0.0) or 0.0)
             lines.append(
-                f"WF 비교: {wf_passes}/{wf_valid} 통과 (기준 {wf_required}), "
-                f"평균 개선 {avg_imp:+.3f} / 기준 +{imp_th:.2f}"
+                f"교차검증: {wf_passes}/{wf_valid} 통과 (기준 {wf_required}), "
+                f"평균 위험대비수익 개선 {avg_imp:+.3f} / 기준 +{imp_th:.2f}"
             )
 
         latest = status.get("latest_change")
@@ -302,7 +302,7 @@ class PerformanceEvaluator:
 
         if top:
             lines.append("")
-            lines.append("상위 후보:")
+            lines.append("<b>▸ 상위 후보</b>")
             for item in top:
                 name = item.get("name", item.get("ticker", ""))
                 score = item.get("confluence_score", 0)
@@ -314,10 +314,10 @@ class PerformanceEvaluator:
 
         # 포트폴리오 현황
         lines.append("")
-        lines.append("포트폴리오:")
+        lines.append("<b>▸ 포트폴리오</b>")
         lines.append(f"• 총 자산: {equity_display}")
         lines.append(f"• 보유: {len(open_positions)}종목")
-        lines.append(f"• MDD: {mdd_pct:.1f}%")
+        lines.append(f"• 최대낙폭: {mdd_pct:.1f}%")
 
         if self._config.dry_run:
             lines.append("")
@@ -338,30 +338,79 @@ class PerformanceEvaluator:
 
     def send_trade_notification(
         self, side: str, name: str, ticker: str,
-        quantity: int, price: int,
-        reason: str = "", pnl_pct: float = None,
+        quantity: int, price: float,
+        reason: str = "",
+        pnl_pct: float = None,
+        pnl_amount: float = None,
+        holding_days: int = None,
+        details: dict = None,
     ) -> None:
         """매매 체결 알림을 전송한다."""
         chat_id = self._config.auto_trade_chat_id
         if not chat_id:
             return
 
+        _REGIME_LABELS = {
+            "uptrend": "상승장",
+            "sideways": "횡보장",
+            "downtrend": "하락장",
+        }
+
+        bot_label = self._config.bot_label if self._config.bot_label else ""
+        label = f"[{bot_label}] " if bot_label else ""
+
         emoji = "🟢" if side == "buy" else "🔴"
         action = "매수" if side == "buy" else "매도"
 
         lines = [
-            f"{emoji} <b>[자율매매] {action} 체결</b>",
-            f"종목: {name} ({ticker})",
-            f"수량: {quantity}주 @ {self._fmt_price(price)}",
-            f"금액: {self._fmt_price(quantity * price)}",
+            f"{emoji} <b>{label}{action} 체결</b>",
+            f"{name} ({ticker}) {quantity}주 @ {self._fmt_price(price)}",
         ]
 
-        if reason:
-            lines.append(f"사유: {reason}")
-
-        if pnl_pct is not None:
-            pnl_emoji = "📈" if pnl_pct > 0 else "📉"
-            lines.append(f"{pnl_emoji} 수익률: {pnl_pct:+.1f}%")
+        if side == "buy":
+            total = self._fmt_price(quantity * price)
+            if details:
+                weight_pct = details.get("weight_pct", 0) or 0
+                lines.append(f"금액: {total} | 비중: {weight_pct:.1f}%")
+                stop_loss = details.get("stop_loss", 0) or 0
+                target1 = details.get("target1", 0) or 0
+                if price > 0 and (target1 > 0 or stop_loss > 0):
+                    t1_str = ""
+                    sl_str = ""
+                    if target1 > 0:
+                        t1_pct = (target1 - price) / price * 100
+                        t1_str = f"🎯 목표: {self._fmt_price(target1)}(+{t1_pct:.1f}%)"
+                    if stop_loss > 0:
+                        sl_pct = (price - stop_loss) / price * 100
+                        sl_str = f"🛑 손절: {self._fmt_price(stop_loss)}(-{sl_pct:.1f}%)"
+                    parts = [p for p in [t1_str, sl_str] if p]
+                    if parts:
+                        lines.append(" | ".join(parts))
+                regime = details.get("regime", "")
+                if regime:
+                    regime_kr = _REGIME_LABELS.get(regime, regime)
+                    lines.append(f"레짐: {regime_kr}")
+            else:
+                lines.append(f"금액: {total}")
+            if reason:
+                lines.append(f"사유: {reason}")
+        else:
+            # sell
+            if pnl_amount is not None and pnl_pct is not None:
+                pnl_emoji = "📈" if pnl_pct > 0 else "📉"
+                holding_str = f" | 보유 {holding_days}일" if holding_days is not None else ""
+                lines.append(
+                    f"{pnl_emoji} {self._fmt_price(pnl_amount, sign=True)}"
+                    f" ({pnl_pct:+.1f}%){holding_str}"
+                )
+            elif pnl_pct is not None:
+                pnl_emoji = "📈" if pnl_pct > 0 else "📉"
+                holding_str = f" | 보유 {holding_days}일" if holding_days is not None else ""
+                lines.append(f"{pnl_emoji} 수익률: {pnl_pct:+.1f}%{holding_str}")
+            elif holding_days is not None:
+                lines.append(f"보유: {holding_days}일")
+            if reason:
+                lines.append(f"사유: {reason}")
 
         if self._config.dry_run:
             lines.append("\n<i>(시뮬레이션 모드)</i>")
@@ -378,8 +427,8 @@ class PerformanceEvaluator:
         bot_label = self._config.bot_label if self._config.bot_label else ""
         label_prefix = f"{bot_label} " if bot_label else ""
         lines = [
-            f"<b>📊 {label_prefix}[자율매매] 주간 성과 리포트</b>",
-            f"기간: 최근 7일 | 날짜: {date.today().isoformat()}",
+            f"<b>━━━ 📊 {label_prefix}주간 성과 리포트 ━━━</b>",
+            f"기간: 최근 7일 | 생성: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             "",
         ]
 
@@ -400,7 +449,7 @@ class PerformanceEvaluator:
         lines.append(f"  거래: {perf_30d['total_trades']}건 "
                       f"| 승률: {perf_30d['win_rate']}%")
         lines.append(f"  누적 PnL: {self._fmt_price(perf_30d['total_pnl'], sign=True)}")
-        lines.append(f"  최대 낙폭: {perf_30d['max_drawdown_pct']:.1f}%")
+        lines.append(f"  최대낙폭(MDD): {perf_30d['max_drawdown_pct']:.1f}%")
         lines.append(f"  연속 패배: {perf_30d['consecutive_losses']}연패")
         lines.append("")
 

@@ -83,7 +83,7 @@ def _cmd_us_status(chat_id: str) -> None:
     pnl_pct = ((portfolio_value - initial) / initial * 100) if initial > 0 else 0.0
 
     lines = [
-        "🇺🇸 <b>[US 자율매매] 상태</b>",
+        "<b>━━━ 🇺🇸 US 자율매매 상태 ━━━</b>",
         f"모드: {mode}",
         "",
     ]
@@ -154,7 +154,7 @@ def _run_us_scan(chat_id: str) -> None:
         }
 
         lines = [
-            f"🇺🇸 <b>[US 스캔] 매매 후보 ({len(candidates)}종목)</b>",
+            f"<b>━━━ 🇺🇸 US 스캔 ({len(candidates)}종목) ━━━</b>",
             "",
         ]
 
@@ -201,7 +201,7 @@ def _cmd_us_positions(chat_id: str) -> None:
         return
 
     lines = [
-        f"🇺🇸 <b>[US 포지션] 보유 종목 ({len(positions)}개)</b>",
+        f"<b>━━━ 🇺🇸 US 포지션 ({len(positions)}개) ━━━</b>",
         "",
     ]
 
@@ -241,7 +241,7 @@ def _cmd_us_config(chat_id: str) -> None:
     mode_label = getattr(cfg, "bot_label", "") or "US"
 
     lines = [
-        f"<b>[{mode_label}] 설정 현황</b>",
+        f"<b>━━━ [{mode_label}] 설정 현황 ━━━</b>",
         f"모드: {mode}",
         "",
         "<b>▸ 진입 임계값</b> (현재 ← 기본값)",
