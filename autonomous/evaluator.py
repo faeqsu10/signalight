@@ -416,13 +416,13 @@ class PerformanceEvaluator:
                 lines.append(
                     f"  {trade['trade_date']} {side_kr} "
                     f"{trade['name']} {trade['quantity']}주 "
-                    f"@ {trade['price']:,}원{pnl_str}"
+                    f"@ {self._fmt_price(trade['price'])}{pnl_str}"
                 )
 
         # 모드 표시
         lines.append("")
         mode = "시뮬레이션" if AUTO_CONFIG.dry_run else "실전"
-        env = "모의투자" if AUTO_CONFIG.use_mock else "실전투자"
+        env = "모의투자" if getattr(AUTO_CONFIG, 'use_mock', False) else "실전투자"
         lines.append(f"<i>모드: {mode} ({env})</i>")
 
         return "\n".join(lines)
