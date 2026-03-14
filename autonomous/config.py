@@ -143,10 +143,10 @@ SWING_CONFIG = AutonomousConfig(
     bot_label="🇰🇷 단타",
     enabled_indicators=["MA", "RSI", "STOCH_RSI"],
     db_name="signalight_swing.db",
-    # 단타 전용: 낮은 임계값, 짧은 보유
-    initial_entry_threshold_uptrend=0.5,
-    initial_entry_threshold_sideways=0.7,
-    initial_entry_threshold_downtrend=1.0,
+    # 단타 전용: 공격적 초기 설정 (데이터 수집 우선)
+    initial_entry_threshold_uptrend=0.3,
+    initial_entry_threshold_sideways=0.5,
+    initial_entry_threshold_downtrend=0.8,
     max_holding_days=10,
     split_buy_phases=2,
     split_buy_confirm_days=1,
@@ -196,15 +196,15 @@ MEANREV_CONFIG = AutonomousConfig(
     bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
     auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
     db_name="signalight_meanrev.db",
-    # 평균회귀 전용: 단순한 진입/청산
-    initial_entry_threshold_uptrend=0.3,    # 매우 낮은 임계값 (RSI만으로 충분)
-    initial_entry_threshold_sideways=0.3,
-    initial_entry_threshold_downtrend=0.5,  # 하락장에서도 약간 까다롭게
-    initial_min_volume_ratio=0.3,
-    max_holding_days=15,           # 최대 15일 (평균회귀는 빨리 발생해야 함)
+    # 평균회귀 전용: 공격적 초기 설정 (데이터 수집 우선)
+    initial_entry_threshold_uptrend=0.1,    # 거의 무조건 진입
+    initial_entry_threshold_sideways=0.1,
+    initial_entry_threshold_downtrend=0.3,  # 하락장만 약간 필터
+    initial_min_volume_ratio=0.2,           # 거래량 필터 완화
+    max_holding_days=15,           # 최대 15일
     split_buy_phases=1,            # 분할매수 없음 — 한 번에 매수
     split_buy_confirm_days=0,
-    target1_atr_mult=1.5,          # 5% 목표 (ATR 보조, 실제는 고정 5%)
+    target1_atr_mult=1.5,
     target2_atr_mult=3.0,
     trailing_stop_atr_mult=1.0,
     stop_loss_atr_uptrend=2.0,
@@ -212,10 +212,10 @@ MEANREV_CONFIG = AutonomousConfig(
     stop_loss_atr_downtrend=2.0,
     max_loss_pct=8.0,              # 8% 손절
     target_weight_pct=5.0,         # 종목당 5%
-    max_positions=10,              # 최대 10종목
-    max_sector_positions=3,
-    indicator_rsi_oversold=30.0,   # RSI 30 이하에서만 매수
-    scan_rsi_oversold_threshold=35.0,  # 스캔은 35 이하로 넓게
+    max_positions=15,              # 최대 15종목 (공격적)
+    max_sector_positions=4,        # 섹터 제한 완화
+    indicator_rsi_oversold=35.0,   # RSI 35 이하 매수 (공격적 확대)
+    scan_rsi_oversold_threshold=45.0,  # 스캔은 45 이하로 넓게
     fixed_target_pct=5.0,          # 5% 고정 목표
     skip_trend_gate=True,          # 추세 게이트 스킵
 )

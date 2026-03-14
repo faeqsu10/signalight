@@ -128,20 +128,20 @@ US_MEANREV_CONFIG = USAutonomousConfig(
     bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
     auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
     db_name="signalight_us_meanrev.db",
-    # 평균회귀 전용: RSI 과매도 진입, 빠른 청산
-    indicator_rsi_oversold=30.0,
-    scan_rsi_oversold_threshold=35.0,
+    # 공격적 초기 설정 (데이터 수집 우선)
+    indicator_rsi_oversold=35.0,
+    scan_rsi_oversold_threshold=45.0,
     fixed_target_pct=5.0,
     skip_trend_gate=True,
     max_loss_pct=8.0,
     max_holding_days=15,
     split_buy_phases=1,
     split_buy_confirm_days=1,
-    max_positions=8,
+    max_positions=10,
     target_weight_pct=10.0,
     max_single_position_pct=15.0,
-    # 적극적 진입 (추세 무관)
-    initial_entry_threshold_uptrend=0.5,
-    initial_entry_threshold_sideways=0.7,
-    initial_entry_threshold_downtrend=1.0,
+    initial_entry_threshold_uptrend=0.1,
+    initial_entry_threshold_sideways=0.1,
+    initial_entry_threshold_downtrend=0.3,
+    initial_min_volume_ratio=0.2,
 )
