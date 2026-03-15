@@ -50,7 +50,7 @@ export function getLatestLLMAnalysis(ticker: string): LLMAnalysis | null {
       if (row) {
         return row;
       }
-    } catch (err) {
+    } catch {
       continue;
     }
   }
@@ -85,7 +85,7 @@ export function getLatestSentiment(ticker: string): Sentiment | null {
       if (row) {
         return row;
       }
-    } catch (err) {
+    } catch {
       continue;
     }
   }
