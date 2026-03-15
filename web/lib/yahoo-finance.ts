@@ -96,39 +96,49 @@ export async function fetchOHLCV(
 export async function fetchVIX(
   days: number = 120
 ): Promise<{ date: string; close: number }[]> {
+  return fetchMarketData("%5EVIX", days);
+}
+
+export async function fetchMarketData(
+  ticker: string,
+  days: number = 120
+): Promise<{ date: string; close: number; change_pct?: number }[]> {
   const now = Math.floor(Date.now() / 1000);
   const from = now - days * 24 * 60 * 60;
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?period1=${from}&period2=${now}&interval=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${from}&period2=${now}&interval=1d`;
 
   const res = await fetchWithRetry(url);
 
   if (!res.ok) {
-    throw new Error(`Yahoo Finance VIX 조회 실패: status=${res.status}`);
+    throw new Error(`Yahoo Finance ${ticker} 조회 실패: status=${res.status}`);
   }
 
   const json = await res.json();
   const result = json.chart?.result?.[0];
   if (!result) {
-    // VIX 데이터 없는 경우 빈 배열 반환 (장 마감/휴장)
-    console.warn("Yahoo Finance VIX 데이터 없음 (장 마감/휴장 가능성)");
+    console.warn(`Yahoo Finance ${ticker} 데이터 없음`);
     return [];
   }
 
   const timestamps: number[] = result.timestamp || [];
   const quote = result.indicators?.quote?.[0];
   if (!quote) {
-    console.warn("Yahoo Finance VIX quote 데이터 없음");
+    console.warn(`Yahoo Finance ${ticker} quote 데이터 없음`);
     return [];
   }
 
-  const data: { date: string; close: number }[] = [];
+  const data: { date: string; close: number; change_pct?: number }[] = [];
   for (let i = 0; i < timestamps.length; i++) {
     if (quote.close[i] == null) continue;
+
+    const prevClose = i > 0 ? quote.close[i - 1] : null;
+    const change_pct = prevClose ? ((quote.close[i] - prevClose) / prevClose) * 100 : 0;
 
     data.push({
       date: new Date(timestamps[i] * 1000).toISOString().split("T")[0],
       close: quote.close[i],
+      change_pct: change_pct || 0
     });
   }
 
