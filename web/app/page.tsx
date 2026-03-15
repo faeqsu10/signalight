@@ -97,7 +97,13 @@ function ScannerCategory({
   tooltip?: React.ReactNode;
 }) {
   return (
-    <div className="glass-card p-4">
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: "rgba(255,255,255,0.018)",
+        border: "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
       <h4 className="text-sm font-semibold mb-3 flex items-center" style={{ color: "var(--accent)" }}>
         {title}
         {tooltip && <Tooltip content={tooltip} />}
@@ -116,9 +122,9 @@ function ScannerCategory({
                 <span
                   className="text-[10px] px-2 py-0.5 rounded-full"
                   style={{
-                    background: "rgba(108,92,231,0.15)",
+                    background: "rgba(246,197,68,0.12)",
                     color: "var(--accent)",
-                    border: "1px solid rgba(108,92,231,0.2)",
+                    border: "1px solid rgba(246,197,68,0.18)",
                   }}
                 >
                   {item.reason}
@@ -312,117 +318,151 @@ export default function Home() {
     <div className="min-h-screen" style={{ color: "var(--foreground)" }}>
       {/* Header */}
       <header
-        className="px-6 py-4 flex items-center justify-between sticky top-0 z-30"
+        className="px-4 py-4 sticky top-0 z-30"
         style={{
           background: "var(--header-bg)",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
-        <div className="flex items-center gap-3">
-          <h1
-            className="text-xl font-bold tracking-widest"
-            style={{ color: "var(--accent)", letterSpacing: "0.15em" }}
-          >
-            SIGNALIGHT
-          </h1>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold opacity-40 uppercase tracking-tighter">System Live</span>
-            {data && !data.error && (
-              <span className="text-[9px]" style={{ color: "var(--buy)" }}>
-                Last Sync: {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-          </div>
-          {/* Star button */}
-          <button
-            onClick={() => toggleFavorite(selected.ticker)}
-            title={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-            className="text-lg leading-none transition-colors focus:outline-none"
-            style={{ color: isFavorite ? "var(--hold)" : "var(--text-dim)" }}
-            aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-          >
-            {isFavorite ? "★" : "☆"}
-          </button>
-          {/* Compare button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                if (compareIdx !== null) {
-                  setCompareIdx(null);
-                  setShowComparePicker(false);
-                } else {
-                  setShowComparePicker((v) => !v);
-                }
-              }}
-              className="text-sm px-3 py-1 rounded-lg transition-colors"
-              style={{
-                border: "1px solid var(--glass-border)",
-                background: compareIdx !== null ? "rgba(108,92,231,0.15)" : "var(--glass)",
-                color: compareIdx !== null ? "var(--accent)" : "var(--text-dim)",
-                borderColor: compareIdx !== null ? "rgba(108,92,231,0.4)" : "var(--glass-border)",
-              }}
-            >
-              {compareIdx !== null ? "비교 해제" : "비교"}
-            </button>
-            {showComparePicker && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowComparePicker(false)} />
-                <div
-                  className="absolute top-full left-0 mt-2 rounded-xl z-50 w-52 max-h-64 overflow-y-auto"
+        <div
+          className="max-w-7xl mx-auto rounded-[20px] px-4 py-3 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          style={{
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            boxShadow: "0 20px 40px -36px rgba(0,0,0,0.9)",
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em]" style={{ color: "var(--accent)" }}>
+                Signalight Console
+              </p>
+              <h1
+                className="mt-2 text-2xl font-bold tracking-[0.16em]"
+                style={{ color: "var(--foreground)" }}
+              >
+                SIGNALIGHT
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                <span
+                  className="px-2.5 py-1 rounded-full"
                   style={{
-                    background: "var(--dropdown-bg)",
-                    backdropFilter: "blur(20px)",
-                    border: "1px solid var(--glass-border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                    color: "var(--foreground)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
-                  {ALL_WATCH_LIST
-                    .map((item, i) => ({ ...item, idx: i }))
-                    .filter((item) => item.idx !== selectedIdx)
-                    .map((item) => (
-                      <button
-                        key={item.ticker}
-                        onClick={() => {
-                          setCompareIdx(item.idx);
-                          setShowComparePicker(false);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
-                        style={{ color: "var(--foreground)" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = "var(--glass)")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <span
-                          className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
-                          style={{
-                            background: item.market === "KR" ? "rgba(108,92,231,0.2)" : "rgba(0,212,170,0.15)",
-                            color: item.market === "KR" ? "var(--accent)" : "var(--buy)",
-                          }}
-                        >
-                          {item.market}
-                        </span>
-                        <span className="truncate">{item.name}</span>
-                      </button>
-                    ))}
-                </div>
-              </>
-            )}
+                  선택 종목 {selected.name} · {selected.ticker}
+                </span>
+                <span
+                  className="px-2.5 py-1 rounded-full"
+                  style={{
+                    color: "var(--buy)",
+                    background: "rgba(255,207,51,0.08)",
+                    border: "1px solid rgba(255,207,51,0.12)",
+                  }}
+                >
+                  System Live
+                </span>
+                {data && !data.error && (
+                  <span style={{ color: "var(--text-dim)" }}>
+                    Last Sync {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <a
-            href="/autonomous"
-            className="text-sm hidden sm:inline transition-colors"
-            style={{ color: "var(--accent)" }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "0.7")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          >
-            자율매매 →
-          </a>
-          {/* Search */}
-          <div className="relative z-50">
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <button
+              onClick={() => toggleFavorite(selected.ticker)}
+              title={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+              className="text-sm px-3 py-2 rounded-xl transition-colors focus:outline-none"
+              style={{
+                color: isFavorite ? "var(--hold)" : "var(--text-dim)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}
+              aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+            >
+              {isFavorite ? "★ 즐겨찾기" : "☆ 즐겨찾기"}
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  if (compareIdx !== null) {
+                    setCompareIdx(null);
+                    setShowComparePicker(false);
+                  } else {
+                    setShowComparePicker((v) => !v);
+                  }
+                }}
+                className="text-sm px-3 py-2 rounded-xl transition-colors"
+                style={{
+                  border: "1px solid var(--glass-border)",
+                  background: compareIdx !== null ? "rgba(246,197,68,0.12)" : "rgba(255,255,255,0.03)",
+                  color: compareIdx !== null ? "var(--accent)" : "var(--text-dim)",
+                }}
+              >
+                {compareIdx !== null ? "비교 해제" : "종목 비교"}
+              </button>
+              {showComparePicker && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowComparePicker(false)} />
+                  <div
+                    className="absolute top-full left-0 mt-2 rounded-xl z-50 w-52 max-h-64 overflow-y-auto"
+                    style={{
+                      background: "var(--dropdown-bg)",
+                      backdropFilter: "blur(20px)",
+                      border: "1px solid var(--glass-border)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {ALL_WATCH_LIST
+                      .map((item, i) => ({ ...item, idx: i }))
+                      .filter((item) => item.idx !== selectedIdx)
+                      .map((item) => (
+                        <button
+                          key={item.ticker}
+                          onClick={() => {
+                            setCompareIdx(item.idx);
+                            setShowComparePicker(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
+                          style={{ color: "var(--foreground)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "var(--glass)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
+                            style={{
+                              background: item.market === "KR" ? "rgba(246,197,68,0.14)" : "rgba(255,207,51,0.08)",
+                              color: item.market === "KR" ? "var(--accent)" : "var(--buy)",
+                            }}
+                          >
+                            {item.market}
+                          </span>
+                          <span className="truncate">{item.name}</span>
+                        </button>
+                      ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <ThemeToggle />
+            <a
+              href="/autonomous"
+              className="text-sm px-3 py-2 rounded-xl hidden sm:inline transition-colors"
+              style={{
+                color: "var(--accent)",
+                background: "rgba(246,197,68,0.08)",
+                border: "1px solid rgba(246,197,68,0.12)",
+              }}
+            >
+              자율매매 →
+            </a>
+            <div className="relative z-50">
             <input
               type="text"
               placeholder="종목 검색..."
@@ -432,7 +472,7 @@ export default function Home() {
                 setShowSearch(true);
               }}
               onFocus={() => setShowSearch(true)}
-              className="rounded-xl px-3 py-1.5 text-sm w-36 sm:w-48 focus:outline-none"
+              className="rounded-xl px-3 py-2 text-sm w-44 sm:w-52 focus:outline-none"
               style={{ color: "var(--foreground)" }}
             />
             {showSearch && filteredList.length > 0 && (
@@ -488,22 +528,28 @@ export default function Home() {
             {showSearch && (
               <div className="fixed inset-0 z-40" onClick={() => setShowSearch(false)} />
             )}
+            </div>
+            {mounted && "Notification" in window && (
+              <button
+                onClick={requestNotifPermission}
+                title={
+                  notifPermission === "granted"
+                    ? "알림 활성"
+                    : notifPermission === "denied"
+                    ? "알림 차단됨"
+                    : "알림 설정"
+                }
+                className="text-sm px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
+                style={{
+                  color: notifPermission === "granted" ? "var(--buy)" : "var(--text-dim)",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
+                {notifPermission === "granted" ? "🔔 알림" : "🔕 알림"}
+              </button>
+            )}
           </div>
-          {mounted && "Notification" in window && (
-            <button
-              onClick={requestNotifPermission}
-              title={
-                notifPermission === "granted"
-                  ? "알림 활성"
-                  : notifPermission === "denied"
-                  ? "알림 차단됨"
-                  : "알림 설정"
-              }
-              className="text-lg leading-none transition-opacity hover:opacity-70"
-            >
-              {notifPermission === "granted" ? "🔔" : "🔕"}
-            </button>
-          )}
         </div>
       </header>
 
@@ -938,10 +984,32 @@ export default function Home() {
 
         {/* Screener Section */}
         {scannerData && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>종목 스크리너</h2>
-              <div className="flex bg-glass p-1 rounded-xl border border-glass-border">
+          <section
+            className="glass-card space-y-4"
+            style={{
+              borderRadius: 20,
+              padding: 20,
+              background:
+                "linear-gradient(180deg, rgba(14,24,39,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+            }}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-[0.24em]"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Screeners
+                </p>
+                <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
+                  기술적 조건으로 빠르게 걸러보기
+                </h2>
+                <p className="mt-2 text-sm max-w-2xl leading-6" style={{ color: "var(--text-dim)" }}>
+                  골든크로스, RSI 과매도, 거래량 급증 조건을 같은 시각 언어로 정리했습니다.
+                  홈 전체와 톤을 맞추면서도 액션성은 유지하는 구간입니다.
+                </p>
+              </div>
+              <div className="flex p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
                 <button
                   onClick={() => setScannerMarket("KR")}
                   className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${
