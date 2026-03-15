@@ -75,8 +75,15 @@ export default function RecoveryPanel({ recovery, loading }: RecoveryPanelProps)
   if (!recovery) return null;
 
   return (
-    <div className="glass-card p-4">
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>
+    <div
+      className="glass-card p-5"
+      style={{
+        borderRadius: 20,
+        background:
+          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+      }}
+    >
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
         회복 시그널 체크리스트
       </h3>
 
@@ -87,7 +94,7 @@ export default function RecoveryPanel({ recovery, loading }: RecoveryPanelProps)
       </p>
 
       <div
-        className="divide-y"
+        className="divide-y rounded-2xl px-3 py-1 mt-4"
         style={{ borderColor: "var(--glass-border)" }}
       >
         {recovery.checks.map((check) => (

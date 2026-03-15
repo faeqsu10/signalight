@@ -7,8 +7,15 @@ interface Props {
 
 export default function SignalPanel({ signals }: Props) {
   return (
-    <div className="glass-card p-4">
-      <h3 className="text-sm font-semibold mb-3 flex items-center" style={{ color: "var(--text-dim)" }}>
+    <div
+      className="glass-card p-5"
+      style={{
+        borderRadius: 20,
+        background:
+          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+      }}
+    >
+      <h3 className="text-sm font-semibold mb-4 flex items-center" style={{ color: "var(--accent)" }}>
         시그널 현황
         <Tooltip
           content={
@@ -29,26 +36,33 @@ export default function SignalPanel({ signals }: Props) {
       </h3>
       <div className="space-y-2">
         {signals.map((s, i) => (
-          <div key={i} className="flex items-start gap-2 text-sm">
+          <div
+            key={i}
+            className="flex items-start gap-2 text-sm rounded-xl px-3 py-3"
+            style={{
+              background: "rgba(255,255,255,0.018)",
+              border: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
             <span
               className="inline-block w-12 text-center rounded px-1 py-0.5 text-xs font-bold flex-shrink-0"
               style={
                 s.type === "buy"
                   ? {
-                      background: "rgba(0,212,170,0.15)",
+                      background: "rgba(255,207,51,0.12)",
                       color: "var(--buy)",
-                      border: "1px solid rgba(0,212,170,0.25)",
+                      border: "1px solid rgba(255,207,51,0.2)",
                     }
                   : s.type === "sell"
                   ? {
-                      background: "rgba(255,71,87,0.15)",
+                      background: "rgba(255,142,60,0.14)",
                       color: "var(--sell)",
-                      border: "1px solid rgba(255,71,87,0.25)",
+                      border: "1px solid rgba(255,142,60,0.22)",
                     }
                   : {
-                      background: "var(--glass)",
+                      background: "rgba(255,255,255,0.03)",
                       color: "var(--text-dim)",
-                      border: "1px solid var(--glass-border)",
+                      border: "1px solid rgba(255,255,255,0.05)",
                     }
               }
             >

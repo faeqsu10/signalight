@@ -164,6 +164,37 @@ function SignalDot({ strength }: { strength: string | undefined }) {
   );
 }
 
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <p
+        className="text-[11px] font-semibold uppercase tracking-[0.24em]"
+        style={{ color: "var(--accent)" }}
+      >
+        {eyebrow}
+      </p>
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
+          {title}
+        </h2>
+        {description && (
+          <p className="text-sm leading-6 max-w-3xl" style={{ color: "var(--text-dim)" }}>
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -627,6 +658,13 @@ export default function Home() {
 
         {data && !data.error && (
           <>
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Selected Asset"
+                title={`${selected.name} 상세 분석`}
+                description="선택한 종목의 신호, AI 해석, 차트, 모멘텀 지표를 한 흐름으로 읽는 구간입니다."
+              />
+
             {/* Signal Banner */}
             {(() => {
               const buySignals = (data.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
@@ -679,6 +717,7 @@ export default function Home() {
               sentiment={data.sentiment}
               loading={isLoading} 
             />
+            </section>
 
             {/* Comparison Panel */}
             {compareStock && compareData && !compareData.error && (() => {
@@ -750,6 +789,12 @@ export default function Home() {
             })()}
 
             {/* Price Info + VIX */}
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Market Read"
+                title="가격 흐름과 변동성"
+                description="현재 가격, 공포지수, 캔들 흐름을 먼저 보고 이후의 기술 지표로 내려가는 구조로 정리했습니다."
+              />
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
                 <PriceInfo
@@ -766,7 +811,14 @@ export default function Home() {
             </div>
 
             {/* Candle Chart */}
-            <div className="glass-card p-4">
+            <div
+              className="glass-card p-5"
+              style={{
+                borderRadius: 20,
+                background:
+                  "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+              }}
+            >
               <div className="flex gap-2 mb-3">
                 {[
                   { label: "1M", days: 30 },
@@ -818,10 +870,24 @@ export default function Home() {
                 signalHistory={data.signalHistory ?? []}
               />
             </div>
+            </section>
 
             {/* RSI + MACD */}
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Momentum"
+                title="기술 지표와 신호 해석"
+                description="RSI와 MACD는 서로 다른 속도로 추세 변화를 잡습니다. 아래에서 시그널 카드와 함께 읽도록 묶었습니다."
+              />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="glass-card p-4">
+              <div
+                className="glass-card p-5"
+                style={{
+                  borderRadius: 20,
+                  background:
+                    "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+                }}
+              >
                 <h3 className="text-sm font-semibold mb-2 flex items-center" style={{ color: "var(--text-dim)" }}>
                   RSI ({data.currentRSI?.toFixed(1) ?? "-"})
                   <Tooltip
@@ -843,7 +909,14 @@ export default function Home() {
                 </h3>
                 <RSIChart ohlcv={data.ohlcv} rsiValues={data.rsiValues} />
               </div>
-              <div className="glass-card p-4">
+              <div
+                className="glass-card p-5"
+                style={{
+                  borderRadius: 20,
+                  background:
+                    "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+                }}
+              >
                 <h3 className="text-sm font-semibold mb-2 flex items-center" style={{ color: "var(--text-dim)" }}>
                   MACD
                   <Tooltip
@@ -874,6 +947,7 @@ export default function Home() {
 
             {/* Signal Panel */}
             <SignalPanel signals={data.signals} />
+            </section>
 
             {/* Warnings */}
             {data.warnings && (data.warnings as string[]).length > 0 && (
@@ -892,6 +966,12 @@ export default function Home() {
             )}
 
             {/* Recovery Analysis + Position Card */}
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Execution"
+                title="회복 가능성과 포지션 판단"
+                description="실제 대응에 가까운 체크리스트와 포지션 카드, 공시 영역을 마지막 액션 구간으로 모았습니다."
+              />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RecoveryPanel
                 recovery={recoveryData?.recovery ?? null}
@@ -911,6 +991,7 @@ export default function Home() {
                 loading={disclosureLoading}
               />
             )}
+            </section>
           </>
         )}
 
@@ -929,7 +1010,14 @@ export default function Home() {
 
         {/* Backtest Summary */}
         {backtestData && !backtestData.error && (
-          <div className="glass-card p-4">
+          <section
+            className="glass-card p-5"
+            style={{
+              borderRadius: 20,
+              background:
+                "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+            }}
+          >
             <h3 className="text-sm font-semibold mb-4 flex items-center" style={{ color: "var(--text-dim)" }}>
               백테스트 (최근 1년)
               <Tooltip
@@ -979,7 +1067,7 @@ export default function Home() {
                 <div className="text-xs mt-1" style={{ color: "var(--text-dim)" }}>거래 수</div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {/* Screener Section */}
