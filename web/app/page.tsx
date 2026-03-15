@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { ALL_WATCH_LIST } from "@/lib/constants";
@@ -507,9 +508,29 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Big Tech Drop Scanner */}
-        <section className="animate-in fade-in slide-in-from-top-4 duration-500">
-          <BigTechDropPanel />
+        {/* Featured Scanner */}
+        <section className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p
+                className="text-[11px] font-semibold uppercase tracking-[0.24em]"
+                style={{ color: "var(--accent)" }}
+              >
+                Market Scanner
+              </p>
+              <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
+                먼저 볼 만한 시장 장면
+              </h2>
+            </div>
+            <Link
+              href="/bigtech"
+              className="text-sm font-medium transition-opacity hover:opacity-80"
+              style={{ color: "var(--accent)" }}
+            >
+              빅테크 할인율 전체 보기 →
+            </Link>
+          </div>
+          <BigTechDropPanel variant="preview" />
         </section>
 
         {/* Global Macro Indices */}

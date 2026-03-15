@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
 type StockData = {
@@ -11,7 +12,18 @@ type StockData = {
   dropPct: number;
 };
 
-export default function BigTechDropPanel() {
+type BigTechDropPanelProps = {
+  variant?: 'preview' | 'full';
+};
+
+function getGaugeFill(dropPct: number) {
+  if (dropPct >= 30) return 'linear-gradient(90deg, #ffd84d 0%, #ffbe1b 100%)';
+  if (dropPct >= 20) return 'linear-gradient(90deg, #ffd25c 0%, #ff9d41 100%)';
+  if (dropPct >= 10) return 'linear-gradient(90deg, #ffb35b 0%, #ff8d3a 100%)';
+  return 'linear-gradient(90deg, #ff8d3a 0%, #ff9e42 100%)';
+}
+
+export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelProps) {
   const [data, setData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +72,152 @@ export default function BigTechDropPanel() {
     return null; // 데이터가 없거나 에러 시 패널을 숨김
   }
 
+  if (variant === 'preview') {
+    const leader = data[0];
+    const secondary = data.slice(1, 4);
+
+    return (
+      <Link
+        href="/bigtech"
+        className="block"
+        aria-label="빅테크 할인율 상세 페이지로 이동"
+      >
+        <section
+          className="glass-card overflow-hidden transition-transform duration-200 hover:-translate-y-0.5"
+          style={{
+            borderRadius: 20,
+            padding: 20,
+            background:
+              'linear-gradient(180deg, rgba(17,27,43,0.96) 0%, rgba(11,18,31,0.98) 100%)',
+          }}
+        >
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
+            <div className="lg:w-[46%] rounded-2xl px-5 py-5" style={{
+              background: 'linear-gradient(135deg, rgba(255,207,51,0.1), rgba(255,142,60,0.04) 45%, transparent 90%)',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.24em] uppercase" style={{ color: 'var(--accent)' }}>
+                    Featured Scanner
+                  </p>
+                  <h3 className="mt-2 text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+                    빅테크 할인율
+                  </h3>
+                </div>
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{
+                    color: 'var(--foreground)',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  상세 보기 →
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6" style={{ color: 'var(--text-dim)' }}>
+                고점 대비 할인 폭이 큰 빅테크를 한 화면에서 비교하고, 전용 페이지에서 전체 종목을
+                깊게 확인할 수 있습니다.
+              </p>
+
+              <div className="mt-6 rounded-2xl px-4 py-4" style={{
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{leader.name}</span>
+                      <span
+                        className="text-[11px] px-2 py-1 rounded-md font-medium"
+                        style={{
+                          color: 'rgba(255,255,255,0.42)',
+                          background: 'rgba(255,255,255,0.04)',
+                        }}
+                      >
+                        {leader.symbol}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--text-dim)' }}>
+                      현재가 ${leader.currentPrice.toFixed(2)} · 최고가 ${leader.high52w.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+                      -{leader.dropPct.toFixed(2)}%
+                    </div>
+                    <p className="text-[11px]" style={{ color: 'var(--text-dim)' }}>
+                      가장 큰 할인 폭
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="relative mt-4 h-4 overflow-hidden"
+                  style={{
+                    borderRadius: 999,
+                    background: 'rgba(138, 156, 181, 0.14)',
+                  }}
+                >
+                  <div
+                    className="absolute inset-y-0 left-0"
+                    style={{
+                      width: `${Math.min(100, (leader.dropPct / 50) * 100)}%`,
+                      background: getGaugeFill(leader.dropPct),
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 rounded-2xl px-4 py-4" style={{
+              background: 'rgba(255,255,255,0.015)',
+              border: '1px solid rgba(255,255,255,0.05)',
+            }}>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h4 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                  빠르게 보기
+                </h4>
+                <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
+                  상위 {Math.min(data.length, 4)}종목
+                </span>
+              </div>
+              <div className="space-y-4">
+                {secondary.map((stock) => (
+                  <div key={stock.symbol} className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium" style={{ color: 'var(--foreground)' }}>{stock.name}</span>
+                        <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>
+                          {stock.symbol}
+                        </span>
+                      </div>
+                      <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
+                        -{stock.dropPct.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div
+                      className="relative h-3 overflow-hidden"
+                      style={{ borderRadius: 999, background: 'rgba(138, 156, 181, 0.14)' }}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0"
+                        style={{
+                          width: `${Math.min(100, (stock.dropPct / 50) * 100)}%`,
+                          background: getGaugeFill(stock.dropPct),
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </Link>
+    );
+  }
+
   return (
     <section
       className="glass-card overflow-hidden"
@@ -90,10 +248,7 @@ export default function BigTechDropPanel() {
       <div className="space-y-6">
         {data.map((stock) => {
           const gaugePercent = Math.min(100, (stock.dropPct / 50) * 100);
-          let fill = 'linear-gradient(90deg, #ff8d3a 0%, #ff9e42 100%)';
-          if (stock.dropPct >= 30) fill = 'linear-gradient(90deg, #ffd84d 0%, #ffbe1b 100%)';
-          else if (stock.dropPct >= 20) fill = 'linear-gradient(90deg, #ffd25c 0%, #ff9d41 100%)';
-          else if (stock.dropPct >= 10) fill = 'linear-gradient(90deg, #ffb35b 0%, #ff8d3a 100%)';
+          const fill = getGaugeFill(stock.dropPct);
 
           return (
             <article
