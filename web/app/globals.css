@@ -33,31 +33,31 @@
 
 /* Dark mode — deep refined dark aesthetic (Vercel/Linear style) */
 .dark {
-  --bg: #09090b;
-  --foreground: #ededed;
-  --text-dim: #a1a1aa;
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(255, 255, 255, 0.12);
-  --buy: #10b981;
-  --sell: #ef4444;
-  --hold: #f59e0b;
-  --accent: #8b5cf6;
-  --card: rgba(255, 255, 255, 0.03);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --background: #09090b;
-  --muted: #a1a1aa;
-  --chart-bg: rgba(255, 255, 255, 0.01);
-  --chart-text: #d1d5db;
-  --chart-grid: rgba(255, 255, 255, 0.04);
-  --tooltip-bg: rgba(9, 9, 11, 0.98);
-  --tooltip-border: rgba(255, 255, 255, 0.12);
-  --select-bg: rgba(255, 255, 255, 0.04);
-  --select-border: rgba(255, 255, 255, 0.1);
-  --hover-bg: rgba(255, 255, 255, 0.05);
-  --header-bg: rgba(9, 9, 11, 0.85);
-  --dropdown-bg: rgba(24, 24, 27, 0.98);
-  --orb-opacity: 0.12;
+  --bg: #07111f;
+  --foreground: #f3f4f6;
+  --text-dim: #8d9aaf;
+  --glass: rgba(14, 24, 40, 0.84);
+  --glass-border: rgba(133, 158, 194, 0.14);
+  --glass-hover: rgba(255, 208, 76, 0.22);
+  --buy: #ffcf33;
+  --sell: #ff8e3c;
+  --hold: #ffd76c;
+  --accent: #f6c544;
+  --card: rgba(13, 23, 39, 0.92);
+  --card-border: rgba(133, 158, 194, 0.16);
+  --background: #07111f;
+  --muted: #8d9aaf;
+  --chart-bg: rgba(10, 19, 33, 0.88);
+  --chart-text: #d7dfec;
+  --chart-grid: rgba(120, 138, 168, 0.12);
+  --tooltip-bg: rgba(9, 16, 29, 0.98);
+  --tooltip-border: rgba(183, 198, 222, 0.16);
+  --select-bg: rgba(18, 31, 50, 0.9);
+  --select-border: rgba(133, 158, 194, 0.16);
+  --hover-bg: rgba(255, 207, 51, 0.08);
+  --header-bg: rgba(7, 17, 31, 0.82);
+  --dropdown-bg: rgba(11, 21, 36, 0.98);
+  --orb-opacity: 0.16;
 }
 
 body {
@@ -83,7 +83,12 @@ body {
 }
 
 .dark .glass-card {
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.3);
+  background:
+    linear-gradient(180deg, rgba(21, 34, 55, 0.92) 0%, rgba(11, 21, 36, 0.96) 100%);
+  border-color: rgba(118, 140, 175, 0.16);
+  box-shadow:
+    0 28px 60px -38px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .glass-card:hover {
@@ -127,6 +132,13 @@ body {
   bottom: -50px;
   left: 30%;
   animation-delay: -14s;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(246, 197, 68, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(255, 142, 60, 0.08), transparent 28%),
+    linear-gradient(180deg, #081220 0%, #050b14 100%);
 }
 
 @keyframes float {
