@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchOHLCV, fetchVIX } from "@/lib/yahoo-finance";
+import { fetchVIX } from "@/lib/yahoo-finance";
 import { fetchInvestorData } from "@/lib/investor";
 import { analyze } from "@/lib/strategy";
 import { getCached, setCache } from "@/lib/cache";
