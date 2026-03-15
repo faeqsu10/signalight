@@ -347,6 +347,9 @@ class InteractiveBot:
 
         elif command == "info":
             self._cmd_info(chat_id)
+            
+        elif command == "us_plan":
+            self._cmd_us_plan(chat_id)
 
         elif command == "stop":
             if not _is_admin_chat(chat_id):
@@ -401,6 +404,7 @@ class InteractiveBot:
             "/remove [종목코드] — 감시 종목 제거",
             "/ask [질문] — AI에게 질문 (일 10회)",
             "/score [종목명] — 합류점수 분해 보기",
+            "/us_plan — 미국 빅테크 매수 전략",
         ]
 
         if is_admin:
@@ -820,6 +824,36 @@ class InteractiveBot:
             send_message(answer, chat_id=chat_id)
         else:
             send_message("해당 항목을 찾을 수 없습니다.", chat_id=chat_id)
+
+    def _cmd_us_plan(self, chat_id: str) -> None:
+        """/us_plan — 미국 빅테크 분할 매수 가이드를 표시한다."""
+        msg = (
+            "<b>[💰 빅테크 소수점 분할 매수 가이드]</b>\n"
+            "\n"
+            "<b>예산:</b> 월 50만 원\n"
+            "<b>전략:</b> 하락 알림 봇 연계 분할 매수 (DCA + Price Drop)\n"
+            "\n"
+            "<b>1. 포트폴리오 비중 (총 50만 원)</b>\n"
+            "🥇 엔비디아(NVDA): 40% (20만 원)\n"
+            "🥈 테슬라(TSLA): 30% (15만 원)\n"
+            "🥉 팔란티어(PLTR): 20% (10만 원)\n"
+            "🏅 구글(GOOGL): 10% (5만 원)\n"
+            "\n"
+            "<b>2. 실전 액션 플랜</b>\n"
+            "<b>🔥 1단계: 즉시 기초 물량 확보 (예산 25%)</b>\n"
+            "오늘 당장 소수점 투자로 담기:\n"
+            "• 엔비디아 5만 원 / 테슬라 4만 원\n"
+            "• 팔란티어 2.5만 원 / 구글 1만 원\n"
+            "\n"
+            "<b>🤖 2단계: 알림 연계 기계적 줍줍 (나머지 75%)</b>\n"
+            "장중 알림이 오면 해당 종목 배정 예산 내에서 기계적 추매:\n"
+            "• 👀 관망 (-10%대): 1~2만 원 투입\n"
+            "• 🎯 적극 (-20%대): 2~4만 원 투입\n"
+            "• 🔥 강력 (-30%이상): 5만 원 이상 투입\n"
+            "\n"
+            "<i>💡 알림이 일주일 내내 안 오면? 금요일 밤 남은 예산 1/3을 기계적으로 매수하세요.</i>"
+        )
+        send_message(msg, chat_id=chat_id)
 
     def _cmd_register(self, chat_id: str, text: str) -> None:
         """/register [닉네임] — 구독자 등록."""
