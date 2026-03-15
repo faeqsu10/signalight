@@ -13,6 +13,9 @@ import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
 import DisclosurePanel from "@/components/DisclosurePanel";
 import ThemeToggle from "@/components/ThemeToggle";
+import LLMAnalysisPanel from "@/components/LLMAnalysisPanel";
+import MacroPanel from "@/components/MacroPanel";
+import BigTechDropPanel from "@/components/BigTechDropPanel";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -163,6 +166,7 @@ export default function Home() {
   const [signalCache, setSignalCache] = useState<Record<string, string>>({});
   const [compareIdx, setCompareIdx] = useState<number | null>(null);
   const [showComparePicker, setShowComparePicker] = useState(false);
+  const [scannerMarket, setScannerMarket] = useState<"KR" | "US">("KR");
   const selected = ALL_WATCH_LIST[selectedIdx];
   const compareStock = compareIdx !== null ? ALL_WATCH_LIST[compareIdx] : null;
 
@@ -273,7 +277,7 @@ export default function Home() {
     prevSignalsRef.current = currentKey;
   }, [data, selected.ticker, selected.name, notifPermission]);
 
-  const { data: scannerData } = useSWR("/api/scanner", fetcher, {
+  const { data: scannerData } = useSWR(`/api/scanner?market=${scannerMarket}`, fetcher, {
     refreshInterval: 300000,
   });
 
@@ -321,11 +325,14 @@ export default function Home() {
           >
             SIGNALIGHT
           </h1>
-          {data && !data.error && (
-            <span className="text-xs hidden sm:inline" style={{ color: "var(--text-dim)" }}>
-              {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준
-            </span>
-          )}
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold opacity-40 uppercase tracking-tighter">System Live</span>
+            {data && !data.error && (
+              <span className="text-[9px]" style={{ color: "var(--buy)" }}>
+                Last Sync: {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+          </div>
           {/* Star button */}
           <button
             onClick={() => toggleFavorite(selected.ticker)}
@@ -499,7 +506,17 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* Big Tech Drop Scanner */}
+        <section className="animate-in fade-in slide-in-from-top-4 duration-500">
+          <BigTechDropPanel />
+        </section>
+
+        {/* Global Macro Indices */}
+        <section className="animate-in fade-in slide-in-from-top-4 duration-700">
+          <MacroPanel />
+        </section>
+
         {isLoading && (
           <div className="space-y-6 animate-pulse">
             <div
@@ -588,6 +605,13 @@ export default function Home() {
                 </div>
               );
             })()}
+
+            {/* Gemini AI Analysis Panel */}
+            <LLMAnalysisPanel 
+              analysis={data.llmAnalysis} 
+              sentiment={data.sentiment}
+              loading={isLoading} 
+            />
 
             {/* Comparison Panel */}
             {compareStock && compareData && !compareData.error && (() => {
@@ -894,7 +918,39 @@ export default function Home() {
         {/* Screener Section */}
         {scannerData && (
           <section className="space-y-4">
-            <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>종목 스크리너</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold" style={{ color: "var(--foreground)" }}>종목 스크리너</h2>
+              <div className="flex bg-glass p-1 rounded-xl border border-glass-border">
+                <button
+                  onClick={() => setScannerMarket("KR")}
+                  className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${
+                    scannerMarket === "KR" 
+                      ? "bg-accent text-white shadow-lg" 
+                      : "text-dim hover:text-foreground"
+                  }`}
+                  style={{
+                    backgroundColor: scannerMarket === "KR" ? "var(--accent)" : "transparent",
+                    color: scannerMarket === "KR" ? "#fff" : "var(--text-dim)"
+                  }}
+                >
+                  KOREA
+                </button>
+                <button
+                  onClick={() => setScannerMarket("US")}
+                  className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${
+                    scannerMarket === "US" 
+                      ? "bg-buy text-white shadow-lg" 
+                      : "text-dim hover:text-foreground"
+                  }`}
+                  style={{
+                    backgroundColor: scannerMarket === "US" ? "var(--buy)" : "transparent",
+                    color: scannerMarket === "US" ? "#fff" : "var(--text-dim)"
+                  }}
+                >
+                  USA
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <ScannerCategory
                 title="골든크로스"
