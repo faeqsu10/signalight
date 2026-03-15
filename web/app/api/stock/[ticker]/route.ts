@@ -5,6 +5,7 @@ import { analyze } from "@/lib/strategy";
 import { getCached, setCache } from "@/lib/cache";
 import { logApiRequest } from "@/lib/api-logger";
 import { recordSuccess, recordFailure } from "@/lib/metrics";
+import { getLatestLLMAnalysis, getLatestSentiment } from "@/lib/db";
 
 export async function GET(
   request: Request,
@@ -22,15 +23,8 @@ export async function GET(
       logApiRequest("GET", `/api/stock/${ticker}`, 200, Date.now() - start);
       return NextResponse.json(cached);
     }
-
-    const warnings: string[] = [];
-
-    // OHLCV는 필수 — 실패하면 전체 에러
-    const ohlcv = await fetchOHLCV(ticker, period);
-    recordSuccess("ohlcv");
-
-    // VIX, 외인/기관은 선택적 — 실패해도 나머지 데이터 반환
-    const [vixData, investorData] = await Promise.all([
+    // VIX, 외인/기관, LLM, 뉴스 감성 데이터는 선택적 — 실패해도 나머지 데이터 반환
+    const [vixData, investorData, llmAnalysis, sentiment] = await Promise.all([
       fetchVIX(period).catch((e) => {
         recordFailure("vix");
         warnings.push(`VIX 데이터 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
@@ -41,6 +35,14 @@ export async function GET(
         warnings.push(`외인/기관 데이터 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
         return null;
       }),
+      Promise.resolve(getLatestLLMAnalysis(ticker)).catch((e) => {
+        warnings.push(`LLM 분석 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+        return null;
+      }),
+      Promise.resolve(getLatestSentiment(ticker)).catch((e) => {
+        warnings.push(`뉴스 감성 조회 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+        return null;
+      })
     ]);
 
     if (vixData !== null) recordSuccess("vix");
@@ -50,7 +52,8 @@ export async function GET(
     const volumes = ohlcv.map((d) => d.volume);
     const analysis = analyze(closes, vixData, investorData, volumes);
 
-    const result = { ticker, ohlcv, ...analysis, warnings };
+    const result = { ticker, ohlcv, ...analysis, llmAnalysis, sentiment, warnings };
+
     setCache(cacheKey, result);
 
     logApiRequest("GET", `/api/stock/${ticker}`, 200, Date.now() - start);
