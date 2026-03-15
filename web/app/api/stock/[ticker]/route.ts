@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchVIX } from "@/lib/yahoo-finance";
+import { fetchOHLCV, fetchVIX } from "@/lib/yahoo-finance";
 import { fetchInvestorData } from "@/lib/investor";
 import { analyze } from "@/lib/strategy";
 import { getCached, setCache } from "@/lib/cache";
@@ -12,8 +12,8 @@ export async function GET(
   { params }: { params: { ticker: string } }
 ) {
   const start = Date.now();
+  const { ticker } = params;
   try {
-    const { ticker } = params;
     const url = new URL(request.url);
     const period = parseInt(url.searchParams.get("period") ?? "120", 10) || 120;
     const cacheKey = `stock-${ticker}-${period}`;
@@ -23,7 +23,16 @@ export async function GET(
       logApiRequest("GET", `/api/stock/${ticker}`, 200, Date.now() - start);
       return NextResponse.json(cached);
     }
-    // VIX, 외인/기관, LLM, 뉴스 감성 데이터는 선택적 — 실패해도 나머지 데이터 반환
+
+    const warnings: string[] = [];
+
+    // 필수 데이터: OHLCV
+    const ohlcv = await fetchOHLCV(ticker, period);
+    if (!ohlcv || ohlcv.length === 0) {
+      throw new Error("OHLCV 데이터가 없습니다.");
+    }
+
+    // 선택적 데이터: VIX, 외인/기관, LLM, 뉴스 감성
     const [vixData, investorData, llmAnalysis, sentiment] = await Promise.all([
       fetchVIX(period).catch((e) => {
         recordFailure("vix");
@@ -60,7 +69,6 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     recordFailure("ohlcv");
-    const { ticker } = params;
     logApiRequest("GET", `/api/stock/${ticker}`, 500, Date.now() - start);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
