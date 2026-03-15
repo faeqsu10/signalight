@@ -78,8 +78,15 @@ export default function PositionCard({
       : "var(--text-dim)";
 
   return (
-    <div className="glass-card p-4">
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>
+    <div
+      className="glass-card p-5"
+      style={{
+        borderRadius: 20,
+        background:
+          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+      }}
+    >
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
         내 포지션 진단
       </h3>
 
@@ -105,8 +112,8 @@ export default function PositionCard({
             onClick={handleClear}
             className="px-3 py-2 rounded-xl text-xs transition-colors"
             style={{
-              background: "var(--glass)",
-              border: "1px solid var(--glass-border)",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.05)",
               color: "var(--text-dim)",
             }}
             onMouseEnter={e => (e.currentTarget.style.color = "var(--foreground)")}
@@ -135,8 +142,8 @@ export default function PositionCard({
             <div
               className="mt-3 p-3 rounded-xl space-y-1.5"
               style={{
-                background: "rgba(255,165,2,0.08)",
-                border: "1px solid rgba(255,165,2,0.2)",
+                background: "rgba(255,207,51,0.08)",
+                border: "1px solid rgba(255,207,51,0.14)",
               }}
             >
               <div className="text-sm font-medium" style={{ color: "var(--hold)" }}>

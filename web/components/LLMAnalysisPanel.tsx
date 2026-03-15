@@ -12,7 +12,14 @@ interface Props {
 export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props) {
   if (loading) {
     return (
-      <div className="glass-card p-5 animate-pulse">
+      <div
+        className="glass-card p-5 animate-pulse"
+        style={{
+          borderRadius: 20,
+          background:
+            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        }}
+      >
         <div className="h-4 w-32 bg-gray-700 rounded mb-4"></div>
         <div className="h-20 bg-gray-700 rounded"></div>
       </div>
@@ -21,7 +28,14 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
 
   if (!analysis) {
     return (
-      <div className="glass-card p-5 flex flex-col items-center justify-center text-center">
+      <div
+        className="glass-card p-5 flex flex-col items-center justify-center text-center"
+        style={{
+          borderRadius: 20,
+          background:
+            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        }}
+      >
         <p className="text-sm" style={{ color: "var(--text-dim)" }}>
           이 종목에 대한 AI 분석 데이터가 아직 없습니다.
         </p>
@@ -53,7 +67,14 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
 
   return (
     <div className="space-y-4">
-      <div className="glass-card p-5 overflow-hidden relative">
+      <div
+        className="glass-card p-5 overflow-hidden relative"
+        style={{
+          borderRadius: 20,
+          background:
+            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        }}
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: "var(--accent)" }}>
             <span className="text-lg">✨</span> Gemini AI 종합 분석
@@ -99,14 +120,16 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
         </div>
       </div>
 
-      {/* News Sentiment Section */}
+    {/* News Sentiment Section */}
       {sentiment && (
         <div 
-          className="glass-card p-4 border-l-4" 
+          className="glass-card p-4 border-l-4"
           style={{ 
             borderLeftColor: sentiment.sentiment.includes("긍정") ? "var(--buy)" : 
                             sentiment.sentiment.includes("부정") ? "var(--sell)" : "var(--hold)",
-            background: "rgba(var(--glass-bg-rgb), 0.5)"
+            borderRadius: 20,
+            background:
+              "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
           }}
         >
           <div className="flex items-center justify-between mb-3">

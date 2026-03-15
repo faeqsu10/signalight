@@ -68,8 +68,15 @@ function importanceBadge(reportName: string) {
 export default function DisclosurePanel({ disclosures, loading }: Props) {
   if (loading) {
     return (
-      <div className="glass-card p-4">
-        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>공시 정보</h3>
+      <div
+        className="glass-card p-5"
+        style={{
+          borderRadius: 20,
+          background:
+            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        }}
+      >
+        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>공시 정보</h3>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div
@@ -88,8 +95,15 @@ export default function DisclosurePanel({ disclosures, loading }: Props) {
   }
 
   return (
-    <div className="glass-card p-4">
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--text-dim)" }}>
+    <div
+      className="glass-card p-5"
+      style={{
+        borderRadius: 20,
+        background:
+          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+      }}
+    >
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
         최근 공시 (DART)
       </h3>
       <ul className="space-y-1">
@@ -99,9 +113,9 @@ export default function DisclosurePanel({ disclosures, loading }: Props) {
               href={getDisclosureUrl(d.rcept_no)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-2 text-sm rounded-lg px-2 py-1.5 -mx-2 transition-colors group"
+              className="flex items-start gap-2 text-sm rounded-xl px-3 py-2 transition-colors group"
               style={{ color: "var(--foreground)" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "var(--glass)")}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               <span className="text-xs flex-shrink-0 pt-0.5" style={{ color: "var(--text-dim)" }}>
