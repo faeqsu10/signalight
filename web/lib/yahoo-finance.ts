@@ -73,6 +73,7 @@ export async function fetchOHLCV(
   const data: OHLCVData[] = [];
   for (let i = 0; i < timestamps.length; i++) {
     if (
+      timestamps[i] == null ||
       quote.open[i] == null ||
       quote.high[i] == null ||
       quote.low[i] == null ||

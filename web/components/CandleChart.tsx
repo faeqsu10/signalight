@@ -63,7 +63,11 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
 
     candleSeries.setData(
       ohlcv
-        .filter(d => d.date && d.open != null && d.high != null && d.low != null && d.close != null)
+        .filter(d => d.date && 
+                d.open != null && !isNaN(d.open) &&
+                d.high != null && !isNaN(d.high) &&
+                d.low != null && !isNaN(d.low) &&
+                d.close != null && !isNaN(d.close))
         .map((d) => ({
           time: d.date,
           open: d.open,
@@ -75,7 +79,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
 
     if (signalHistory && signalHistory.length > 0) {
       const markers = signalHistory
-        .filter((e) => e.index < ohlcv.length)
+        .filter((e) => e.index < ohlcv.length && ohlcv[e.index]?.date)
         .map((e) => ({
           time: ohlcv[e.index].date as string,
           position: e.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
@@ -94,12 +98,13 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     });
     shortMASeries.setData(
       ohlcv
-        .map((d, i) =>
-          shortMA[i] !== null
-            ? { time: d.date, value: shortMA[i] as number }
-            : null
-        )
-        .filter(Boolean) as { time: string; value: number }[]
+        .map((d, i) => {
+          const val = shortMA[i];
+          return (d.date && val !== null && !isNaN(val as number))
+            ? { time: d.date, value: val as number }
+            : null;
+        })
+        .filter((item): item is { time: string; value: number } => item !== null)
     );
 
     const longMASeries = chart.addSeries(LineSeries, {
@@ -109,12 +114,13 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     });
     longMASeries.setData(
       ohlcv
-        .map((d, i) =>
-          longMA[i] !== null
-            ? { time: d.date, value: longMA[i] as number }
-            : null
-        )
-        .filter(Boolean) as { time: string; value: number }[]
+        .map((d, i) => {
+          const val = longMA[i];
+          return (d.date && val !== null && !isNaN(val as number))
+            ? { time: d.date, value: val as number }
+            : null;
+        })
+        .filter((item): item is { time: string; value: number } => item !== null)
     );
 
     // Bollinger Bands overlay
@@ -127,12 +133,13 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       });
       bbUpperSeries.setData(
         ohlcv
-          .map((d, i) =>
-            bollingerUpper[i] !== null
-              ? { time: d.date, value: bollingerUpper[i] as number }
-              : null
-          )
-          .filter(Boolean) as { time: string; value: number }[]
+          .map((d, i) => {
+            const val = bollingerUpper[i];
+            return (d.date && val !== null && !isNaN(val as number))
+              ? { time: d.date, value: val as number }
+              : null;
+          })
+          .filter((item): item is { time: string; value: number } => item !== null)
       );
 
       const bbLowerSeries = chart.addSeries(LineSeries, {
@@ -143,12 +150,13 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       });
       bbLowerSeries.setData(
         ohlcv
-          .map((d, i) =>
-            bollingerLower[i] !== null
-              ? { time: d.date, value: bollingerLower[i] as number }
-              : null
-          )
-          .filter(Boolean) as { time: string; value: number }[]
+          .map((d, i) => {
+            const val = bollingerLower[i];
+            return (d.date && val !== null && !isNaN(val as number))
+              ? { time: d.date, value: val as number }
+              : null;
+          })
+          .filter((item): item is { time: string; value: number } => item !== null)
       );
     }
 
@@ -162,7 +170,7 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     });
     volumeSeries.setData(
       ohlcv
-        .filter(d => d.date && d.volume != null)
+        .filter(d => d.date && d.volume != null && !isNaN(d.volume))
         .map((d) => ({
           time: d.date,
           value: d.volume,
