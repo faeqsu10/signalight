@@ -53,7 +53,7 @@ export default function MACDChart({
     histSeries.setData(
       ohlcv
         .map((d, i) =>
-          histogram[i] !== null
+          (d.date && histogram[i] !== null && !isNaN(histogram[i] as number))
             ? {
                 time: d.date,
                 value: histogram[i] as number,
@@ -62,7 +62,7 @@ export default function MACDChart({
               }
             : null
         )
-        .filter(Boolean) as { time: string; value: number; color: string }[]
+        .filter((item): item is { time: string; value: number; color: string } => item !== null)
     );
 
     const macdSeries = chart.addSeries(LineSeries, {
@@ -73,11 +73,11 @@ export default function MACDChart({
     macdSeries.setData(
       ohlcv
         .map((d, i) =>
-          macdLine[i] !== null
+          (d.date && macdLine[i] !== null && !isNaN(macdLine[i] as number))
             ? { time: d.date, value: macdLine[i] as number }
             : null
         )
-        .filter(Boolean) as { time: string; value: number }[]
+        .filter((item): item is { time: string; value: number } => item !== null)
     );
 
     const sigSeries = chart.addSeries(LineSeries, {
@@ -88,11 +88,11 @@ export default function MACDChart({
     sigSeries.setData(
       ohlcv
         .map((d, i) =>
-          signalLine[i] !== null
+          (d.date && signalLine[i] !== null && !isNaN(signalLine[i] as number))
             ? { time: d.date, value: signalLine[i] as number }
             : null
         )
-        .filter(Boolean) as { time: string; value: number }[]
+        .filter((item): item is { time: string; value: number } => item !== null)
     );
 
     chart.timeScale().fitContent();

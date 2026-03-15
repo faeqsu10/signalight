@@ -47,11 +47,11 @@ export default function RSIChart({ ohlcv, rsiValues }: Props) {
     rsiSeries.setData(
       ohlcv
         .map((d, i) =>
-          rsiValues[i] !== null
+          (d.date && rsiValues[i] !== null && !isNaN(rsiValues[i] as number))
             ? { time: d.date, value: rsiValues[i] as number }
             : null
         )
-        .filter(Boolean) as { time: string; value: number }[]
+        .filter((item): item is { time: string; value: number } => item !== null)
     );
 
     const dates = ohlcv

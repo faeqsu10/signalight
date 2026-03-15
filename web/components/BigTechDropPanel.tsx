@@ -19,11 +19,17 @@ export default function BigTechDropPanel() {
     fetch('/api/watchlist/bigtech')
       .then(res => res.json())
       .then(d => {
-        setData(d);
+        if (Array.isArray(d)) {
+          setData(d);
+        } else {
+          console.error('Invalid data received:', d);
+          setData([]);
+        }
         setLoading(false);
       })
       .catch(e => {
         console.error(e);
+        setData([]);
         setLoading(false);
       });
   }, []);
@@ -39,6 +45,10 @@ export default function BigTechDropPanel() {
         </div>
       </div>
     );
+  }
+
+  if (data.length === 0) {
+    return null; // 데이터가 없거나 에러 시 패널을 숨김
   }
 
   return (

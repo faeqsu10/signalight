@@ -62,13 +62,15 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     });
 
     candleSeries.setData(
-      ohlcv.map((d) => ({
-        time: d.date,
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      }))
+      ohlcv
+        .filter(d => d.date && d.open != null && d.high != null && d.low != null && d.close != null)
+        .map((d) => ({
+          time: d.date,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+        }))
     );
 
     if (signalHistory && signalHistory.length > 0) {
@@ -159,13 +161,15 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
       scaleMargins: { top: 0.8, bottom: 0 },
     });
     volumeSeries.setData(
-      ohlcv.map((d) => ({
-        time: d.date,
-        value: d.volume,
-        color: d.close >= d.open
-          ? "rgba(0,212,170,0.3)"
-          : "rgba(255,71,87,0.3)",
-      }))
+      ohlcv
+        .filter(d => d.date && d.volume != null)
+        .map((d) => ({
+          time: d.date,
+          value: d.volume,
+          color: d.close >= d.open
+            ? "rgba(0,212,170,0.3)"
+            : "rgba(255,71,87,0.3)",
+        }))
     );
 
     chart.timeScale().fitContent();
