@@ -288,7 +288,7 @@ export function analyze(
 
   // 5. OBV Divergence
   if (obv) {
-    const obvStrength = detectOBVDivergenceStrength(closes, obv, 20);
+    const obvStrength = detectOBVDivergenceStrength(closes, obv);
     if (obvStrength > 0) {
       const weighted = obvStrength * 0.8 * regimeWeight(regime, "buy");
       signals.push({
