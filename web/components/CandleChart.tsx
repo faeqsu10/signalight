@@ -78,16 +78,23 @@ export default function CandleChart({ ohlcv, shortMA, longMA, bollingerUpper, bo
     );
 
     if (signalHistory && signalHistory.length > 0) {
-      const markers = signalHistory
+      // 중복된 날짜의 마커가 있으면 차트가 에러를 낼 수 있으므로 Map을 사용해 날짜당 하나만 남김
+      const markerMap = new Map<string, any>();
+      
+      signalHistory
         .filter((e) => e.index < ohlcv.length && ohlcv[e.index]?.date)
-        .map((e) => ({
-          time: ohlcv[e.index].date as string,
-          position: e.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
-          color: e.type === "buy" ? "#00d4aa" : "#ff4757",
-          shape: e.type === "buy" ? ("arrowUp" as const) : ("arrowDown" as const),
-          text: e.type === "buy" ? "매수" : "매도",
-        }))
-        .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+        .forEach((e) => {
+          const date = ohlcv[e.index].date;
+          markerMap.set(date, {
+            time: date,
+            position: e.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
+            color: e.type === "buy" ? "#00d4aa" : "#ff4757",
+            shape: e.type === "buy" ? ("arrowUp" as const) : ("arrowDown" as const),
+            text: e.type === "buy" ? "매수" : "매도",
+          });
+        });
+
+      const markers = Array.from(markerMap.values()).sort((a, b) => a.time.localeCompare(b.time));
       createSeriesMarkers(candleSeries, markers);
     }
 
