@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
+import AppNavigation from "@/components/AppNavigation";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -50,7 +51,10 @@ export default function RootLayout({
         <div className="orb orb-3" aria-hidden="true" />
 
         <div className="relative z-10">
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <AppNavigation />
+            {children}
+          </ThemeProvider>
         </div>
       </body>
     </html>
