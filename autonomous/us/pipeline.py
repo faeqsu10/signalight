@@ -7,6 +7,7 @@ import logging
 import os
 from datetime import date
 from typing import Dict, List
+from uuid import uuid4
 
 from trading.rules import TradeRule
 from trading.position_tracker import PositionTracker
@@ -19,6 +20,8 @@ from autonomous.us.execution import USSafeExecutor
 from autonomous.evaluator import PerformanceEvaluator
 from autonomous.optimizer import StrategyOptimizer
 from config import DRY_RUN_VIRTUAL_ASSET_USD
+from infra.logging_config import log_event
+from infra.ops_event_store import OpsEventStore
 
 logger = logging.getLogger("signalight.us")
 
@@ -55,6 +58,8 @@ class USAutonomousPipeline:
             position_tracker=self.tracker,
             currency="$",
         )
+        self.ops_store = OpsEventStore()
+        self.service_name = "auto-us"
         self._optimizer_status = None
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시
         self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
@@ -91,15 +96,77 @@ class USAutonomousPipeline:
             "sector_map": self.config.sector_map,
         }
 
+    def _new_cycle_id(self, cycle_type: str) -> str:
+        service_name = getattr(self, "service_name", "auto-us")
+        return f"{service_name}:{cycle_type}:{date.today().isoformat()}:{uuid4().hex[:8]}"
+
+    def _record_ops_event(self, level: str, event: str, message: str, cycle_id: str = "", **context) -> None:
+        store = getattr(self, "ops_store", None) or OpsEventStore()
+        service_name = getattr(self, "service_name", "auto-us")
+        store.record_event(
+            level=level,
+            service=service_name,
+            event=event,
+            message=message,
+            cycle_id=cycle_id or None,
+            ticker=context.get("ticker"),
+            order_id=context.get("order_id"),
+            status=context.get("status"),
+            error_type=context.get("error_type"),
+            context=context,
+        )
+
+    def _start_run(self, cycle_type: str, summary: Dict = None) -> str:
+        cycle_id = self._new_cycle_id(cycle_type)
+        store = getattr(self, "ops_store", None) or OpsEventStore()
+        service_name = getattr(self, "service_name", "auto-us")
+        store.start_run(service_name, cycle_id, summary=summary)
+        log_event(
+            logger, logging.INFO, f"{cycle_type}_started",
+            f"{cycle_type} started",
+            cycle_id=cycle_id,
+            service=service_name,
+        )
+        return cycle_id
+
+    def _finish_run(self, cycle_type: str, cycle_id: str, status: str, summary: Dict = None) -> None:
+        summary = summary or {}
+        store = getattr(self, "ops_store", None) or OpsEventStore()
+        service_name = getattr(self, "service_name", "auto-us")
+        store.finish_run(
+            service=service_name,
+            cycle_id=cycle_id,
+            status=status,
+            scanned_count=summary.get("scan_count", 0),
+            analyzed_count=summary.get("analyze_count", 0),
+            buy_count=summary.get("buys", 0),
+            sell_count=summary.get("sells", 0),
+            warning_count=summary.get("warning_count", 0),
+            error_count=summary.get("error_count", len(summary.get("errors", []))),
+            summary=summary,
+        )
+        log_event(
+            logger,
+            logging.INFO if status == "success" else logging.WARNING,
+            f"{cycle_type}_finished",
+            f"{cycle_type} finished: {status}",
+            cycle_id=cycle_id,
+            service=service_name,
+            status=status,
+            **summary,
+        )
+
     def run_morning_scan(self) -> int:
         """장 시작 시 유니버스 스캔 + 후보 캐싱.
 
         Returns:
             스캔된 후보 종목 수
         """
+        cycle_id = self._start_run("morning_scan")
         today = date.today()
         if self._daily_scan_date == today:
             logger.info("🇺🇸 오늘 스캔 이미 완료 — 스킵")
+            self._finish_run("morning_scan", cycle_id, "skipped", {"scan_count": len(self._daily_candidates)})
             return len(self._daily_candidates)
 
         logger.info("🇺🇸 === US 장 시작 유니버스 스캔 (%s) ===", today)
@@ -123,6 +190,7 @@ class USAutonomousPipeline:
                 )
         except Exception as e:
             logger.warning("최적화 파라미터 적용 실패: %s", e)
+            self._record_ops_event("WARNING", "optimizer_apply_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # 유니버스 스캔
         held = set(pos["ticker"] for pos in self.tracker.get_all_open())
@@ -132,6 +200,21 @@ class USAutonomousPipeline:
             logger.info("🇺🇸 매수 후보 없음")
             self._daily_candidates = []
             self._daily_scan_date = today
+            self._record_ops_event("INFO", "no_buy_candidates", "매수 후보 없음", cycle_id=cycle_id, status="empty")
+            try:
+                open_count = len(self.tracker.get_all_open())
+                chat_id = self.config.auto_trade_chat_id
+                if chat_id:
+                    from bot.telegram import send_message
+                    send_message(
+                        f"📋 <b>[{self.config.bot_label}] 매수 후보 없음</b>\n"
+                        f"기존 보유 {open_count}종목 모니터링 중",
+                        chat_id=chat_id,
+                        bot_token=self.config.bot_token or None,
+                    )
+            except Exception:
+                pass
+            self._finish_run("morning_scan", cycle_id, "success", {"scan_count": 0, "analyze_count": 0})
             return 0
 
         logger.info("🇺🇸 매수 후보 스캔: %d종목", len(candidates))
@@ -156,7 +239,14 @@ class USAutonomousPipeline:
             )
         except Exception as e:
             logger.warning("스캔 요약 전송 실패: %s", e)
+            self._record_ops_event("WARNING", "scan_summary_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
+        self._finish_run(
+            "morning_scan",
+            cycle_id,
+            "success",
+            {"scan_count": len(candidates), "analyze_count": len(self._daily_candidates)},
+        )
         return len(self._daily_candidates)
 
     def run_daily_cycle(self) -> Dict:
@@ -167,11 +257,14 @@ class USAutonomousPipeline:
         Returns:
             일일 결과 요약
         """
+        cycle_id = self._start_run("daily_cycle")
         logger.info("🇺🇸 === US 일일 마무리 시작 (%s) ===", date.today())
 
         result = {
             "date": date.today().isoformat(),
             "errors": [],
+            "warning_count": 0,
+            "error_count": 0,
         }
 
         # 에퀴티 스냅샷
@@ -180,18 +273,24 @@ class USAutonomousPipeline:
         except Exception as e:
             logger.warning("에퀴티 스냅샷 실패: %s", e)
             result["errors"].append(f"equity: {e}")
+            result["warning_count"] += 1
+            self._record_ops_event("WARNING", "equity_snapshot_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # 일일 PnL 기록
         try:
             self._record_daily_pnl()
         except Exception as e:
             logger.warning("일일 PnL 기록 실패: %s", e)
+            result["warning_count"] += 1
+            self._record_ops_event("WARNING", "daily_pnl_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # 일일 요약 전송
         try:
             self.evaluator.daily_summary(optimizer_status=self._optimizer_status)
         except Exception as e:
             logger.warning("일일 요약 전송 실패: %s", e)
+            result["warning_count"] += 1
+            self._record_ops_event("WARNING", "daily_summary_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # ── 웹 대시보드 데이터 export + 자동 배포 ──
         try:
@@ -217,12 +316,15 @@ class USAutonomousPipeline:
                 logger.info("웹 데이터 export + push 완료")
         except Exception as e:
             logger.warning("웹 데이터 export 실패: %s", e)
+            result["warning_count"] += 1
+            self._record_ops_event("WARNING", "dashboard_export_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # 내일 스캔을 위해 캐시 초기화
         self._daily_candidates = []
         self._daily_scan_date = None
 
         logger.info("🇺🇸 === US 일일 마무리 완료 ===")
+        self._finish_run("daily_cycle", cycle_id, "success" if not result["errors"] else "warning", result)
         return result
 
     def run_intraday_monitor(self) -> Dict:
@@ -231,7 +333,23 @@ class USAutonomousPipeline:
         Returns:
             {"buys": int, "sells": int}
         """
-        result = {"buys": 0, "sells": 0}
+        cycle_id = self._start_run("intraday_monitor")
+        result = {"buys": 0, "sells": 0, "warning_count": 0, "error_count": 0}
+
+        if not self._daily_candidates and self._daily_scan_date != date.today():
+            logger.info("🇺🇸 후보 캐시 없음 — 장중 재시작 복구를 위해 1회 재스캔")
+            try:
+                self.run_morning_scan()
+            except Exception as e:
+                logger.warning("🇺🇸 장중 재스캔 실패: %s", e)
+                result["warning_count"] += 1
+                self._record_ops_event(
+                    "WARNING",
+                    "intraday_rescan_failed",
+                    str(e),
+                    cycle_id=cycle_id,
+                    error_type=type(e).__name__,
+                )
 
         logger.info("🇺🇸 장중 모니터링 시작 (%d 보유, %d 후보)",
                     len(self.tracker.get_all_open()), len(self._daily_candidates))
@@ -256,6 +374,23 @@ class USAutonomousPipeline:
                         )
                         if order and order.status in ("filled", "simulated"):
                             result["sells"] += 1
+                            self._record_ops_event(
+                                "INFO",
+                                "sell_executed",
+                                f"{order.ticker} sell executed",
+                                cycle_id=cycle_id,
+                                ticker=order.ticker,
+                                order_id=getattr(order, "order_id", None),
+                                status=order.status,
+                            )
+                            _entry_date = decision["position"].get("entry_date", "")
+                            try:
+                                _holding_days = (
+                                    (date.today() - date.fromisoformat(_entry_date)).days
+                                    if _entry_date else None
+                                )
+                            except (ValueError, TypeError):
+                                _holding_days = None
                             self.evaluator.send_trade_notification(
                                 side="sell",
                                 name=order.name,
@@ -264,6 +399,8 @@ class USAutonomousPipeline:
                                 price=order.price,
                                 reason=decision["recommendation"].get("action", ""),
                                 pnl_pct=decision["recommendation"].get("pnl_pct"),
+                                pnl_amount=decision["recommendation"].get("pnl_amount"),
+                                holding_days=_holding_days,
                             )
                     except Exception as e:
                         logger.error(
@@ -271,8 +408,17 @@ class USAutonomousPipeline:
                             decision["stock_data"]["name"],
                             decision["stock_data"]["ticker"], e,
                         )
+                        result["error_count"] += 1
+                        self._record_ops_event(
+                            "ERROR", "sell_execution_failed", str(e),
+                            cycle_id=cycle_id,
+                            ticker=decision["stock_data"].get("ticker"),
+                            error_type=type(e).__name__,
+                        )
             except Exception as e:
                 logger.error("보유 종목 매도 분석 실패 — 매수 체크로 진행: %s", e, exc_info=True)
+                result["error_count"] += 1
+                self._record_ops_event("ERROR", "sell_analysis_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
         # ── 캐시된 후보 매수 체크 ──
         if self._daily_candidates:
@@ -292,6 +438,15 @@ class USAutonomousPipeline:
                         )
                         if order and order.status in ("filled", "simulated"):
                             result["buys"] += 1
+                            self._record_ops_event(
+                                "INFO",
+                                "buy_executed",
+                                f"{order.ticker} buy executed",
+                                cycle_id=cycle_id,
+                                ticker=order.ticker,
+                                order_id=getattr(order, "order_id", None),
+                                status=order.status,
+                            )
                             scan_sigs = decision.get("scan_signals", [])
                             reason_parts = [f"score={decision['confluence_score']:.1f}"]
                             if scan_sigs:
@@ -303,6 +458,15 @@ class USAutonomousPipeline:
                                 quantity=order.quantity,
                                 price=order.price,
                                 reason=" ".join(reason_parts),
+                                details={
+                                    "stop_loss": decision["recommendation"].get("stop_loss", 0),
+                                    "target1": decision["recommendation"].get("target1", 0),
+                                    "target2": decision["recommendation"].get("target2", 0),
+                                    "weight_pct": decision["recommendation"].get(
+                                        "weight_pct", self.config.target_weight_pct
+                                    ),
+                                    "regime": decision["stock_data"].get("market_regime", ""),
+                                },
                             )
                             self._daily_candidates = [
                                 c for c in self._daily_candidates
@@ -310,22 +474,34 @@ class USAutonomousPipeline:
                             ]
                     except Exception as e:
                         logger.error("매수 실행 실패: %s", e)
+                        result["error_count"] += 1
+                        self._record_ops_event(
+                            "ERROR", "buy_execution_failed", str(e),
+                            cycle_id=cycle_id,
+                            ticker=decision["stock_data"].get("ticker"),
+                            error_type=type(e).__name__,
+                        )
 
         logger.info("🇺🇸 장중 모니터링: 매수 %d건, 매도 %d건",
                     result["buys"], result["sells"])
 
+        self._finish_run("intraday_monitor", cycle_id, "success" if result["error_count"] == 0 else "warning", result)
         return result
 
     def run_weekly_evaluation(self) -> Dict:
         """주간 성과 평가를 실행한다."""
+        cycle_id = self._start_run("weekly_evaluation")
         logger.info("🇺🇸 === US 주간 성과 평가 시작 ===")
 
         try:
             self._update_optimizer_with_closed_trades()
         except Exception as e:
             logger.warning("optimizer 거래 결과 갱신 실패: %s", e)
+            self._record_ops_event("WARNING", "weekly_optimizer_update_failed", str(e), cycle_id=cycle_id, error_type=type(e).__name__)
 
-        return self.evaluator.weekly_report()
+        report = self.evaluator.weekly_report()
+        self._finish_run("weekly_evaluation", cycle_id, "success", {})
+        return report
 
     # ── 내부 메서드 ──
 
@@ -355,6 +531,14 @@ class USAutonomousPipeline:
                 )
                 if order and order.status in ("filled", "simulated"):
                     sell_count += 1
+                    _entry_date = decision["position"].get("entry_date", "")
+                    try:
+                        _holding_days = (
+                            (date.today() - date.fromisoformat(_entry_date)).days
+                            if _entry_date else None
+                        )
+                    except (ValueError, TypeError):
+                        _holding_days = None
                     self.evaluator.send_trade_notification(
                         side="sell",
                         name=order.name,
@@ -363,6 +547,8 @@ class USAutonomousPipeline:
                         price=order.price,
                         reason=decision["recommendation"].get("action", ""),
                         pnl_pct=decision["recommendation"].get("pnl_pct"),
+                        pnl_amount=decision["recommendation"].get("pnl_amount"),
+                        holding_days=_holding_days,
                     )
             except Exception as e:
                 logger.error("매도 실행 실패: %s", e)
@@ -449,6 +635,15 @@ class USAutonomousPipeline:
                         quantity=order.quantity,
                         price=order.price,
                         reason=" ".join(reason_parts),
+                        details={
+                            "stop_loss": decision["recommendation"].get("stop_loss", 0),
+                            "target1": decision["recommendation"].get("target1", 0),
+                            "target2": decision["recommendation"].get("target2", 0),
+                            "weight_pct": decision["recommendation"].get(
+                                "weight_pct", self.config.target_weight_pct
+                            ),
+                            "regime": decision["stock_data"].get("market_regime", ""),
+                        },
                     )
             except Exception as e:
                 logger.error("매수 실행 실패: %s", e)

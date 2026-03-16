@@ -14,7 +14,7 @@ from typing import Callable, Dict, Optional
 
 import requests
 
-from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ADMIN_CHAT_ID
 from bot.telegram import send_message
 from autonomous.commands import is_auto_trade_chat, handle_auto_command
 from autonomous.us.commands import handle_us_command
@@ -71,6 +71,11 @@ def _send_with_keyboard(chat_id: str, text: str, inline_keyboard: list) -> Optio
     })
 
 
+def _send_admin_message(text: str) -> bool:
+    """관리자 전용 채팅으로 메시지를 전송한다."""
+    return send_message(text, chat_id=TELEGRAM_ADMIN_CHAT_ID)
+
+
 def _answer_callback(callback_query_id: str, text: str = "") -> None:
     """인라인 키보드 콜백 쿼리에 응답한다 (로딩 스피너 해제)."""
     _post("answerCallbackQuery", {
@@ -81,7 +86,7 @@ def _answer_callback(callback_query_id: str, text: str = "") -> None:
 
 def _is_admin_chat(chat_id: str) -> bool:
     """관리자 chat_id인지 확인한다."""
-    return str(chat_id) == str(TELEGRAM_CHAT_ID)
+    return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
 
 
 def _is_allowed_chat(chat_id: str) -> bool:
@@ -177,7 +182,7 @@ class InteractiveBot:
             {"text": "거부", "callback_data": f"reject_trade:{ticker}"},
         ]]
 
-        result = _send_with_keyboard(TELEGRAM_CHAT_ID, text, keyboard)
+        result = _send_with_keyboard(TELEGRAM_ADMIN_CHAT_ID, text, keyboard)
         if result and result.get("ok"):
             with self._pending_lock:
                 self._pending_trades[ticker] = order_data
@@ -876,7 +881,7 @@ class InteractiveBot:
                 chat_id=chat_id,
             )
             # 관리자에게 알림
-            send_message(f"[구독자 등록] {nickname} (chat_id: {chat_id})")
+            _send_admin_message(f"[구독자 등록] {nickname} (chat_id: {chat_id})")
             logger.info("구독자 등록: %s (chat_id=%s)", nickname, chat_id)
         else:
             send_message("이미 등록된 구독자입니다.", chat_id=chat_id)
@@ -903,7 +908,7 @@ class InteractiveBot:
 
         if unregister_subscriber(chat_id):
             send_message("구독이 해제되었습니다. 더 이상 알림을 받지 않습니다.", chat_id=chat_id)
-            send_message(f"[구독자 해제] chat_id: {chat_id}")
+            _send_admin_message(f"[구독자 해제] chat_id: {chat_id}")
             logger.info("구독자 해제: chat_id=%s", chat_id)
         else:
             send_message("등록된 구독자가 아닙니다.", chat_id=chat_id)
@@ -918,7 +923,7 @@ class InteractiveBot:
 
         subscribers = get_active_subscribers()
         if not subscribers:
-            send_message("등록된 구독자가 없습니다.")
+            _send_admin_message("등록된 구독자가 없습니다.")
             return
 
         lines = ["<b>[구독자 목록]</b>", ""]
@@ -930,7 +935,7 @@ class InteractiveBot:
             lines.append(f"{i}. {nick} ({cid})")
             lines.append(f"   종목: {ticker_str}")
         lines.append(f"\n총 {len(subscribers)}명")
-        send_message("\n".join(lines))
+        _send_admin_message("\n".join(lines))
 
     def _cmd_add(self, chat_id: str, text: str) -> None:
         """/add 종목코드 종목명 — 감시 종목 추가."""
@@ -1037,7 +1042,7 @@ class InteractiveBot:
 
     def _cmd_scan(self, chat_id: str) -> None:
         """/scan 명령 처리. 수동 시장 스캔을 트리거한다."""
-        send_message("수동 스캔을 시작합니다. 잠시 후 결과를 전송합니다...")
+        send_message("수동 스캔을 시작합니다. 잠시 후 결과를 전송합니다...", chat_id=chat_id)
         logger.info("/scan 명령: 수동 시장 스캔 요청")
 
         # 스캔은 별도 스레드에서 실행해 polling 루프를 블로킹하지 않는다
@@ -1092,12 +1097,12 @@ class InteractiveBot:
 
             if stock_data_list:
                 message = format_signal_alert(stock_data_list)
-                send_message(message)
+                _send_admin_message(message)
             else:
-                send_message("수동 스캔: 데이터를 수집하지 못했습니다.")
+                _send_admin_message("수동 스캔: 데이터를 수집하지 못했습니다.")
         except Exception as e:
             logger.error("수동 스캔 실행 오류: %s", e)
-            send_message(f"수동 스캔 오류: {e}")
+            _send_admin_message(f"수동 스캔 오류: {e}")
 
     # ── 콜백 핸들러 ───────────────────────────
 
@@ -1144,7 +1149,7 @@ class InteractiveBot:
         side_label = "매수" if side == "buy" else "매도"
 
         logger.info("거래 승인: %s %s %d주 @%d", ticker, side_label, quantity, price)
-        send_message(
+        _send_admin_message(
             f"<b>[거래 승인]</b> {name} ({ticker})\n"
             f"{side_label} {quantity:,}주 @ {price:,}원\n"
             f"주문이 실행됩니다."
@@ -1157,7 +1162,7 @@ class InteractiveBot:
                 execute_fn(order_data)
             except Exception as e:
                 logger.error("주문 실행 오류 [%s]: %s", ticker, e)
-                send_message(f"<b>[주문 오류]</b> {name} ({ticker}): {e}")
+                _send_admin_message(f"<b>[주문 오류]</b> {name} ({ticker}): {e}")
 
     def _reject_trade(self, query_id: str, ticker: str) -> None:
         """거래 거부 콜백을 처리한다."""
@@ -1176,7 +1181,7 @@ class InteractiveBot:
         side_label = "매수" if side == "buy" else "매도"
 
         logger.info("거래 거부: %s %s", ticker, side_label)
-        send_message(
+        _send_admin_message(
             f"<b>[거래 거부]</b> {name} ({ticker})\n"
             f"{side_label} 주문이 취소되었습니다."
         )
