@@ -11,8 +11,7 @@ export default function SignalPanel({ signals }: Props) {
       className="glass-card p-5"
       style={{
         borderRadius: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface-strong)",
       }}
     >
       <h3 className="text-sm font-semibold mb-4 flex items-center" style={{ color: "var(--accent)" }}>
@@ -40,8 +39,8 @@ export default function SignalPanel({ signals }: Props) {
             key={i}
             className="flex items-start gap-2 text-sm rounded-xl px-3 py-3"
             style={{
-              background: "rgba(255,255,255,0.018)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "var(--panel-muted)",
+              border: "1px solid var(--panel-border-strong)",
             }}
           >
             <span
@@ -49,20 +48,20 @@ export default function SignalPanel({ signals }: Props) {
               style={
                 s.type === "buy"
                   ? {
-                      background: "rgba(255,207,51,0.12)",
+                      background: "rgba(15,159,122,0.1)",
                       color: "var(--buy)",
-                      border: "1px solid rgba(255,207,51,0.2)",
+                      border: "1px solid rgba(15,159,122,0.16)",
                     }
                   : s.type === "sell"
                   ? {
-                      background: "rgba(255,142,60,0.14)",
+                      background: "rgba(217,100,59,0.12)",
                       color: "var(--sell)",
-                      border: "1px solid rgba(255,142,60,0.22)",
+                      border: "1px solid rgba(217,100,59,0.18)",
                     }
                   : {
-                      background: "rgba(255,255,255,0.03)",
+                      background: "var(--chip-surface)",
                       color: "var(--text-dim)",
-                      border: "1px solid rgba(255,255,255,0.05)",
+                      border: "1px solid var(--chip-border)",
                     }
               }
             >

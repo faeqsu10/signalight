@@ -16,7 +16,7 @@ function ScoreGauge({ score }: { score: number }) {
     <div className="flex items-center gap-3">
       <div
         className="flex-1 h-2.5 rounded-full overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.08)" }}
+        style={{ background: "var(--chip-surface)" }}
       >
         <div
           className="h-full rounded-full transition-all duration-500"
@@ -79,8 +79,7 @@ export default function RecoveryPanel({ recovery, loading }: RecoveryPanelProps)
       className="glass-card p-5"
       style={{
         borderRadius: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface-strong)",
       }}
     >
       <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
@@ -95,7 +94,7 @@ export default function RecoveryPanel({ recovery, loading }: RecoveryPanelProps)
 
       <div
         className="divide-y rounded-2xl px-3 py-1 mt-4"
-        style={{ borderColor: "var(--glass-border)" }}
+        style={{ background: "var(--panel-muted)", border: "1px solid var(--panel-border-strong)", borderColor: "var(--panel-border-strong)" }}
       >
         {recovery.checks.map((check) => (
           <CheckItem

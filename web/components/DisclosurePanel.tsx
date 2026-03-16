@@ -53,9 +53,9 @@ function importanceBadge(reportName: string) {
       <span
         className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
         style={{
-          background: "rgba(108,92,231,0.15)",
+          background: "rgba(184,134,11,0.12)",
           color: "var(--accent)",
-          border: "1px solid rgba(108,92,231,0.2)",
+          border: "1px solid rgba(184,134,11,0.18)",
         }}
       >
         자사주
@@ -72,8 +72,7 @@ export default function DisclosurePanel({ disclosures, loading }: Props) {
         className="glass-card p-5"
         style={{
           borderRadius: 20,
-          background:
-            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+          background: "var(--panel-surface-strong)",
         }}
       >
         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>공시 정보</h3>
@@ -99,8 +98,7 @@ export default function DisclosurePanel({ disclosures, loading }: Props) {
       className="glass-card p-5"
       style={{
         borderRadius: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface-strong)",
       }}
     >
       <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
@@ -115,7 +113,7 @@ export default function DisclosurePanel({ disclosures, loading }: Props) {
               rel="noopener noreferrer"
               className="flex items-start gap-2 text-sm rounded-xl px-3 py-2 transition-colors group"
               style={{ color: "var(--foreground)" }}
-              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+              onMouseEnter={e => (e.currentTarget.style.background = "var(--chip-surface)")}
               onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               <span className="text-xs flex-shrink-0 pt-0.5" style={{ color: "var(--text-dim)" }}>

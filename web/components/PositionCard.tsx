@@ -82,8 +82,7 @@ export default function PositionCard({
       className="glass-card p-5"
       style={{
         borderRadius: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface-strong)",
       }}
     >
       <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--accent)" }}>
@@ -112,8 +111,8 @@ export default function PositionCard({
             onClick={handleClear}
             className="px-3 py-2 rounded-xl text-xs transition-colors"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "var(--chip-surface)",
+              border: "1px solid var(--chip-border)",
               color: "var(--text-dim)",
             }}
             onMouseEnter={e => (e.currentTarget.style.color = "var(--foreground)")}
@@ -142,8 +141,8 @@ export default function PositionCard({
             <div
               className="mt-3 p-3 rounded-xl space-y-1.5"
               style={{
-                background: "rgba(255,207,51,0.08)",
-                border: "1px solid rgba(255,207,51,0.14)",
+                background: "var(--chip-active-surface)",
+                border: "1px solid var(--chip-active-border)",
               }}
             >
               <div className="text-sm font-medium" style={{ color: "var(--hold)" }}>

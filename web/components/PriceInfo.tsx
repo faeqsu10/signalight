@@ -43,8 +43,7 @@ export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" 
       className="glass-card p-5"
       style={{
         borderRadius: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface-strong)",
       }}
     >
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -57,8 +56,8 @@ export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" 
               className="text-[11px] px-2 py-1 rounded-full"
               style={{
                 color: "var(--text-dim)",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.05)",
+                background: "var(--chip-surface)",
+                border: "1px solid var(--chip-border)",
               }}
             >
               {ticker}
@@ -94,8 +93,8 @@ export default function PriceInfo({ name, ticker, ohlcv, signals, market = "KR" 
         <div
           className="flex items-center gap-2 rounded-2xl px-4 py-3"
           style={{
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.05)",
+            background: "var(--panel-muted)",
+            border: "1px solid var(--panel-border-strong)",
           }}
         >
           <span

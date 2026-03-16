@@ -16,8 +16,7 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
         className="glass-card p-5 animate-pulse"
         style={{
           borderRadius: 20,
-          background:
-            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+          background: "var(--panel-surface-strong)",
         }}
       >
         <div className="h-4 w-32 bg-gray-700 rounded mb-4"></div>
@@ -32,8 +31,7 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
         className="glass-card p-5 flex flex-col items-center justify-center text-center"
         style={{
           borderRadius: 20,
-          background:
-            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+          background: "var(--panel-surface-strong)",
         }}
       >
         <p className="text-sm" style={{ color: "var(--text-dim)" }}>
@@ -71,8 +69,7 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
         className="glass-card p-5 overflow-hidden relative"
         style={{
           borderRadius: 20,
-          background:
-            "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+          background: "var(--panel-surface-strong)",
         }}
       >
         <div className="flex items-center justify-between mb-4">
@@ -120,7 +117,7 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
         </div>
       </div>
 
-    {/* News Sentiment Section */}
+  {/* News Sentiment Section */}
       {sentiment && (
         <div 
           className="glass-card p-4 border-l-4"
@@ -128,17 +125,32 @@ export default function LLMAnalysisPanel({ analysis, sentiment, loading }: Props
             borderLeftColor: sentiment.sentiment.includes("긍정") ? "var(--buy)" : 
                             sentiment.sentiment.includes("부정") ? "var(--sell)" : "var(--hold)",
             borderRadius: 20,
-            background:
-              "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+            background: "var(--panel-surface-strong)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-bold flex items-center gap-1.5">
               📰 뉴스 감성 분석
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                sentiment.sentiment.includes("긍정") ? "bg-buy/10 text-buy" : 
-                sentiment.sentiment.includes("부정") ? "bg-sell/10 text-sell" : "bg-hold/10 text-hold"
-              }`}>
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded-md"
+                style={{
+                  background: sentiment.sentiment.includes("긍정")
+                    ? "rgba(15,159,122,0.1)"
+                    : sentiment.sentiment.includes("부정")
+                    ? "rgba(217,100,59,0.12)"
+                    : "rgba(195,139,18,0.12)",
+                  color: sentiment.sentiment.includes("긍정")
+                    ? "var(--buy)"
+                    : sentiment.sentiment.includes("부정")
+                    ? "var(--sell)"
+                    : "var(--hold)",
+                  border: sentiment.sentiment.includes("긍정")
+                    ? "1px solid rgba(15,159,122,0.16)"
+                    : sentiment.sentiment.includes("부정")
+                    ? "1px solid rgba(217,100,59,0.18)"
+                    : "1px solid rgba(195,139,18,0.18)",
+                }}
+              >
                 {sentiment.sentiment} ({Math.round(sentiment.confidence * 100)}%)
               </span>
             </h4>
