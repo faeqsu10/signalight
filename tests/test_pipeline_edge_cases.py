@@ -515,23 +515,78 @@ class TestIntradayRestartRecovery:
         assert ("saturday", "04:50") in slots
         assert ("saturday", "05:50") in slots
 
-    def test_us_kst_gate_runs_only_on_matching_slot(self):
-        """KST 슬롯 게이트는 ET 기준 허용 슬롯일 때만 콜백을 실행한다."""
+    def test_us_et_gate_runs_only_on_matching_time(self):
+        """US 시간 게이트는 실제 ET 시각이 일치할 때만 콜백을 실행한다."""
         from autonomous.us import runner as us_runner
 
         callback = MagicMock(return_value={"ok": True})
-        matching_slot = ("monday", "22:35")
-        non_matching_slot = ("monday", "21:35")
+        matching_time = datetime(2026, 3, 16, 9, 35)
+        non_matching_time = datetime(2026, 3, 16, 8, 35)
 
-        with patch.object(us_runner, "_current_kst_slot", return_value=matching_slot):
+        with patch.object(us_runner, "_current_us_time", return_value=matching_time):
             result = us_runner._run_if_kst_matches_et_time(("monday",), 9, 35, callback)
 
         assert result == {"ok": True}
         callback.assert_called_once_with()
 
         callback.reset_mock()
-        with patch.object(us_runner, "_current_kst_slot", return_value=non_matching_slot):
+        with patch.object(us_runner, "_current_us_time", return_value=non_matching_time):
             result = us_runner._run_if_kst_matches_et_time(("monday",), 9, 35, callback)
+
+        assert result is None
+        callback.assert_not_called()
+
+    def test_us_et_window_blocks_market_close_slot(self):
+        """장중 모니터링은 15:40 ET까지 허용하고 15:50 ET는 막는다."""
+        from autonomous.us import runner as us_runner
+
+        callback = MagicMock(return_value={"ok": True})
+
+        with patch.object(us_runner, "_current_us_time", return_value=datetime(2026, 3, 16, 15, 40)):
+            result = us_runner._run_if_kst_matches_et_window(
+                ("monday",),
+                9,
+                40,
+                15,
+                40,
+                5,
+                callback,
+            )
+
+        assert result == {"ok": True}
+        callback.assert_called_once_with()
+
+        callback.reset_mock()
+        with patch.object(us_runner, "_current_us_time", return_value=datetime(2026, 3, 16, 15, 50)):
+            result = us_runner._run_if_kst_matches_et_window(
+                ("monday",),
+                9,
+                40,
+                15,
+                40,
+                5,
+                callback,
+            )
+
+        assert result is None
+        callback.assert_not_called()
+
+    def test_us_et_window_requires_interval_alignment(self):
+        """장중 모니터링은 허용 구간 안이어도 5분 슬롯이 아니면 실행하지 않는다."""
+        from autonomous.us import runner as us_runner
+
+        callback = MagicMock(return_value={"ok": True})
+
+        with patch.object(us_runner, "_current_us_time", return_value=datetime(2026, 3, 16, 14, 42)):
+            result = us_runner._run_if_kst_matches_et_window(
+                ("monday",),
+                9,
+                40,
+                15,
+                40,
+                5,
+                callback,
+            )
 
         assert result is None
         callback.assert_not_called()

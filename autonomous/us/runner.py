@@ -199,6 +199,23 @@ def _current_kst_slot() -> tuple[str, str]:
     return DAY_NAMES[now.weekday()], now.strftime("%H:%M")
 
 
+def _current_us_time() -> datetime:
+    """tzdata 없이도 현재 ET 시각을 얻는다."""
+    original_tz = os.environ.get("TZ")
+    try:
+        os.environ["TZ"] = "America/New_York"
+        if hasattr(time, "tzset"):
+            time.tzset()
+        return datetime.now()
+    finally:
+        if original_tz is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = original_tz
+        if hasattr(time, "tzset"):
+            time.tzset()
+
+
 def _kst_slots_for_et_time(et_day: str, hour: int, minute: int) -> list[tuple[str, str]]:
     """ET 시각을 KST 스케줄 슬롯(EST/EDT 둘 다)으로 변환한다."""
     et_day_index = DAY_NAMES.index(et_day)
@@ -217,13 +234,11 @@ def _schedule_tagged(day: str, time_str: str, callback, tag: str):
 
 
 def _run_if_kst_matches_et_time(et_days: tuple[str, ...], target_hour: int, target_minute: int, callback):
-    current_slot = _current_kst_slot()
-    allowed_slots = {
-        slot
-        for et_day in et_days
-        for slot in _kst_slots_for_et_time(et_day, target_hour, target_minute)
-    }
-    if current_slot not in allowed_slots:
+    now_et = _current_us_time()
+    current_day = DAY_NAMES[now_et.weekday()]
+    if current_day not in et_days:
+        return None
+    if now_et.hour != target_hour or now_et.minute != target_minute:
         return None
     return callback()
 
@@ -237,17 +252,17 @@ def _run_if_kst_matches_et_window(
     interval: int,
     callback,
 ):
-    current_slot = _current_kst_slot()
-    allowed_slots = set()
-    for et_day in et_days:
-        for hour in range(start_hour, end_hour + 1):
-            for minute in range(0, 60, interval):
-                if hour == start_hour and minute < start_minute:
-                    continue
-                if hour == end_hour and minute > end_minute:
-                    continue
-                allowed_slots.update(_kst_slots_for_et_time(et_day, hour, minute))
-    if current_slot not in allowed_slots:
+    now_et = _current_us_time()
+    current_day = DAY_NAMES[now_et.weekday()]
+    if current_day not in et_days:
+        return None
+
+    now_minutes = now_et.hour * 60 + now_et.minute
+    start_minutes = start_hour * 60 + start_minute
+    end_minutes = end_hour * 60 + end_minute
+    if now_minutes < start_minutes or now_minutes > end_minutes:
+        return None
+    if now_et.minute % interval != 0:
         return None
     return callback()
 
