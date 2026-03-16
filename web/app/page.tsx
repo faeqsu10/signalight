@@ -65,17 +65,17 @@ export default function Home() {
             </p>
             <div className="space-y-3">
               <h1 className="max-w-3xl text-4xl font-bold leading-tight" style={{ color: "var(--foreground)" }}>
-                홈은 시장 요약만 보여주고, 실행 화면은 기능별로 분리합니다.
+                지금 시장에서 먼저 볼 화면을 빠르게 고르는 대시보드입니다.
               </h1>
               <p className="max-w-2xl text-sm leading-7" style={{ color: "var(--text-dim)" }}>
-                빅테크 마켓 스캐너, 한국 시그널 상세, 자율매매 운영을 한 화면에 겹쳐두지 않고
-                작업 목적별로 나눴습니다. 여기서는 지금 어디로 들어가야 하는지만 빠르게 판단하면 됩니다.
+                미국 빅테크 스캐너, 한국 종목 분석, 자율매매 운영, 매크로 체크포인트를 한 번에 훑고
+                지금 필요한 작업 화면으로 바로 들어갈 수 있게 정리했습니다.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-xs">
-              <span className="badge badge-accent">Overview = 진입 허브</span>
-              <span className="badge badge-buy">Signals = 분석 작업 화면</span>
-              <span className="badge badge-hold">Big Tech = US 스캐너 전용</span>
+              <span className="badge badge-accent">Overview = 빠른 상황판</span>
+              <span className="badge badge-buy">Signals = 종목 분석 워크스페이스</span>
+              <span className="badge badge-hold">Big Tech = 미국 스캐너 전용</span>
             </div>
           </div>
 
