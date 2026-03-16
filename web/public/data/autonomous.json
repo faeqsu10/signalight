@@ -94,7 +94,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-17T04:50:26"
+    "updated_at": "2026-03-17T05:50:05"
   },
   "us": {
     "equity": [
@@ -107,9 +107,9 @@
       },
       {
         "date": "2026-03-17",
-        "total": 9998713,
-        "invested": 548930,
-        "cash": 9449782,
+        "total": 9998057,
+        "invested": 5386130,
+        "cash": 4611927,
         "positions": 3
       }
     ],
@@ -176,6 +176,6 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-17T04:50:26"
+    "updated_at": "2026-03-17T05:50:05"
   }
 }
