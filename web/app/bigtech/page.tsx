@@ -23,7 +23,7 @@ export default function BigTechPage() {
       <WorkspaceHero
         eyebrow="US Big Tech"
         title="BIG TECH MARKET SCANNER"
-        description="빅테크는 홈에서 요약으로만 소비할 정보가 아니라, 별도 스캐너로 읽어야 하는 작업 화면입니다. 여기서는 52주 고점 대비 낙폭과 매수 우선순위를 한 화면에서 비교합니다."
+        description="52주 고점 대비 낙폭과 매수 우선순위를 한 화면에서 비교합니다."
         badges={["Drawdown · Priority · Action", "US Scanner Focus"]}
         actions={[
           { href: "/", label: "Overview" },
@@ -90,8 +90,8 @@ export default function BigTechPage() {
         <section className="space-y-4">
           <SectionHeader
             eyebrow="Live Scanner"
-            title="현재 할인율 비교"
-            description="숫자와 게이지를 중심으로 읽도록 단순화한 전용 영역입니다. 홈 미리보기보다 더 직접적으로 종목 간 간격을 비교할 수 있습니다."
+            title="Drawdown Board"
+            description="숫자와 게이지 중심으로 종목 간 간격을 바로 비교합니다."
           />
           <BigTechDropPanel />
         </section>

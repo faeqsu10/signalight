@@ -37,8 +37,7 @@ export default function MacroPanel() {
       style={{
         borderRadius: 20,
         padding: 20,
-        background:
-          "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+        background: "var(--panel-surface)",
       }}
     >
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -71,8 +70,8 @@ export default function MacroPanel() {
               className="flex flex-col justify-between rounded-2xl px-4 py-4 transition-transform hover:-translate-y-0.5"
               style={{
                 minHeight: 128,
-                background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 100%)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "var(--panel-muted)",
+                border: "1px solid var(--panel-border-strong)",
               }}
             >
               <div className="space-y-3">

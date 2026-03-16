@@ -471,7 +471,7 @@ export default function AutonomousPage() {
       <WorkspaceHero
         eyebrow="Autonomous"
         title="AUTONOMOUS OPERATIONS"
-        description="이 화면은 자동매매를 분석 대상이 아니라 운영 대상처럼 읽기 위한 콘솔입니다. KR·US 운용 상태, 에퀴티 흐름, 일별 손익, 최근 체결을 한 흐름으로 점검합니다."
+        description="KR·US 운용 상태, 에퀴티, 일별 손익, 최근 체결을 한 흐름으로 점검합니다."
         badges={[
           market === "kr" ? "KR Runtime" : "US Runtime",
           marketData?.updated_at
@@ -595,8 +595,8 @@ export default function AutonomousPage() {
             <section className="space-y-4">
               <SectionHeader
                 eyebrow="Performance"
-                title="전략 성과 요약"
-                description="총 자산, 누적 수익률, MDD, 승률을 한 번에 읽어 현재 운용 상태를 빠르게 파악하는 구간입니다."
+                title="Performance Board"
+                description="총 자산, 누적 수익률, MDD, 승률을 한 번에 확인합니다."
               />
               <SummaryCards data={marketData} market={market} />
             </section>
@@ -606,8 +606,8 @@ export default function AutonomousPage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <SectionHeader
                   eyebrow="Equity"
-                  title="에퀴티 커브"
-                  description="총 자산이 일자별로 어떻게 움직였는지 보면서 전략의 방향성과 흔들림을 확인합니다."
+                  title="Equity Curve"
+                  description="총 자산 흐름과 변동 폭을 확인합니다."
                 />
                 <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip
@@ -632,8 +632,8 @@ export default function AutonomousPage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <SectionHeader
                   eyebrow="Daily PnL"
-                  title="일별 손익 흐름"
-                  description="최근 14일 동안 실현 손익이 어떻게 분포했는지 읽어 전략의 리듬을 확인합니다."
+                  title="Daily PnL"
+                  description="최근 손익 리듬을 빠르게 확인합니다."
                 />
                 <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip
@@ -656,8 +656,8 @@ export default function AutonomousPage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <SectionHeader
                   eyebrow="Execution"
-                  title="최근 거래"
-                  description="실제 매수·매도 로그를 보면서 현재 전략이 어떤 이유로 움직였는지 추적합니다."
+                  title="Recent Trades"
+                  description="실행 로그와 최근 체결을 추적합니다."
                 />
                 <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip

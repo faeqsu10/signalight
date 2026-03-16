@@ -94,14 +94,13 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
           style={{
             borderRadius: 20,
             padding: 20,
-            background:
-              'linear-gradient(180deg, rgba(17,27,43,0.96) 0%, rgba(11,18,31,0.98) 100%)',
+            background: 'var(--panel-surface-strong)',
           }}
         >
           <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
             <div className="rounded-2xl px-5 py-5 lg:w-[46%]" style={{
               background: 'linear-gradient(135deg, rgba(255,207,51,0.1), rgba(255,142,60,0.04) 45%, transparent 90%)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              border: '1px solid var(--panel-border-strong)',
             }}>
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -129,8 +128,8 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
               </p>
 
               <div className="mt-6 rounded-2xl px-4 py-4" style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.05)',
+                background: 'var(--panel-muted)',
+                border: '1px solid var(--panel-border-strong)',
               }}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -188,8 +187,8 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
             </div>
 
             <div className="flex-1 rounded-2xl px-4 py-4" style={{
-              background: 'rgba(255,255,255,0.015)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              background: 'var(--panel-muted)',
+              border: '1px solid var(--panel-border-strong)',
             }}>
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h4 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -205,8 +204,8 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
                     key={stock.symbol}
                     className="space-y-2 rounded-2xl px-3 py-3"
                     style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.04)',
+                      background: 'var(--panel-muted)',
+                      border: '1px solid var(--panel-border-strong)',
                     }}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -253,8 +252,7 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
       style={{
         borderRadius: 20,
         padding: 20,
-        background:
-          'linear-gradient(180deg, rgba(17,27,43,0.96) 0%, rgba(11,18,31,0.98) 100%)',
+        background: 'var(--panel-surface-strong)',
       }}
     >
       <div
@@ -262,7 +260,7 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
         style={{
           background:
             'linear-gradient(135deg, rgba(255,207,51,0.08), rgba(255,142,60,0.02) 45%, transparent 80%)',
-          border: '1px solid rgba(255,255,255,0.04)',
+          border: '1px solid var(--panel-border-strong)',
         }}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -310,8 +308,8 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
               key={stock.symbol}
               className="flex flex-col gap-3 rounded-2xl px-4 py-4"
               style={{
-                background: 'rgba(255,255,255,0.015)',
-                border: '1px solid rgba(255,255,255,0.04)',
+                background: 'var(--panel-muted)',
+                border: '1px solid var(--panel-border-strong)',
               }}
             >
               <div className="flex justify-between items-end gap-3">

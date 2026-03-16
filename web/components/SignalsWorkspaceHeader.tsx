@@ -91,8 +91,7 @@ export default function SignalsWorkspaceHeader({
       <div
         className="mx-auto flex max-w-7xl flex-col gap-4 rounded-[28px] px-6 py-6 lg:flex-row lg:items-center lg:justify-between glass-card"
         style={{
-          background:
-            "radial-gradient(circle at top left, rgba(246,197,68,0.08), transparent 24%), linear-gradient(180deg, rgba(18,31,50,0.94) 0%, rgba(9,17,29,0.98) 100%)",
+          background: "var(--hero-surface)",
         }}
       >
         <div className="flex items-start gap-4">
@@ -104,7 +103,7 @@ export default function SignalsWorkspaceHeader({
               ANALYSIS WORKSTATION
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-              홈의 Overview에서 들어온 뒤, 여기서는 한국 주식 종목 하나를 깊게 읽는 데만 집중합니다.
+              한 종목을 깊게 읽는 KR 분석 화면입니다.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
               <span

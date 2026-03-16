@@ -24,7 +24,7 @@ export default function MacroPage() {
       <WorkspaceHero
         eyebrow="Macro"
         title="MACRO PULSE DESK"
-        description="매크로는 홈에서 짧게 보고 끝낼 정보가 아니라, 신호와 포지션 판단 전 시장 컨텍스트를 맞추는 읽기 단위입니다. 여기서는 금리, 달러, 원자재, 변동성의 방향만 따로 모아 해석합니다."
+        description="금리, 달러, 원자재, 변동성 흐름을 한 화면에서 정렬합니다."
         badges={["Rates · Dollar · Commodities", "Context Before Signals"]}
         actions={[
           { href: "/", label: "Overview" },
@@ -91,8 +91,8 @@ export default function MacroPage() {
         <section className="space-y-4">
           <SectionHeader
             eyebrow="Dashboard"
-            title="오늘의 매크로 체크포인트"
-            description="대시보드 전체와 같은 네이비·골드 톤 위에서, 실제 지표 수치는 이 패널 안에서만 읽게 정리했습니다."
+            title="Macro Board"
+            description="핵심 지표를 빠르게 훑는 실시간 보드입니다."
           />
           <MacroPanel />
         </section>
@@ -112,10 +112,10 @@ export default function MacroPage() {
               Next Step
             </p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-              매크로 해석 뒤에는 신호 화면으로 이어집니다.
+              Next Move
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-              컨텍스트를 읽은 뒤에는 한국 종목 상세나 US 빅테크 스캐너로 넘어가 실제 의사결정을 진행하는 흐름이 자연스럽습니다.
+              컨텍스트를 맞춘 뒤 Signals나 Big Tech로 바로 이어집니다.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

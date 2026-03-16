@@ -51,8 +51,7 @@ export default function Home() {
         style={{
           borderRadius: 28,
           padding: 32,
-          background:
-            "radial-gradient(circle at top left, rgba(246,197,68,0.12), transparent 28%), linear-gradient(180deg, rgba(18,31,50,0.94) 0%, rgba(9,17,29,0.98) 100%)",
+          background: "var(--hero-surface)",
         }}
       >
         <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
@@ -65,11 +64,10 @@ export default function Home() {
             </p>
             <div className="space-y-3">
               <h1 className="max-w-3xl text-4xl font-bold leading-tight" style={{ color: "var(--foreground)" }}>
-                지금 시장에서 먼저 볼 화면을 빠르게 고르는 대시보드입니다.
+                오늘의 마켓 보드
               </h1>
               <p className="max-w-2xl text-sm leading-7" style={{ color: "var(--text-dim)" }}>
-                미국 빅테크 스캐너, 한국 종목 분석, 자율매매 운영, 매크로 체크포인트를 한 번에 훑고
-                지금 필요한 작업 화면으로 바로 들어갈 수 있게 정리했습니다.
+                핵심 흐름만 먼저 보고, 필요한 작업 화면으로 바로 들어갑니다.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-xs">
@@ -82,8 +80,8 @@ export default function Home() {
           <div
             className="rounded-3xl p-5"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "var(--panel-muted)",
+              border: "1px solid var(--panel-border-strong)",
             }}
           >
             <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
@@ -155,10 +153,10 @@ export default function Home() {
               Featured Scanner
             </p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-              빅테크 스캐너는 홈 미리보기만 유지합니다.
+              Big Tech Snapshot
             </h2>
             <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-              상세 비교와 액션 해석은 전용 메뉴에서 보고, 홈에서는 오늘의 할인율 분위기만 빠르게 확인합니다.
+              할인율 분위기만 빠르게 보고 상세는 전용 스캐너에서 확인합니다.
             </p>
           </div>
           <Link href="/bigtech" className="text-sm font-medium" style={{ color: "var(--accent)" }}>
@@ -178,7 +176,7 @@ export default function Home() {
               Macro
             </p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-              거시 지표는 별도 읽기 단위로 분리합니다.
+              Macro Snapshot
             </h2>
           </div>
           <Link href="/macro" className="text-sm font-medium" style={{ color: "var(--accent)" }}>

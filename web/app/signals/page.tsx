@@ -385,8 +385,8 @@ export default function Home() {
             <section className="space-y-4">
               <SectionHeader
                 eyebrow="Selected Asset"
-                title={`${selected.name} 상세 분석`}
-                description="선택한 종목의 신호, AI 해석, 차트, 모멘텀 지표를 한 흐름으로 읽는 구간입니다."
+                title={`${selected.name} Analysis`}
+                description="핵심 신호와 해석을 한 흐름으로 봅니다."
               />
 
             <SignalStatusBanner signals={data.signals as { type: string }[]} />
@@ -472,8 +472,8 @@ export default function Home() {
             <section className="space-y-4">
               <SectionHeader
                 eyebrow="Market Read"
-                title="가격 흐름과 변동성"
-                description="현재 가격, 공포지수, 캔들 흐름을 먼저 보고 이후의 기술 지표로 내려가는 구조로 정리했습니다."
+                title="Price Structure"
+                description="가격, 변동성, 캔들 흐름을 먼저 봅니다."
               />
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
@@ -556,8 +556,8 @@ export default function Home() {
             <section className="space-y-4">
               <SectionHeader
                 eyebrow="Momentum"
-                title="기술 지표와 신호 해석"
-                description="RSI와 MACD는 서로 다른 속도로 추세 변화를 잡습니다. 아래에서 시그널 카드와 함께 읽도록 묶었습니다."
+                title="Momentum Stack"
+                description="RSI, MACD, 시그널을 함께 읽습니다."
               />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
@@ -649,8 +649,8 @@ export default function Home() {
             <section className="space-y-4">
               <SectionHeader
                 eyebrow="Execution"
-                title="회복 가능성과 포지션 판단"
-                description="실제 대응에 가까운 체크리스트와 포지션 카드, 공시 영역을 마지막 액션 구간으로 모았습니다."
+                title="Decision Stack"
+                description="회복 체크, 포지션 판단, 공시를 한곳에 묶었습니다."
               />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RecoveryPanel
