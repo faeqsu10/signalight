@@ -496,3 +496,42 @@ class TestIntradayRestartRecovery:
         pipeline.run_morning_scan.assert_called_once_with()
         assert result["warning_count"] == 0
         assert result["error_count"] == 0
+
+    def test_us_kst_slots_cover_dst_and_standard_open(self):
+        """US 장 시작 시각은 EDT/EST 둘 다 KST 슬롯으로 등록된다."""
+        from autonomous.us.runner import _kst_slots_for_et_time
+
+        slots = _kst_slots_for_et_time("monday", 9, 35)
+
+        assert ("monday", "22:35") in slots
+        assert ("monday", "23:35") in slots
+
+    def test_us_kst_slots_cover_dst_and_standard_close(self):
+        """US 장 마감 직전 시각은 다음날 KST 슬롯까지 포함한다."""
+        from autonomous.us.runner import _kst_slots_for_et_time
+
+        slots = _kst_slots_for_et_time("friday", 15, 50)
+
+        assert ("saturday", "04:50") in slots
+        assert ("saturday", "05:50") in slots
+
+    def test_us_kst_gate_runs_only_on_matching_slot(self):
+        """KST 슬롯 게이트는 ET 기준 허용 슬롯일 때만 콜백을 실행한다."""
+        from autonomous.us import runner as us_runner
+
+        callback = MagicMock(return_value={"ok": True})
+        matching_slot = ("monday", "22:35")
+        non_matching_slot = ("monday", "21:35")
+
+        with patch.object(us_runner, "_current_kst_slot", return_value=matching_slot):
+            result = us_runner._run_if_kst_matches_et_time(("monday",), 9, 35, callback)
+
+        assert result == {"ok": True}
+        callback.assert_called_once_with()
+
+        callback.reset_mock()
+        with patch.object(us_runner, "_current_kst_slot", return_value=non_matching_slot):
+            result = us_runner._run_if_kst_matches_et_time(("monday",), 9, 35, callback)
+
+        assert result is None
+        callback.assert_not_called()

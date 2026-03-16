@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """미국 주식 자율 트레이딩 스케줄 러너.
 
 main.py와 완전 독립된 별도 프로세스로 동작한다.
@@ -32,11 +34,14 @@ sys.path.insert(
 )
 
 import schedule
-from infra.logging_config import setup_logging
+from infra.logging_config import setup_logging, log_event
+from infra.ops_event_store import OpsEventStore
 from autonomous.us.config import US_AUTO_CONFIG, US_MEANREV_CONFIG
 from autonomous.us.pipeline import USAutonomousPipeline
+from bot.telegram import send_message
 
 logger = None  # setup_logging()으로 초기화
+DAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
 def parse_args():
@@ -64,7 +69,8 @@ def parse_args():
 
 def main():
     global logger
-    logger = setup_logging()
+    logger = setup_logging(service_name="auto-us", log_basename="auto-us")
+    ops_store = OpsEventStore()
 
     args = parse_args()
 
@@ -81,6 +87,14 @@ def main():
         config.dry_run = True
         logger.info("🇺🇸 US 시뮬레이션(Paper Trading) 모드로 시작합니다.")
 
+    ops_store.record_event(
+        level="INFO",
+        service="auto-us",
+        event="runner_started",
+        message="US runner started",
+        context={"mode": args.mode, "live": args.live, "once": args.once},
+    )
+
     pipeline = USAutonomousPipeline(config=config)
 
     # 시그널 핸들러 (Ctrl+C / SIGTERM — 현재 작업 완료 후 종료)
@@ -90,6 +104,12 @@ def main():
         nonlocal _shutdown_requested
         logger.info("종료 시그널 수신 — 현재 작업 완료 후 종료")
         _shutdown_requested = True
+        chat_id = config.auto_trade_chat_id
+        if chat_id:
+            send_message(
+                f"⛔ <b>{config.bot_label} 종료 중...</b>",
+                chat_id=chat_id, bot_token=config.bot_token or None,
+            )
 
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
@@ -111,6 +131,14 @@ def main():
         config.max_drawdown_pct,
     )
 
+    if chat_id:
+        startup_msg = (
+            f"✅ <b>{config.bot_label} 파이프라인 시작</b>\n"
+            f"모드: {'실전' if not config.dry_run else 'Paper Trading'}\n"
+            f"포지션: {config.target_weight_pct:.0f}% × 최대 {config.max_positions}종목"
+        )
+        send_message(startup_msg, chat_id=chat_id, bot_token=config.bot_token or None)
+
     if args.once:
         logger.info("1회 실행 모드")
         if args.monitor_only:
@@ -125,76 +153,192 @@ def main():
 
     logger.info("US 스케줄 등록 완료. 실행 중... (Ctrl+C로 종료)")
 
-    while not _shutdown_requested:
-        try:
-            schedule.run_pending()
-        except Exception as e:
-            logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
-        time.sleep(30)
+    try:
+        while not _shutdown_requested:
+            try:
+                schedule.run_pending()
+            except Exception as e:
+                logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
+                ops_store.record_event(
+                    level="ERROR",
+                    service="auto-us",
+                    event="schedule_loop_error",
+                    message=str(e),
+                    error_type=type(e).__name__,
+                )
+            time.sleep(30)
+    except Exception as e:
+        logger.critical("파이프라인 크래시: %s", e, exc_info=True)
+        log_event(logger, logging.CRITICAL, "runner_crash", "US runner crashed", service="auto-us", error_type=type(e).__name__)
+        ops_store.record_event(
+            level="CRITICAL",
+            service="auto-us",
+            event="runner_crash",
+            message=str(e),
+            error_type=type(e).__name__,
+        )
+        chat_id = config.auto_trade_chat_id
+        if chat_id:
+            send_message(
+                f"🚨 <b>{config.bot_label} 크래시!</b>\n{str(e)[:200]}",
+                chat_id=chat_id, bot_token=config.bot_token or None,
+            )
+        raise
 
     logger.info("US 파이프라인 정상 종료")
+    ops_store.record_event(
+        level="INFO",
+        service="auto-us",
+        event="runner_stopped",
+        message="US runner stopped",
+    )
+
+
+def _current_kst_slot() -> tuple[str, str]:
+    now = datetime.now()
+    return DAY_NAMES[now.weekday()], now.strftime("%H:%M")
+
+
+def _kst_slots_for_et_time(et_day: str, hour: int, minute: int) -> list[tuple[str, str]]:
+    """ET 시각을 KST 스케줄 슬롯(EST/EDT 둘 다)으로 변환한다."""
+    et_day_index = DAY_NAMES.index(et_day)
+    slots = set()
+    for kst_offset_hours in (13, 14):  # EDT +13h, EST +14h
+        total_minutes = hour * 60 + minute + kst_offset_hours * 60
+        day_shift, local_minutes = divmod(total_minutes, 24 * 60)
+        local_day = DAY_NAMES[(et_day_index + day_shift) % 7]
+        local_hour, local_minute = divmod(local_minutes, 60)
+        slots.add((local_day, f"{local_hour:02d}:{local_minute:02d}"))
+    return sorted(slots)
+
+
+def _schedule_tagged(day: str, time_str: str, callback, tag: str):
+    return getattr(schedule.every(), day).at(time_str).do(callback).tag(tag)
+
+
+def _run_if_kst_matches_et_time(et_days: tuple[str, ...], target_hour: int, target_minute: int, callback):
+    current_slot = _current_kst_slot()
+    allowed_slots = {
+        slot
+        for et_day in et_days
+        for slot in _kst_slots_for_et_time(et_day, target_hour, target_minute)
+    }
+    if current_slot not in allowed_slots:
+        return None
+    return callback()
+
+
+def _run_if_kst_matches_et_window(
+    et_days: tuple[str, ...],
+    start_hour: int,
+    start_minute: int,
+    end_hour: int,
+    end_minute: int,
+    interval: int,
+    callback,
+):
+    current_slot = _current_kst_slot()
+    allowed_slots = set()
+    for et_day in et_days:
+        for hour in range(start_hour, end_hour + 1):
+            for minute in range(0, 60, interval):
+                if hour == start_hour and minute < start_minute:
+                    continue
+                if hour == end_hour and minute > end_minute:
+                    continue
+                allowed_slots.update(_kst_slots_for_et_time(et_day, hour, minute))
+    if current_slot not in allowed_slots:
+        return None
+    return callback()
+
+
+def _run_if_kst_matches_weekly(et_day: str, target_hour: int, target_minute: int, callback):
+    return _run_if_kst_matches_et_time((et_day,), target_hour, target_minute, callback)
 
 
 def _register_schedules(pipeline: USAutonomousPipeline, monitor_only: bool, config=None):
     """KST 기준 스케줄을 등록한다.
 
-    3단계 흐름 (KST 기준, EDT +13h):
-        23:35 KST (월~금) = 09:35 ET — 장 시작 유니버스 스캔
-        23:40~05:40 KST (화~토) = 09:40~15:40 ET — 장중 실시간 모니터링 (매수+매도)
-        05:50 KST (화~토) = 15:50 ET — 장 마감 일일 마무리
-
-    서머타임(EDT, 3월~11월) 적용 시 1시간 빠름.
-    서버를 KST로 운영하므로 KST 기준 시각으로 등록.
+    ET 기준 거래 시각을 EST/EDT 두 경우의 KST 슬롯으로 모두 등록하고,
+    실제 실행 시점에는 현재 US/Eastern 시각으로 한 번 더 검증한다.
     """
     if config is None:
         config = US_AUTO_CONFIG
     interval = config.monitor_interval_min
 
     if not monitor_only:
-        # 평일 23:35 KST (월~금) = 09:35 ET — 장 시작 유니버스 스캔
         for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
-            getattr(schedule.every(), day).at("23:35").do(
-                pipeline.run_morning_scan
-            )
-        logger.info("스케줄: 월~금 23:35 KST (09:35 ET) — US 장 시작 유니버스 스캔")
-
-        # 화~토 05:50 KST = 15:50 ET — 장 마감 일일 마무리
-        for day in ("tuesday", "wednesday", "thursday", "friday", "saturday"):
-            getattr(schedule.every(), day).at("05:50").do(
-                pipeline.run_daily_cycle
-            )
-        logger.info("스케줄: 화~토 05:50 KST (15:50 ET) — US 장 마감 일일 마무리")
-
-    # 장중 실시간 모니터링 (매수+매도): KST 23:40~05:40, 5분 간격
-
-    # KST 23:40~23:55 구간 (ET 09:40~09:55): 월~금에 등록
-    for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
-        for minute in range(40, 60, interval):
-            t = f"23:{minute:02d}"
-            getattr(schedule.every(), day).at(t).do(
-                pipeline.run_intraday_monitor
-            )
-
-    # KST 00:00~05:40 구간 (ET 10:00~15:40): 화~토에 등록
-    for day in ("tuesday", "wednesday", "thursday", "friday", "saturday"):
-        for hour in range(0, 6):
-            for minute in range(0, 60, interval):
-                # 05:45 이후 제외 (05:50에 daily_cycle)
-                if hour == 5 and minute >= 45:
-                    continue
-                t = f"{hour:02d}:{minute:02d}"
-                getattr(schedule.every(), day).at(t).do(
-                    pipeline.run_intraday_monitor
+            for local_day, local_time in _kst_slots_for_et_time(
+                day, config.market_open_hour, config.market_open_minute
+            ):
+                _schedule_tagged(
+                    local_day,
+                    local_time,
+                    lambda cb=pipeline.run_morning_scan, h=config.market_open_hour, m=config.market_open_minute: _run_if_kst_matches_et_time(
+                        ("monday", "tuesday", "wednesday", "thursday", "friday"),
+                        h,
+                        m,
+                        cb,
+                    ),
+                    "us-morning-scan",
                 )
 
+        for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+            for local_day, local_time in _kst_slots_for_et_time(
+                day, config.market_close_hour, config.market_close_minute
+            ):
+                _schedule_tagged(
+                    local_day,
+                    local_time,
+                    lambda cb=pipeline.run_daily_cycle, h=config.market_close_hour, m=config.market_close_minute: _run_if_kst_matches_et_time(
+                        ("monday", "tuesday", "wednesday", "thursday", "friday"),
+                        h,
+                        m,
+                        cb,
+                    ),
+                    "us-daily-cycle",
+                )
+
+        logger.info(
+            "스케줄: ET 09:35 / 15:50 기준 KST 슬롯 등록 완료 (EST/EDT 자동 대응)"
+        )
+
+    for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+        for hour in range(config.market_open_hour, config.market_close_hour + 1):
+            for minute in range(0, 60, interval):
+                if hour == config.market_open_hour and minute < 40:
+                    continue
+                if hour == config.market_close_hour and minute > 40:
+                    continue
+                for local_day, local_time in _kst_slots_for_et_time(day, hour, minute):
+                    _schedule_tagged(
+                        local_day,
+                        local_time,
+                        lambda cb=pipeline.run_intraday_monitor: _run_if_kst_matches_et_window(
+                            ("monday", "tuesday", "wednesday", "thursday", "friday"),
+                            config.market_open_hour,
+                            40,
+                            config.market_close_hour,
+                            40,
+                            interval,
+                            cb,
+                        ),
+                        "us-intraday-monitor",
+                    )
+
     logger.info(
-        "스케줄: 23:40~05:40 KST — US 장중 실시간 모니터링 (매수+매도, %d분 간격)",
+        "스케줄: ET 09:40~15:40 기준 KST 슬롯 등록 완료 (매수+매도, %d분 간격)",
         interval,
     )
 
-    # 주간 성과 평가: 토요일 06:30 KST = 금요일 16:30 ET
-    schedule.every().saturday.at("06:30").do(pipeline.run_weekly_evaluation)
-    logger.info("스케줄: 토요일 06:30 KST (금요일 16:30 ET) — US 주간 성과 평가")
+    for local_day, local_time in _kst_slots_for_et_time("friday", 16, 30):
+        _schedule_tagged(
+            local_day,
+            local_time,
+            lambda cb=pipeline.run_weekly_evaluation: _run_if_kst_matches_weekly("friday", 16, 30, cb),
+            "us-weekly-evaluation",
+        )
+    logger.info("스케줄: ET 금요일 16:30 기준 KST 슬롯 등록 완료 (EST/EDT 자동 대응)")
 
 
 if __name__ == "__main__":
