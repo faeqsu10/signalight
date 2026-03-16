@@ -14,6 +14,9 @@ import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
 import DisclosurePanel from "@/components/DisclosurePanel";
 import LLMAnalysisPanel from "@/components/LLMAnalysisPanel";
+import SectionHeader from "@/components/SectionHeader";
+import SignalStatusBanner from "@/components/SignalStatusBanner";
+import SignalsWorkspaceHeader from "@/components/SignalsWorkspaceHeader";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -135,63 +138,6 @@ function ScannerCategory({
   );
 }
 
-function SignalDot({ strength }: { strength: string | undefined }) {
-  if (!strength) return null;
-  if (strength === "strong_buy" || strength === "buy") {
-    return (
-      <span
-        className="inline-block w-2 h-2 rounded-full ml-1 flex-shrink-0"
-        style={{ background: "var(--buy)", boxShadow: "0 0 4px var(--buy)" }}
-      />
-    );
-  }
-  if (strength === "strong_sell" || strength === "sell") {
-    return (
-      <span
-        className="inline-block w-2 h-2 rounded-full ml-1 flex-shrink-0"
-        style={{ background: "var(--sell)", boxShadow: "0 0 4px var(--sell)" }}
-      />
-    );
-  }
-  return (
-    <span
-      className="inline-block w-2 h-2 rounded-full ml-1 flex-shrink-0"
-      style={{ background: "var(--text-dim)" }}
-    />
-  );
-}
-
-function SectionHeader({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <p
-        className="text-[11px] font-semibold uppercase tracking-[0.24em]"
-        style={{ color: "var(--accent)" }}
-      >
-        {eyebrow}
-      </p>
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-          {title}
-        </h2>
-        {description && (
-          <p className="text-sm leading-6 max-w-3xl" style={{ color: "var(--text-dim)" }}>
-            {description}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -264,6 +210,11 @@ export default function Home() {
       return aFav - bFav;
     });
   }, [searchQuery, favorites]);
+
+  const compareCandidates = useMemo(
+    () => filteredList.filter((item) => item.idx !== selectedIdx),
+    [filteredList, selectedIdx]
+  );
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/stock/${selected.ticker}?period=${period}`,
@@ -344,237 +295,48 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ color: "var(--foreground)" }}>
-      <section
-        className="px-4 pt-8"
-      >
-        <div
-          className="max-w-7xl mx-auto glass-card rounded-[28px] px-6 py-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-          style={{
-            background:
-              "radial-gradient(circle at top left, rgba(246,197,68,0.08), transparent 24%), linear-gradient(180deg, rgba(18,31,50,0.94) 0%, rgba(9,17,29,0.98) 100%)",
-          }}
-        >
-          <div className="flex items-start gap-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.26em]" style={{ color: "var(--accent)" }}>
-                KR Signals
-              </p>
-              <h1
-                className="mt-2 text-2xl font-bold tracking-[0.16em]"
-                style={{ color: "var(--foreground)" }}
-              >
-                ANALYSIS WORKSTATION
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-                홈의 Overview에서 들어온 뒤, 여기서는 한국 주식 종목 하나를 깊게 읽는 데만 집중합니다.
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                <span
-                  className="px-2.5 py-1 rounded-full"
-                  style={{
-                    color: "var(--foreground)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  선택 종목 {selected.name} · {selected.ticker}
-                </span>
-                <span
-                  className="px-2.5 py-1 rounded-full"
-                  style={{
-                    color: "var(--buy)",
-                    background: "rgba(255,207,51,0.08)",
-                    border: "1px solid rgba(255,207,51,0.12)",
-                  }}
-                >
-                  Analysis Live
-                </span>
-                {data && !data.error && (
-                  <span style={{ color: "var(--text-dim)" }}>
-                    Last Sync {new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <button
-              onClick={() => toggleFavorite(selected.ticker)}
-              title={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-              className="text-sm px-3 py-2 rounded-xl transition-colors focus:outline-none"
-              style={{
-                color: isFavorite ? "var(--hold)" : "var(--text-dim)",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.05)",
-              }}
-              aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
-            >
-              {isFavorite ? "★ 즐겨찾기" : "☆ 즐겨찾기"}
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => {
-                  if (compareIdx !== null) {
-                    setCompareIdx(null);
-                    setShowComparePicker(false);
-                  } else {
-                    setShowComparePicker((v) => !v);
-                  }
-                }}
-                className="text-sm px-3 py-2 rounded-xl transition-colors"
-                style={{
-                  border: "1px solid var(--glass-border)",
-                  background: compareIdx !== null ? "rgba(246,197,68,0.12)" : "rgba(255,255,255,0.03)",
-                  color: compareIdx !== null ? "var(--accent)" : "var(--text-dim)",
-                }}
-              >
-                {compareIdx !== null ? "비교 해제" : "종목 비교"}
-              </button>
-              {showComparePicker && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowComparePicker(false)} />
-                  <div
-                    className="absolute top-full left-0 mt-2 rounded-xl z-50 w-52 max-h-64 overflow-y-auto"
-                    style={{
-                      background: "var(--dropdown-bg)",
-                      backdropFilter: "blur(20px)",
-                      border: "1px solid var(--glass-border)",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    {ALL_WATCH_LIST
-                      .map((item, i) => ({ ...item, idx: i }))
-                      .filter((item) => item.idx !== selectedIdx)
-                      .map((item) => (
-                        <button
-                          key={item.ticker}
-                          onClick={() => {
-                            setCompareIdx(item.idx);
-                            setShowComparePicker(false);
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm transition-colors flex items-center gap-2"
-                          style={{ color: "var(--foreground)" }}
-                          onMouseEnter={e => (e.currentTarget.style.background = "var(--glass)")}
-                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                        >
-                          <span
-                            className="text-[10px] px-1.5 py-0.5 rounded flex-shrink-0"
-                            style={{
-                              background: item.market === "KR" ? "rgba(246,197,68,0.14)" : "rgba(255,207,51,0.08)",
-                              color: item.market === "KR" ? "var(--accent)" : "var(--buy)",
-                            }}
-                          >
-                            {item.market}
-                          </span>
-                          <span className="truncate">{item.name}</span>
-                        </button>
-                      ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <a
-              href="/autonomous"
-              className="text-sm px-3 py-2 rounded-xl hidden sm:inline transition-colors"
-              style={{
-                color: "var(--accent)",
-                background: "rgba(246,197,68,0.08)",
-                border: "1px solid rgba(246,197,68,0.12)",
-              }}
-            >
-              자율매매 →
-            </a>
-            <div className="relative z-50">
-            <input
-              type="text"
-              placeholder="종목 검색..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSearch(true);
-              }}
-              onFocus={() => setShowSearch(true)}
-              className="rounded-xl px-3 py-2 text-sm w-44 sm:w-52 focus:outline-none"
-              style={{ color: "var(--foreground)" }}
-            />
-            {showSearch && filteredList.length > 0 && (
-              <div
-                className="absolute top-full left-0 right-0 mt-2 rounded-xl z-50 max-h-64 overflow-y-auto"
-                style={{
-                  background: "var(--dropdown-bg)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid var(--glass-border)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                }}
-              >
-                {filteredList.map((item) => {
-                  const isFav = favorites.includes(item.ticker);
-                  const strength = signalCache[item.ticker];
-                  return (
-                    <button
-                      key={item.ticker}
-                      onClick={() => {
-                        setSelectedIdx(item.idx);
-                        setSearchQuery("");
-                        setShowSearch(false);
-                      }}
-                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-sm transition-colors flex items-center justify-between"
-                      style={{ color: "var(--foreground)" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "var(--glass)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {isFav && (
-                          <span className="text-xs leading-none" style={{ color: "var(--hold)" }}>★</span>
-                        )}
-                        <span
-                          className="text-[10px] px-1.5 py-0.5 rounded"
-                          style={{
-                            background: item.market === "KR" ? "rgba(108,92,231,0.2)" : "rgba(0,212,170,0.15)",
-                            color: item.market === "KR" ? "var(--accent)" : "var(--buy)",
-                          }}
-                        >
-                          {item.market}
-                        </span>
-                        {item.name}
-                        <SignalDot strength={strength} />
-                      </span>
-                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: "var(--text-dim)" }}>
-                        {item.ticker}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {showSearch && (
-              <div className="fixed inset-0 z-40" onClick={() => setShowSearch(false)} />
-            )}
-            </div>
-            {mounted && "Notification" in window && (
-              <button
-                onClick={requestNotifPermission}
-                title={
-                  notifPermission === "granted"
-                    ? "알림 활성"
-                    : notifPermission === "denied"
-                    ? "알림 차단됨"
-                    : "알림 설정"
-                }
-                className="text-sm px-3 py-2 rounded-xl transition-opacity hover:opacity-80"
-                style={{
-                  color: notifPermission === "granted" ? "var(--buy)" : "var(--text-dim)",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}
-              >
-                {notifPermission === "granted" ? "🔔 알림" : "🔕 알림"}
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
+      <SignalsWorkspaceHeader
+        selectedName={selected.name}
+        selectedTicker={selected.ticker}
+        hasData={Boolean(data && !data.error)}
+        isFavorite={isFavorite}
+        compareActive={compareIdx !== null}
+        favorites={favorites}
+        compareCandidates={compareCandidates}
+        searchResults={filteredList}
+        signalCache={signalCache}
+        searchQuery={searchQuery}
+        showSearch={showSearch}
+        showComparePicker={showComparePicker}
+        mounted={mounted}
+        notifPermission={notifPermission}
+        onToggleFavorite={() => toggleFavorite(selected.ticker)}
+        onToggleCompare={() => {
+          if (compareIdx !== null) {
+            setCompareIdx(null);
+            setShowComparePicker(false);
+          } else {
+            setShowComparePicker((v) => !v);
+          }
+        }}
+        onCloseCompare={() => setShowComparePicker(false)}
+        onSelectCompare={(idx) => {
+          setCompareIdx(idx);
+          setShowComparePicker(false);
+        }}
+        onSearchQueryChange={(value) => {
+          setSearchQuery(value);
+          setShowSearch(true);
+        }}
+        onSearchOpen={() => setShowSearch(true)}
+        onSearchClose={() => setShowSearch(false)}
+        onSelectTicker={(idx) => {
+          setSelectedIdx(idx);
+          setSearchQuery("");
+          setShowSearch(false);
+        }}
+        onRequestNotifications={requestNotifPermission}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {isLoading && (
@@ -627,51 +389,7 @@ export default function Home() {
                 description="선택한 종목의 신호, AI 해석, 차트, 모멘텀 지표를 한 흐름으로 읽는 구간입니다."
               />
 
-            {/* Signal Banner */}
-            {(() => {
-              const buySignals = (data.signals as { type: string }[]).filter((s) => s.type === "BUY").length;
-              const sellSignals = (data.signals as { type: string }[]).filter((s) => s.type === "SELL").length;
-              if (buySignals > 0 && buySignals >= sellSignals) {
-                return (
-                  <div
-                    className="w-full rounded-xl px-4 py-3 text-center font-semibold text-sm"
-                    style={{
-                      background: "rgba(0,212,170,0.1)",
-                      border: "1px solid rgba(0,212,170,0.3)",
-                      color: "var(--buy)",
-                    }}
-                  >
-                    매수 시그널 {buySignals}개 활성
-                  </div>
-                );
-              }
-              if (sellSignals > 0) {
-                return (
-                  <div
-                    className="w-full rounded-xl px-4 py-3 text-center font-semibold text-sm"
-                    style={{
-                      background: "rgba(255,71,87,0.1)",
-                      border: "1px solid rgba(255,71,87,0.3)",
-                      color: "var(--sell)",
-                    }}
-                  >
-                    매도 시그널 {sellSignals}개 활성
-                  </div>
-                );
-              }
-              return (
-                <div
-                  className="w-full rounded-xl px-4 py-3 text-center font-semibold text-sm"
-                  style={{
-                    background: "var(--glass)",
-                    border: "1px solid var(--glass-border)",
-                    color: "var(--text-dim)",
-                  }}
-                >
-                  시그널 없음
-                </div>
-              );
-            })()}
+            <SignalStatusBanner signals={data.signals as { type: string }[]} />
 
             {/* Gemini AI Analysis Panel */}
             <LLMAnalysisPanel 
