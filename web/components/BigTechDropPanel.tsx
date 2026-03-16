@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type StockData = {
   symbol: string;
@@ -21,6 +21,13 @@ function getGaugeFill(dropPct: number) {
   if (dropPct >= 20) return 'linear-gradient(90deg, #ffd25c 0%, #ff9d41 100%)';
   if (dropPct >= 10) return 'linear-gradient(90deg, #ffb35b 0%, #ff8d3a 100%)';
   return 'linear-gradient(90deg, #ff8d3a 0%, #ff9e42 100%)';
+}
+
+function discountLabel(dropPct: number) {
+  if (dropPct >= 30) return 'Deep Value';
+  if (dropPct >= 20) return 'Watch Zone';
+  if (dropPct >= 10) return 'Pullback';
+  return 'Near High';
 }
 
 export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelProps) {
@@ -92,7 +99,7 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
           }}
         >
           <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
-            <div className="lg:w-[46%] rounded-2xl px-5 py-5" style={{
+            <div className="rounded-2xl px-5 py-5 lg:w-[46%]" style={{
               background: 'linear-gradient(135deg, rgba(255,207,51,0.1), rgba(255,142,60,0.04) 45%, transparent 90%)',
               border: '1px solid rgba(255,255,255,0.05)',
             }}>
@@ -150,6 +157,16 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
                     <p className="text-[11px]" style={{ color: 'var(--text-dim)' }}>
                       가장 큰 할인 폭
                     </p>
+                    <span
+                      className="mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                      style={{
+                        color: 'var(--accent)',
+                        background: 'rgba(246,197,68,0.08)',
+                        border: '1px solid rgba(246,197,68,0.16)',
+                      }}
+                    >
+                      {discountLabel(leader.dropPct)}
+                    </span>
                   </div>
                 </div>
                 <div
@@ -184,7 +201,14 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
               </div>
               <div className="space-y-4">
                 {secondary.map((stock) => (
-                  <div key={stock.symbol} className="space-y-2">
+                  <div
+                    key={stock.symbol}
+                    className="space-y-2 rounded-2xl px-3 py-3"
+                    style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.04)',
+                    }}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium" style={{ color: 'var(--foreground)' }}>{stock.name}</span>
@@ -192,9 +216,14 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
                           {stock.symbol}
                         </span>
                       </div>
-                      <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
-                        -{stock.dropPct.toFixed(2)}%
-                      </span>
+                      <div className="text-right">
+                        <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
+                          -{stock.dropPct.toFixed(2)}%
+                        </span>
+                        <p className="text-[10px]" style={{ color: 'var(--text-dim)' }}>
+                          {discountLabel(stock.dropPct)}
+                        </p>
+                      </div>
                     </div>
                     <div
                       className="relative h-3 overflow-hidden"
@@ -236,13 +265,39 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
           border: '1px solid rgba(255,255,255,0.04)',
         }}
       >
-        <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
-          <span>💰</span> 빅테크 할인율 스캐너 (분할 매수 타점)
-        </h3>
-        <p className="mt-2 text-sm leading-6" style={{ color: 'var(--text-dim)' }}>
-          52주 최고가 대비 할인 폭을 한눈에 보여주는 스캐너입니다. 길고 밝은 게이지일수록
-          분할 매수 후보로 볼 수 있는 구간에 더 가까워집니다.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 text-xl font-bold" style={{ color: 'var(--foreground)' }}>
+              <span>💰</span> 빅테크 할인율 스캐너 (분할 매수 타점)
+            </h3>
+            <p className="mt-2 text-sm leading-6" style={{ color: 'var(--text-dim)' }}>
+              52주 최고가 대비 할인 폭을 한눈에 보여주는 스캐너입니다. 길고 밝은 게이지일수록
+              분할 매수 후보로 볼 수 있는 구간에 더 가까워집니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            <span
+              className="rounded-full px-2.5 py-1"
+              style={{
+                color: 'var(--foreground)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.05)',
+              }}
+            >
+              Drawdown Ranking
+            </span>
+            <span
+              className="rounded-full px-2.5 py-1"
+              style={{
+                color: 'var(--accent)',
+                background: 'rgba(246,197,68,0.08)',
+                border: '1px solid rgba(246,197,68,0.12)',
+              }}
+            >
+              Action Zones
+            </span>
+          </div>
+        </div>
       </div>
       
       <div className="space-y-6">
@@ -253,7 +308,7 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
           return (
             <article
               key={stock.symbol}
-              className="flex flex-col gap-2 rounded-2xl px-4 py-3"
+              className="flex flex-col gap-3 rounded-2xl px-4 py-4"
               style={{
                 background: 'rgba(255,255,255,0.015)',
                 border: '1px solid rgba(255,255,255,0.04)',
@@ -277,6 +332,9 @@ export default function BigTechDropPanel({ variant = 'full' }: BigTechDropPanelP
                   <span className="text-3xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
                     -{stock.dropPct.toFixed(2)}%
                   </span>
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--text-dim)' }}>
+                    {discountLabel(stock.dropPct)}
+                  </p>
                 </div>
               </div>
               

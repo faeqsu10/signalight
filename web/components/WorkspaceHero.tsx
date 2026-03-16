@@ -22,9 +22,9 @@ export default function WorkspaceHero({
   aside?: ReactNode;
 }) {
   return (
-    <section className="px-4 pt-8">
+    <section className="px-4 pt-6 sm:pt-8">
       <div
-        className="mx-auto grid max-w-7xl gap-6 rounded-[28px] px-6 py-6 glass-card lg:grid-cols-[1.25fr_0.75fr]"
+        className="mx-auto grid max-w-7xl gap-5 rounded-[24px] px-5 py-5 glass-card sm:gap-6 sm:rounded-[28px] sm:px-6 sm:py-6 lg:grid-cols-[1.25fr_0.75fr]"
         style={{
           background:
             "radial-gradient(circle at top left, rgba(246,197,68,0.1), transparent 26%), linear-gradient(180deg, rgba(18,31,50,0.94) 0%, rgba(9,17,29,0.98) 100%)",
@@ -38,10 +38,10 @@ export default function WorkspaceHero({
             >
               {eyebrow}
             </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-[0.08em]" style={{ color: "var(--foreground)" }}>
+            <h1 className="mt-2 text-2xl font-bold tracking-[0.06em] sm:text-3xl sm:tracking-[0.08em]" style={{ color: "var(--foreground)" }}>
               {title}
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7" style={{ color: "var(--text-dim)" }}>
+            <p className="mt-3 max-w-3xl text-sm leading-6 sm:leading-7" style={{ color: "var(--text-dim)" }}>
               {description}
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function WorkspaceHero({
 
         {aside && (
           <div
-            className="rounded-3xl p-5"
+            className="rounded-[22px] p-4 sm:rounded-3xl sm:p-5"
             style={{
               background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.08)",
