@@ -9,31 +9,31 @@ const NAV_ITEMS = [
     href: "/",
     label: "Overview",
     eyebrow: "Overview",
-    summary: "시장을 훑고 다음 작업 화면을 고르는 진입 허브",
+    summary: "시장 요약과 진입 흐름",
   },
   {
     href: "/signals",
     label: "KR Signals",
     eyebrow: "Workspace",
-    summary: "한국 종목 상세 신호와 차트를 읽는 분석 화면",
+    summary: "국내 종목 분석 보드",
   },
   {
     href: "/bigtech",
     label: "US Big Tech",
     eyebrow: "Scanner",
-    summary: "미국 빅테크 낙폭과 우선순위를 비교하는 스캐너",
+    summary: "빅테크 드로우다운 스캐너",
   },
   {
     href: "/autonomous",
     label: "Autonomous",
     eyebrow: "Operations",
-    summary: "KR·US 자동매매 운영 상태와 성과를 점검하는 콘솔",
+    summary: "자동매매 운영 콘솔",
   },
   {
     href: "/macro",
     label: "Macro",
     eyebrow: "Context",
-    summary: "금리·달러·원자재 흐름으로 시장 컨텍스트를 맞추는 화면",
+    summary: "거시 환경 보드",
   },
 ];
 
@@ -85,8 +85,6 @@ export default function AppNavigation() {
                 {currentItem.eyebrow}
               </p>
               <p className="mt-1 text-xs leading-5 sm:text-sm" style={{ color: "var(--text-dim)" }}>
-                <span style={{ color: "var(--foreground)" }}>{currentItem.label}</span>
-                {" · "}
                 {currentItem.summary}
               </p>
             </div>
@@ -97,8 +95,8 @@ export default function AppNavigation() {
           <nav
             className="flex items-center gap-2 rounded-2xl p-1"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "var(--chip-surface)",
+              border: "1px solid var(--chip-border)",
             }}
           >
             {NAV_ITEMS.map((item) => {
@@ -109,9 +107,9 @@ export default function AppNavigation() {
                   href={item.href}
                   className="rounded-xl px-4 py-2 text-sm font-medium transition-colors"
                   style={{
-                    background: active ? "rgba(246,197,68,0.14)" : "transparent",
+                    background: active ? "var(--chip-active-surface)" : "transparent",
                     color: active ? "var(--accent)" : "var(--text-dim)",
-                    border: active ? "1px solid rgba(246,197,68,0.22)" : "1px solid transparent",
+                    border: active ? "1px solid var(--chip-active-border)" : "1px solid transparent",
                   }}
                 >
                   {item.label}
@@ -122,16 +120,11 @@ export default function AppNavigation() {
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-3">
-          <div className="hidden text-right lg:block">
-            <p className="text-xs" style={{ color: "var(--text-dim)" }}>
-              시장 상황을 훑고 필요한 작업 화면으로 바로 이동합니다.
-            </p>
-          </div>
           <ThemeToggle />
         </div>
       </div>
 
-      <div className="border-t px-4 py-3 xl:hidden" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+      <div className="border-t px-4 py-3 xl:hidden" style={{ borderColor: "var(--chip-border)" }}>
         <div className="mb-2 flex items-center justify-between gap-3">
           <p
             className="text-[10px] font-semibold uppercase tracking-[0.2em]"
@@ -152,11 +145,11 @@ export default function AppNavigation() {
                 href={item.href}
                 className="rounded-xl px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
                 style={{
-                  background: active ? "rgba(246,197,68,0.14)" : "rgba(255,255,255,0.03)",
+                  background: active ? "var(--chip-active-surface)" : "var(--chip-surface)",
                   color: active ? "var(--accent)" : "var(--text-dim)",
                   border: active
-                    ? "1px solid rgba(246,197,68,0.22)"
-                    : "1px solid rgba(255,255,255,0.06)",
+                    ? "1px solid var(--chip-active-border)"
+                    : "1px solid var(--chip-border)",
                 }}
               >
                 {item.label}

@@ -23,7 +23,7 @@ export default function BigTechPage() {
       <WorkspaceHero
         eyebrow="US Big Tech"
         title="BIG TECH MARKET SCANNER"
-        description="52주 고점 대비 낙폭과 매수 우선순위를 한 화면에서 비교합니다."
+        description="52주 고점 대비 낙폭과 액션 구간을 같은 축에서 봅니다."
         badges={["Drawdown · Priority · Action", "US Scanner Focus"]}
         actions={[
           { href: "/", label: "Overview" },
@@ -32,15 +32,15 @@ export default function BigTechPage() {
         aside={
           <div className="space-y-4">
             <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
-              Reading Order
+              Scan Flow
             </p>
             {focusCards.map((card, index) => (
               <div key={card.title} className="flex gap-4">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
                   style={{
-                    background: "rgba(246,197,68,0.12)",
-                    border: "1px solid rgba(246,197,68,0.22)",
+                    background: "var(--chip-active-surface)",
+                    border: "1px solid var(--chip-active-border)",
                     color: "var(--accent)",
                   }}
                 >
@@ -67,8 +67,7 @@ export default function BigTechPage() {
               key={card.title}
               className="glass-card rounded-[24px] p-6"
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+                background: "var(--panel-surface-strong)",
               }}
             >
               <p

@@ -67,13 +67,13 @@ export default function Home() {
                 오늘의 마켓 보드
               </h1>
               <p className="max-w-2xl text-sm leading-7" style={{ color: "var(--text-dim)" }}>
-                핵심 흐름만 먼저 보고, 필요한 작업 화면으로 바로 들어갑니다.
+                시장 요약을 먼저 보고 필요한 보드로 이동합니다.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 text-xs">
               <span className="badge badge-accent">Overview = 빠른 상황판</span>
-              <span className="badge badge-buy">Signals = 종목 분석 워크스페이스</span>
-              <span className="badge badge-hold">Big Tech = 미국 스캐너 전용</span>
+              <span className="badge badge-buy">Signals = 국내 종목 분석</span>
+              <span className="badge badge-hold">Big Tech = 미국 스캐너</span>
             </div>
           </div>
 
@@ -85,20 +85,20 @@ export default function Home() {
             }}
           >
             <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
-              Recommended Flow
+              Operating Flow
             </p>
             <div className="mt-5 space-y-4">
               {[
-                ["1", "US Big Tech", "미국 빅테크 할인율과 드로우다운을 먼저 확인"],
-                ["2", "KR Signals", "한국 종목 상세 차트와 신호를 읽기"],
-                ["3", "Autonomous", "자동매매 상태와 성과를 운영 관점에서 점검"],
+                ["1", "US Big Tech", "빅테크 드로우다운 확인"],
+                ["2", "KR Signals", "국내 종목 신호 점검"],
+                ["3", "Autonomous", "운영 로그와 성과 확인"],
               ].map(([step, title, body]) => (
                 <div key={step} className="flex gap-4">
                   <div
                     className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
                     style={{
-                      background: "rgba(246,197,68,0.12)",
-                      border: "1px solid rgba(246,197,68,0.22)",
+                      background: "var(--chip-active-surface)",
+                      border: "1px solid var(--chip-active-border)",
                       color: "var(--accent)",
                     }}
                   >
@@ -124,20 +124,21 @@ export default function Home() {
           eyebrow="KR Signals"
           title="한국 주식 상세 분석"
           description="대표 종목 차트, RSI, MACD, AI 해석, 포지션 판단까지 한 흐름으로 읽는 분석 화면입니다."
+          description="대표 종목 차트와 신호, 해석, 포지션 판단을 한 흐름으로 읽는 보드입니다."
           href="/signals"
           tone="buy"
         />
         <EntryCard
           eyebrow="US Big Tech"
           title="빅테크 마켓 스캐너"
-          description="고점 대비 할인 폭, 분할매수 구간, 종목별 우선순위를 집중해서 보는 전용 화면입니다."
+          description="고점 대비 할인 폭과 액션 구간, 우선순위를 모아 보는 스캐너입니다."
           href="/bigtech"
           tone="accent"
         />
         <EntryCard
           eyebrow="Autonomous"
           title="자율매매 운영 콘솔"
-          description="KR/US 운용 성과, 체결 기록, 자산 흐름을 운영 로그 관점에서 점검하는 화면입니다."
+          description="KR·US 운용 성과와 체결, 자산 흐름을 운영 관점에서 보는 콘솔입니다."
           href="/autonomous"
           tone="sell"
         />
@@ -156,7 +157,7 @@ export default function Home() {
               Big Tech Snapshot
             </h2>
             <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-              할인율 분위기만 빠르게 보고 상세는 전용 스캐너에서 확인합니다.
+              할인율 분위기만 빠르게 보고 상세는 스캐너로 이동합니다.
             </p>
           </div>
           <Link href="/bigtech" className="text-sm font-medium" style={{ color: "var(--accent)" }}>

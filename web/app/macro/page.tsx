@@ -24,7 +24,7 @@ export default function MacroPage() {
       <WorkspaceHero
         eyebrow="Macro"
         title="MACRO PULSE DESK"
-        description="금리, 달러, 원자재, 변동성 흐름을 한 화면에서 정렬합니다."
+        description="금리, 달러, 변동성, 원자재 흐름을 한 보드에서 정리합니다."
         badges={["Rates · Dollar · Commodities", "Context Before Signals"]}
         actions={[
           { href: "/", label: "Overview" },
@@ -33,15 +33,15 @@ export default function MacroPage() {
         aside={
           <div className="space-y-4">
             <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
-              Recommended Read
+              Read Order
             </p>
             {focusCards.map((card, index) => (
               <div key={card.title} className="flex gap-4">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
                   style={{
-                    background: "rgba(246,197,68,0.12)",
-                    border: "1px solid rgba(246,197,68,0.22)",
+                    background: "var(--chip-active-surface)",
+                    border: "1px solid var(--chip-active-border)",
                     color: "var(--accent)",
                   }}
                 >
@@ -68,8 +68,7 @@ export default function MacroPage() {
               key={card.title}
               className="glass-card rounded-[24px] p-6"
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+                background: "var(--panel-surface-strong)",
               }}
             >
               <p
@@ -100,8 +99,7 @@ export default function MacroPage() {
         <section
           className="glass-card flex flex-col gap-4 rounded-[24px] p-6 lg:flex-row lg:items-center lg:justify-between"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+            background: "var(--panel-surface-strong)",
           }}
         >
           <div>

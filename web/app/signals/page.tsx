@@ -100,8 +100,8 @@ function ScannerCategory({
     <div
       className="rounded-2xl p-4"
       style={{
-        background: "rgba(255,255,255,0.018)",
-        border: "1px solid rgba(255,255,255,0.05)",
+        background: "var(--panel-muted)",
+        border: "1px solid var(--panel-border-strong)",
       }}
     >
       <h4 className="text-sm font-semibold mb-3 flex items-center" style={{ color: "var(--accent)" }}>
@@ -122,9 +122,9 @@ function ScannerCategory({
                 <span
                   className="text-[10px] px-2 py-0.5 rounded-full"
                   style={{
-                    background: "rgba(246,197,68,0.12)",
+                    background: "var(--chip-active-surface)",
                     color: "var(--accent)",
-                    border: "1px solid rgba(246,197,68,0.18)",
+                    border: "1px solid var(--chip-active-border)",
                   }}
                 >
                   {item.reason}
@@ -495,8 +495,7 @@ export default function Home() {
               className="glass-card p-5"
               style={{
                 borderRadius: 20,
-                background:
-                  "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+                background: "var(--panel-surface-strong)",
               }}
             >
               <div className="flex gap-2 mb-3">
@@ -561,12 +560,11 @@ export default function Home() {
               />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
-                className="glass-card p-5"
-                style={{
-                  borderRadius: 20,
-                  background:
-                    "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
-                }}
+              className="glass-card p-5"
+              style={{
+                borderRadius: 20,
+                background: "var(--panel-surface-strong)",
+              }}
               >
                 <h3 className="text-sm font-semibold mb-2 flex items-center" style={{ color: "var(--text-dim)" }}>
                   RSI ({data.currentRSI?.toFixed(1) ?? "-"})
@@ -590,12 +588,11 @@ export default function Home() {
                 <RSIChart ohlcv={data.ohlcv} rsiValues={data.rsiValues} />
               </div>
               <div
-                className="glass-card p-5"
-                style={{
-                  borderRadius: 20,
-                  background:
-                    "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
-                }}
+              className="glass-card p-5"
+              style={{
+                borderRadius: 20,
+                background: "var(--panel-surface-strong)",
+              }}
               >
                 <h3 className="text-sm font-semibold mb-2 flex items-center" style={{ color: "var(--text-dim)" }}>
                   MACD
@@ -694,8 +691,7 @@ export default function Home() {
             className="glass-card p-5"
             style={{
               borderRadius: 20,
-              background:
-                "linear-gradient(180deg, rgba(16,26,43,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+              background: "var(--panel-surface-strong)",
             }}
           >
             <h3 className="text-sm font-semibold mb-4 flex items-center" style={{ color: "var(--text-dim)" }}>
@@ -757,8 +753,7 @@ export default function Home() {
             style={{
               borderRadius: 20,
               padding: 20,
-              background:
-                "linear-gradient(180deg, rgba(14,24,39,0.94) 0%, rgba(10,18,31,0.98) 100%)",
+              background: "var(--panel-surface-strong)",
             }}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -777,7 +772,7 @@ export default function Home() {
                   홈 전체와 톤을 맞추면서도 액션성은 유지하는 구간입니다.
                 </p>
               </div>
-              <div className="flex p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="flex rounded-xl p-1" style={{ background: "var(--chip-surface)", border: "1px solid var(--chip-border)" }}>
                 <button
                   onClick={() => setScannerMarket("KR")}
                   className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${

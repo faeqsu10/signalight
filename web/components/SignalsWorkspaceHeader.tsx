@@ -102,16 +102,16 @@ export default function SignalsWorkspaceHeader({
             <h1 className="mt-2 text-2xl font-bold tracking-[0.16em]" style={{ color: "var(--foreground)" }}>
               ANALYSIS WORKSTATION
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
-              한 종목을 깊게 읽는 KR 분석 화면입니다.
+            <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
+              국내 종목 분석과 비교를 한 흐름으로 정리합니다.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
               <span
                 className="rounded-full px-2.5 py-1"
                 style={{
                   color: "var(--foreground)",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.05)",
+                  background: "var(--chip-surface)",
+                  border: "1px solid var(--chip-border)",
                 }}
               >
                 선택 종목 {selectedName} · {selectedTicker}
@@ -119,9 +119,9 @@ export default function SignalsWorkspaceHeader({
               <span
                 className="rounded-full px-2.5 py-1"
                 style={{
-                  color: "var(--buy)",
-                  background: "rgba(255,207,51,0.08)",
-                  border: "1px solid rgba(255,207,51,0.12)",
+                  color: "var(--accent)",
+                  background: "var(--chip-active-surface)",
+                  border: "1px solid var(--chip-active-border)",
                 }}
               >
                 Analysis Live
@@ -142,8 +142,8 @@ export default function SignalsWorkspaceHeader({
             className="rounded-xl px-3 py-2 text-sm transition-colors focus:outline-none"
             style={{
               color: isFavorite ? "var(--hold)" : "var(--text-dim)",
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: "var(--chip-surface)",
+              border: "1px solid var(--chip-border)",
             }}
             aria-label={isFavorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
           >
@@ -155,7 +155,7 @@ export default function SignalsWorkspaceHeader({
               className="rounded-xl px-3 py-2 text-sm transition-colors"
               style={{
                 border: "1px solid var(--glass-border)",
-                background: compareActive ? "rgba(246,197,68,0.12)" : "rgba(255,255,255,0.03)",
+                background: compareActive ? "var(--chip-active-surface)" : "var(--chip-surface)",
                 color: compareActive ? "var(--accent)" : "var(--text-dim)",
               }}
             >
@@ -185,7 +185,7 @@ export default function SignalsWorkspaceHeader({
                       <span
                         className="flex-shrink-0 rounded px-1.5 py-0.5 text-[10px]"
                         style={{
-                          background: item.market === "KR" ? "rgba(246,197,68,0.14)" : "rgba(255,207,51,0.08)",
+                          background: item.market === "KR" ? "var(--chip-active-surface)" : "rgba(15,159,122,0.08)",
                           color: item.market === "KR" ? "var(--accent)" : "var(--buy)",
                         }}
                       >
@@ -203,8 +203,8 @@ export default function SignalsWorkspaceHeader({
             className="hidden rounded-xl px-3 py-2 text-sm transition-colors sm:inline"
             style={{
               color: "var(--accent)",
-              background: "rgba(246,197,68,0.08)",
-              border: "1px solid rgba(246,197,68,0.12)",
+              background: "var(--chip-active-surface)",
+              border: "1px solid var(--chip-active-border)",
             }}
           >
             자율매매 →
@@ -282,8 +282,8 @@ export default function SignalsWorkspaceHeader({
               className="rounded-xl px-3 py-2 text-sm transition-opacity hover:opacity-80"
               style={{
                 color: notifPermission === "granted" ? "var(--buy)" : "var(--text-dim)",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.05)",
+                background: "var(--chip-surface)",
+                border: "1px solid var(--chip-border)",
               }}
             >
               {notifPermission === "granted" ? "🔔 알림" : "🔕 알림"}

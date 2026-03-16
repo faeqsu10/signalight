@@ -10,10 +10,10 @@
   --glass: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.05);
   --glass-hover: rgba(0, 0, 0, 0.08);
-  --buy: #00b894;
-  --sell: #e74c3c;
-  --hold: #f59e0b;
-  --accent: #6c5ce7;
+  --buy: #0f9f7a;
+  --sell: #d9643b;
+  --hold: #c38b12;
+  --accent: #b8860b;
   --card: rgba(255, 255, 255, 0.8);
   --card-border: rgba(0, 0, 0, 0.05);
   --background: #fafafa;
@@ -36,8 +36,12 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 240, 228, 0.88) 100%);
   --panel-surface-strong:
     linear-gradient(180deg, rgba(255, 252, 245, 0.97) 0%, rgba(242, 235, 222, 0.93) 100%);
-  --panel-border-strong: rgba(108, 92, 231, 0.08);
+  --panel-border-strong: rgba(184, 134, 11, 0.12);
   --panel-muted: rgba(255, 255, 255, 0.7);
+  --chip-surface: rgba(255, 250, 240, 0.82);
+  --chip-border: rgba(184, 134, 11, 0.12);
+  --chip-active-surface: rgba(184, 134, 11, 0.12);
+  --chip-active-border: rgba(184, 134, 11, 0.2);
 }
 
 /* Dark mode — deep refined dark aesthetic (Vercel/Linear style) */
@@ -76,6 +80,10 @@
     linear-gradient(180deg, rgba(17, 27, 43, 0.96) 0%, rgba(11, 18, 31, 0.98) 100%);
   --panel-border-strong: rgba(255, 255, 255, 0.06);
   --panel-muted: rgba(255, 255, 255, 0.03);
+  --chip-surface: rgba(255, 255, 255, 0.04);
+  --chip-border: rgba(255, 255, 255, 0.06);
+  --chip-active-surface: rgba(246, 197, 68, 0.14);
+  --chip-active-border: rgba(246, 197, 68, 0.22);
 }
 
 body {
@@ -202,9 +210,9 @@ body {
 }
 
 .badge-accent {
-  background: rgba(108, 92, 231, 0.12);
+  background: rgba(184, 134, 11, 0.12);
   color: var(--accent);
-  border: 1px solid rgba(108, 92, 231, 0.25);
+  border: 1px solid rgba(184, 134, 11, 0.22);
 }
 
 .badge-live {
