@@ -3,6 +3,8 @@ import useSWR from "swr";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import Tooltip from "@/components/Tooltip";
+import SectionHeader from "@/components/SectionHeader";
+import WorkspaceHero from "@/components/WorkspaceHero";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -466,105 +468,65 @@ export default function AutonomousPage() {
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
       }}
     >
-      {/* Header */}
-      <header
-        className="glass-card"
-        style={{
-          margin: "16px 16px 0",
-          borderRadius: 16,
-          padding: "14px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 12,
-        }}
-      >
-        {/* Left: Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <a
-            href="/"
-            style={{
-              fontSize: 18,
-              fontWeight: 900,
-              letterSpacing: "-0.04em",
-              color: "var(--foreground)",
-              textDecoration: "none",
-              background: "linear-gradient(135deg, #6c5ce7, #00d4aa)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            SIGNALIGHT
-          </a>
-          <span className="badge-accent" style={{ fontSize: 11 }}>자율매매</span>
-        </div>
-
-        {/* Center: Market tab selector */}
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: 999,
-            padding: "4px",
-          }}
-        >
-          {(["kr", "us"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMarket(m)}
-              style={{
-                padding: "6px 18px",
-                borderRadius: 999,
-                border: "none",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 600,
-                transition: "all 0.2s ease",
-                background:
-                  market === m
-                    ? "var(--accent)"
-                    : "transparent",
-                color: market === m ? "#fff" : "var(--text-dim)",
-                boxShadow:
-                  market === m
-                    ? "0 0 16px rgba(108,92,231,0.5)"
-                    : "none",
-              }}
-            >
-              {m === "kr" ? "🇰🇷 KR" : "🇺🇸 US"}
-            </button>
-          ))}
-        </div>
-
-        {/* Right: ThemeToggle + Timestamp */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <ThemeToggle />
-          {marketData?.updated_at && (
-            <>
-              <span
-                className="pulse-ring"
-                style={{ width: 8, height: 8, flexShrink: 0 }}
-              />
-              <span style={{ fontSize: 11, color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}>
-                {marketData.updated_at.replace("T", " ").slice(0, 16)}
-              </span>
-            </>
-          )}
-        </div>
-      </header>
+      <WorkspaceHero
+        eyebrow="Autonomous"
+        title="AUTONOMOUS OPERATIONS"
+        description="이 화면은 자동매매를 분석 대상이 아니라 운영 대상처럼 읽기 위한 콘솔입니다. KR·US 운용 상태, 에퀴티 흐름, 일별 손익, 최근 체결을 한 흐름으로 점검합니다."
+        badges={[
+          market === "kr" ? "KR Runtime" : "US Runtime",
+          marketData?.updated_at
+            ? `Last Sync ${marketData.updated_at.replace("T", " ").slice(0, 16)}`
+            : "Waiting for Snapshot",
+        ]}
+        actions={[
+          { href: "/", label: "Overview" },
+          { href: "/signals", label: "KR Signals" },
+        ]}
+        aside={
+          <div className="space-y-5">
+            <div>
+              <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
+                Market Scope
+              </p>
+              <div
+                className="mt-3 inline-flex rounded-full p-1"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--glass-border)",
+                }}
+              >
+                {(["kr", "us"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMarket(m)}
+                    className="rounded-full px-4 py-2 text-sm font-semibold transition-colors"
+                    style={{
+                      background: market === m ? "var(--accent)" : "transparent",
+                      color: market === m ? "#08111d" : "var(--text-dim)",
+                    }}
+                  >
+                    {m === "kr" ? "KR 전략" : "US 전략"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium" style={{ color: "var(--text-dim)" }}>
+                  Console Utilities
+                </p>
+                <p className="mt-1 text-xs leading-5" style={{ color: "var(--text-dim)" }}>
+                  테마 전환과 최신 스냅샷 기준 시각을 같이 둬서 운영 화면 성격을 유지합니다.
+                </p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        }
+      />
 
       <main
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
+        className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8"
       >
         {/* Loading skeleton */}
         {isLoading && (
@@ -630,38 +592,24 @@ export default function AutonomousPage() {
             )}
 
             {/* Summary Cards */}
-            <section>
-              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  성과 요약
-                  <Tooltip
-                    content={
-                      <div>
-                        <p className="font-semibold mb-1">성과 요약이란?</p>
-                        <p className="opacity-80">자율매매 봇이 운영한 전체 성과를 한눈에 보여줍니다.</p>
-                        <table className="w-full text-[10px] mt-2">
-                          <tbody>
-                            <tr><td className="pr-2" style={{ color: "var(--buy)" }}>에퀴티</td><td>현재 총 자산(현금+보유 종목 평가액)</td></tr>
-                            <tr><td className="pr-2" style={{ color: "var(--sell)" }}>MDD</td><td>최고점 대비 최대 하락폭 (위험도 지표)</td></tr>
-                            <tr><td className="pr-2">거래 수</td><td>매수+매도 실행 횟수</td></tr>
-                            <tr><td className="pr-2">승률</td><td>이익을 낸 거래의 비율</td></tr>
-                            <tr><td className="pr-2">총 손익</td><td>실현된 누적 손익 금액</td></tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    }
-                  />
-                </span>
-                <hr className="glass-divider" style={{ flex: 1 }} />
-              </div>
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Performance"
+                title="전략 성과 요약"
+                description="총 자산, 누적 수익률, MDD, 승률을 한 번에 읽어 현재 운용 상태를 빠르게 파악하는 구간입니다."
+              />
               <SummaryCards data={marketData} market={market} />
             </section>
 
             {/* Equity Curve */}
-            <section className="glass-card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  에퀴티 커브
+            <section className="glass-card space-y-4" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <SectionHeader
+                  eyebrow="Equity"
+                  title="에퀴티 커브"
+                  description="총 자산이 일자별로 어떻게 움직였는지 보면서 전략의 방향성과 흔들림을 확인합니다."
+                />
+                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip
                     content={
                       <div>
@@ -671,19 +619,23 @@ export default function AutonomousPage() {
                       </div>
                     }
                   />
-                </span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
-                  {marketData.equity.length}일 추적
-                </span>
+                  <span>
+                    {marketData.equity.length}일 추적
+                  </span>
+                </div>
               </div>
               <EquityChart equity={marketData.equity} market={market} />
             </section>
 
             {/* Daily PnL */}
-            <section className="glass-card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  일별 손익
+            <section className="glass-card space-y-4" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <SectionHeader
+                  eyebrow="Daily PnL"
+                  title="일별 손익 흐름"
+                  description="최근 14일 동안 실현 손익이 어떻게 분포했는지 읽어 전략의 리듬을 확인합니다."
+                />
+                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip
                     content={
                       <div>
@@ -693,17 +645,21 @@ export default function AutonomousPage() {
                       </div>
                     }
                   />
-                </span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>최근 14일</span>
+                  <span>최근 14일</span>
+                </div>
               </div>
               <DailyPnlBars daily_pnl={marketData.daily_pnl} market={market} />
             </section>
 
             {/* Recent Trades */}
-            <section className="glass-card" style={{ padding: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span className="flex items-center" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  최근 거래
+            <section className="glass-card space-y-4" style={{ padding: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <SectionHeader
+                  eyebrow="Execution"
+                  title="최근 거래"
+                  description="실제 매수·매도 로그를 보면서 현재 전략이 어떤 이유로 움직였는지 추적합니다."
+                />
+                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-dim)" }}>
                   <Tooltip
                     content={
                       <div>
@@ -720,10 +676,10 @@ export default function AutonomousPage() {
                       </div>
                     }
                   />
-                </span>
-                <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
-                  {marketData.trades.length}건
-                </span>
+                  <span>
+                    {marketData.trades.length}건
+                  </span>
+                </div>
               </div>
               <TradesTable trades={marketData.trades} market={market} />
             </section>
