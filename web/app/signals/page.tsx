@@ -13,10 +13,7 @@ import Tooltip from "@/components/Tooltip";
 import RecoveryPanel from "@/components/RecoveryPanel";
 import PositionCard from "@/components/PositionCard";
 import DisclosurePanel from "@/components/DisclosurePanel";
-import ThemeToggle from "@/components/ThemeToggle";
 import LLMAnalysisPanel from "@/components/LLMAnalysisPanel";
-import MacroPanel from "@/components/MacroPanel";
-import BigTechDropPanel from "@/components/BigTechDropPanel";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -347,34 +344,30 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ color: "var(--foreground)" }}>
-      {/* Header */}
-      <header
-        className="px-4 py-4 sticky top-0 z-30"
-        style={{
-          background: "var(--header-bg)",
-          backdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--glass-border)",
-        }}
+      <section
+        className="px-4 pt-8"
       >
         <div
-          className="max-w-7xl mx-auto rounded-[20px] px-4 py-3 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          className="max-w-7xl mx-auto glass-card rounded-[28px] px-6 py-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
           style={{
-            background: "rgba(255,255,255,0.025)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            boxShadow: "0 20px 40px -36px rgba(0,0,0,0.9)",
+            background:
+              "radial-gradient(circle at top left, rgba(246,197,68,0.08), transparent 24%), linear-gradient(180deg, rgba(18,31,50,0.94) 0%, rgba(9,17,29,0.98) 100%)",
           }}
         >
           <div className="flex items-start gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.26em]" style={{ color: "var(--accent)" }}>
-                Signalight Console
+                KR Signals
               </p>
               <h1
                 className="mt-2 text-2xl font-bold tracking-[0.16em]"
                 style={{ color: "var(--foreground)" }}
               >
-                SIGNALIGHT
+                ANALYSIS WORKSTATION
               </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: "var(--text-dim)" }}>
+                홈의 Overview에서 들어온 뒤, 여기서는 한국 주식 종목 하나를 깊게 읽는 데만 집중합니다.
+              </p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
                 <span
                   className="px-2.5 py-1 rounded-full"
@@ -394,7 +387,7 @@ export default function Home() {
                     border: "1px solid rgba(255,207,51,0.12)",
                   }}
                 >
-                  System Live
+                  Analysis Live
                 </span>
                 {data && !data.error && (
                   <span style={{ color: "var(--text-dim)" }}>
@@ -481,7 +474,6 @@ export default function Home() {
                 </>
               )}
             </div>
-            <ThemeToggle />
             <a
               href="/autonomous"
               className="text-sm px-3 py-2 rounded-xl hidden sm:inline transition-colors"
@@ -582,39 +574,9 @@ export default function Home() {
             )}
           </div>
         </div>
-      </header>
+      </section>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Featured Scanner */}
-        <section className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <p
-                className="text-[11px] font-semibold uppercase tracking-[0.24em]"
-                style={{ color: "var(--accent)" }}
-              >
-                Market Scanner
-              </p>
-              <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--foreground)" }}>
-                먼저 볼 만한 시장 장면
-              </h2>
-            </div>
-            <Link
-              href="/bigtech"
-              className="text-sm font-medium transition-opacity hover:opacity-80"
-              style={{ color: "var(--accent)" }}
-            >
-              빅테크 할인율 전체 보기 →
-            </Link>
-          </div>
-          <BigTechDropPanel variant="preview" />
-        </section>
-
-        {/* Global Macro Indices */}
-        <section className="animate-in fade-in slide-in-from-top-4 duration-700">
-          <MacroPanel />
-        </section>
-
         {isLoading && (
           <div className="space-y-6 animate-pulse">
             <div
