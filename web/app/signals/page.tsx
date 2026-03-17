@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { ALL_WATCH_LIST } from "@/lib/constants";

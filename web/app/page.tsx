@@ -123,7 +123,6 @@ export default function Home() {
         <EntryCard
           eyebrow="KR Signals"
           title="한국 주식 상세 분석"
-          description="대표 종목 차트, RSI, MACD, AI 해석, 포지션 판단까지 한 흐름으로 읽는 분석 화면입니다."
           description="대표 종목 차트와 신호, 해석, 포지션 판단을 한 흐름으로 읽는 보드입니다."
           href="/signals"
           tone="buy"
