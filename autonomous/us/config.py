@@ -116,6 +116,8 @@ class USAutonomousConfig:
     db_name: str = "signalight_us_auto.db"
     fixed_target_pct: float = 0.0  # 0이면 ATR 기반, >0이면 고정 퍼센트 목표
     skip_trend_gate: bool = False   # True이면 추세 게이트 스킵 (평균회귀용)
+    quick_profit_take_pct: float = 0.0  # 소폭 이익 후 비매수 상태면 빠른 청산
+    quick_profit_take_requires_non_buy: bool = True
 
 
 US_AUTO_CONFIG = USAutonomousConfig()
@@ -128,20 +130,48 @@ US_MEANREV_CONFIG = USAutonomousConfig(
     bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
     auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
     db_name="signalight_us_meanrev.db",
-    # 공격적 초기 설정 (데이터 수집 우선)
+
+    # ── 운영 분리 ──
+    kill_switch_path="/tmp/signalight_us_meanrev_kill",
+
+    # ── 스캔 완화 ──
+    # 후보군을 더 넓게 열어 평균회귀 진입 빈도를 높인다.
     indicator_rsi_oversold=35.0,
-    scan_rsi_oversold_threshold=45.0,
-    fixed_target_pct=5.0,
-    skip_trend_gate=True,
-    max_loss_pct=8.0,
-    max_holding_days=15,
+    scan_rsi_oversold_threshold=50.0,
+    scan_volume_surge_ratio=1.0,
+    scan_near_golden_cross_proximity=0.96,
+
+    # ── 진입 완화 ──
+    # downtrend에서도 더 쉽게 진입하도록 기준을 낮춘다.
+    initial_entry_threshold_uptrend=0.1,
+    initial_entry_threshold_sideways=0.1,
+    initial_entry_threshold_downtrend=0.2,
+    initial_min_volume_ratio=0.2,
+
+    # ── 포지션/사이징 ──
+    # 한 번에 넓게 진입하고 분할 없이 빠르게 회전한다.
     split_buy_phases=1,
     split_buy_confirm_days=1,
     max_positions=10,
     target_weight_pct=10.0,
     max_single_position_pct=15.0,
-    initial_entry_threshold_uptrend=0.1,
-    initial_entry_threshold_sideways=0.1,
-    initial_entry_threshold_downtrend=0.3,
-    initial_min_volume_ratio=0.2,
+
+    # ── 청산/회전 강화 ──
+    # 목표가를 가깝게 두고 소폭 수익도 빠르게 실현한다.
+    fixed_target_pct=2.0,
+    max_loss_pct=5.0,
+    max_holding_days=5,
+    quick_profit_take_pct=1.0,
+    quick_profit_take_requires_non_buy=False,
+
+    # ── 룰 오버라이드 ──
+    # 추세 게이트를 비활성화해 RSI 역추세 진입을 허용한다.
+    skip_trend_gate=True,
+
+    # ── 후보 부족 시 추가 완화 ──
+    # 장중 후보가 적으면 스캔 조건을 더 공격적으로 풀어준다.
+    universe_min_candidates=5,
+    universe_max_relaxation_rounds=4,
+    universe_rsi_relaxation_step=7.0,
+    universe_volume_relaxation_step=0.4,
 )

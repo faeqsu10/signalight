@@ -9,9 +9,10 @@ Output:
 JSON 구조:
     {
       "kr": { "equity": [...], "daily_pnl": [...], "trades": [...],
-               "summary": {...}, "updated_at": "..." },
+               "current_positions": [...], "summary": {...}, "updated_at": "..." },
       "us": { "equity": [...], "daily_pnl": [...], "trades": [...],
-               "summary": {...}, "updated_at": "..." }
+               "current_positions": [...], "summary": {...}, "updated_at": "..." },
+      "us_meanrev": { ... }
     }
 """
 
@@ -23,6 +24,7 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 KR_DB_PATH = os.path.join(BASE_DIR, "storage", "signalight.db")
 US_DB_PATH = os.path.join(BASE_DIR, "storage", "signalight_us.db")
+US_MEANREV_DB_PATH = os.path.join(BASE_DIR, "storage", "signalight_us_meanrev.db")
 OUT_PATH = os.path.join(BASE_DIR, "web", "public", "data", "autonomous.json")
 
 
@@ -73,6 +75,7 @@ def _export_market(db_path: str, label: str) -> dict:
             "equity": [],
             "daily_pnl": [],
             "trades": [],
+            "current_positions": [],
             "summary": _calc_summary([], []),
             "updated_at": datetime.now().isoformat(timespec="seconds"),
         }
@@ -150,6 +153,34 @@ def _export_market(db_path: str, label: str) -> dict:
             for row in rows
         ]
 
+    current_positions = []
+    if _table_exists(conn, "virtual_positions"):
+        rows = conn.execute(
+            """
+            SELECT ticker, name, phase, entry_price, entry_date, stop_loss, target1,
+                   target2, highest_close, weight_pct, remaining_pct
+            FROM virtual_positions
+            WHERE status = 'open'
+            ORDER BY entry_date ASC, id ASC
+            """
+        ).fetchall()
+        current_positions = [
+            {
+                "ticker": row["ticker"],
+                "name": row["name"],
+                "phase": row["phase"],
+                "entry_price": row["entry_price"],
+                "entry_date": row["entry_date"],
+                "stop_loss": row["stop_loss"],
+                "target1": row["target1"],
+                "target2": row["target2"],
+                "highest_close": row["highest_close"],
+                "weight_pct": row["weight_pct"],
+                "remaining_pct": row["remaining_pct"],
+            }
+            for row in rows
+        ]
+
     conn.close()
 
     summary = _calc_summary(equity, daily_pnl)
@@ -159,6 +190,7 @@ def _export_market(db_path: str, label: str) -> dict:
         "equity": equity,
         "daily_pnl": daily_pnl,
         "trades": recent_trades,
+        "current_positions": current_positions,
         "summary": summary,
         "updated_at": datetime.now().isoformat(timespec="seconds"),
     }
@@ -169,10 +201,12 @@ def export() -> None:
 
     kr_data = _export_market(KR_DB_PATH, "KR")
     us_data = _export_market(US_DB_PATH, "US")
+    us_meanrev_data = _export_market(US_MEANREV_DB_PATH, "US_MEANREV")
 
     data = {
         "kr": kr_data,
         "us": us_data,
+        "us_meanrev": us_meanrev_data,
     }
 
     with open(OUT_PATH, "w", encoding="utf-8") as f:

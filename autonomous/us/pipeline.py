@@ -43,24 +43,29 @@ class USAutonomousPipeline:
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
 
-        self.universe = USUniverseSelector()
-        self.analyzer = USStockAnalyzer()
+        self.universe = USUniverseSelector(config=self.config)
+        self.analyzer = USStockAnalyzer(config=self.config)
         self.decision = DecisionEngine(
             trade_rule=self.trade_rule,
             position_tracker=self.tracker,
             state=self.state,
+            config=self.config,
         )
         self.executor = USSafeExecutor(
             state=self.state,
             position_tracker=self.tracker,
+            config=self.config,
         )
         self.evaluator = PerformanceEvaluator(
             state=self.state,
             position_tracker=self.tracker,
             currency="$",
+            config=self.config,
         )
         self.ops_store = OpsEventStore()
-        self.service_name = "auto-us"
+        self.service_name = (
+            "auto-us-meanrev" if self.config.bot_mode == "meanrev" else "auto-us"
+        )
         self._optimizer_status = None
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시
         self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
@@ -95,6 +100,10 @@ class USAutonomousPipeline:
                 "extreme": self.config.vix_position_mult_extreme,
             },
             "sector_map": self.config.sector_map,
+            "fixed_target_pct": self.config.fixed_target_pct,
+            "skip_trend_gate": self.config.skip_trend_gate,
+            "quick_profit_take_pct": self.config.quick_profit_take_pct,
+            "quick_profit_take_requires_non_buy": self.config.quick_profit_take_requires_non_buy,
         }
 
     def _new_cycle_id(self, cycle_type: str) -> str:
@@ -365,6 +374,8 @@ class USAutonomousPipeline:
                 ]
                 analyzed = self.analyzer.analyze_holdings(holdings_info)
                 sell_decisions = self.decision.make_sell_decisions(analyzed)
+                if not sell_decisions:
+                    self._log_sell_rejection_summary(analyzed, cycle_id=cycle_id)
 
                 for decision in sell_decisions:
                     try:
@@ -686,6 +697,42 @@ class USAutonomousPipeline:
             summary,
             cycle_id=cycle_id,
             analyzed_count=len(analyzed_stocks),
+            reasons=dict(top_reasons),
+        )
+
+    def _log_sell_rejection_summary(self, analyzed_stocks: List[Dict], cycle_id: str = "") -> None:
+        """매도 보류 사유를 집계해 로그와 ops 이벤트에 남긴다."""
+        if not analyzed_stocks:
+            return
+
+        reason_counts = Counter()
+        evaluated = 0
+
+        for stock in analyzed_stocks:
+            ticker = stock.get("ticker", "")
+            position = self.tracker.get_position(ticker)
+            if not position:
+                continue
+            recommendation = self.trade_rule.should_sell(stock, position)
+            reason = recommendation.get("reason") or "사유 없음"
+            reason_counts[reason] += 1
+            evaluated += 1
+
+        if evaluated == 0 or not reason_counts:
+            return
+
+        top_reasons = sorted(
+            reason_counts.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:5]
+        summary = ", ".join(f"{reason}={count}" for reason, count in top_reasons)
+        logger.info("🇺🇸 매도 보류 사유 상위: %s", summary)
+        self._record_ops_event(
+            "INFO",
+            "sell_hold_summary",
+            summary,
+            cycle_id=cycle_id,
+            analyzed_count=evaluated,
             reasons=dict(top_reasons),
         )
 

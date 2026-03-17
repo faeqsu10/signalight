@@ -423,6 +423,11 @@ class TradeRule:
         target1_hit = position.get("target1_hit", False)
         target2_hit = position.get("target2_hit", False)
 
+        fixed_target = float(self._get_rule_value("fixed_target_pct", 0))
+        if fixed_target > 0 and entry_price > 0:
+            target1 = int(entry_price * (1 + fixed_target / 100))
+            target2 = int(entry_price * (1 + fixed_target * 1.5 / 100))
+
         result = {
             "recommend": False,
             "action": "hold",
@@ -452,6 +457,22 @@ class TradeRule:
             return result
 
         # 2. 역시그널 매도
+        quick_profit_take_pct = float(
+            self._get_rule_value("quick_profit_take_pct", 0)
+        )
+        quick_profit_requires_non_buy = bool(
+            self._get_rule_value("quick_profit_take_requires_non_buy", True)
+        )
+        if quick_profit_take_pct > 0 and pnl_pct >= quick_profit_take_pct:
+            if (not quick_profit_requires_non_buy) or confluence_direction != "buy":
+                result["recommend"] = True
+                result["action"] = "quick_profit"
+                result["reason"] = (
+                    f"빠른 이익 실현 ({pnl_pct:+.1f}% ≥ {quick_profit_take_pct:.1f}%)"
+                )
+                result["sell_pct"] = 100
+                return result
+
         if signal_strength == "strong_sell":
             result["recommend"] = True
             result["action"] = "signal_exit"

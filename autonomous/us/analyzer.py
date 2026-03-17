@@ -7,7 +7,7 @@
 import logging
 from typing import Dict, List, Optional
 
-from autonomous.us.config import US_AUTO_CONFIG
+from autonomous.us.config import US_AUTO_CONFIG, USAutonomousConfig
 from config import MACRO_EVENT_RULES, MACRO_SECTOR_IMPACT, MACRO_SIGNAL_MAX_SCORE
 from data.us_fetcher import fetch_us_stock_data
 from data.fetcher import fetch_vix
@@ -20,15 +20,16 @@ logger = logging.getLogger("signalight.us")
 class USStockAnalyzer:
     """미국 종목 분석기 — 기존 analyze_detailed를 래핑."""
 
-    def __init__(self):
+    def __init__(self, config: Optional[USAutonomousConfig] = None):
+        self.config = config or US_AUTO_CONFIG
         self._vix_cache = None  # type: Optional[float]
         self._macro_cache = None  # type: Optional[Dict]
         self._strategy_settings = {
-            "short_ma": US_AUTO_CONFIG.indicator_short_ma,
-            "long_ma": US_AUTO_CONFIG.indicator_long_ma,
-            "rsi_period": US_AUTO_CONFIG.indicator_rsi_period,
-            "rsi_oversold": US_AUTO_CONFIG.indicator_rsi_oversold,
-            "rsi_overbought": US_AUTO_CONFIG.indicator_rsi_overbought,
+            "short_ma": self.config.indicator_short_ma,
+            "long_ma": self.config.indicator_long_ma,
+            "rsi_period": self.config.indicator_rsi_period,
+            "rsi_oversold": self.config.indicator_rsi_oversold,
+            "rsi_overbought": self.config.indicator_rsi_overbought,
             # StochRSI — US config에 없으면 KR 기본값 사용
             "stoch_rsi_period": 14,
             "stoch_rsi_smooth_k": 3,
@@ -38,19 +39,19 @@ class USStockAnalyzer:
             # 수급 연속일 (미국은 수급 없으므로 실질적으로 미사용)
             "investor_consec_days": 3,
             # VIX 임계값
-            "vix_extreme_fear": US_AUTO_CONFIG.vix_extreme_fear,
-            "vix_fear": US_AUTO_CONFIG.vix_fear,
-            "vix_extreme_greed": US_AUTO_CONFIG.vix_extreme_greed,
+            "vix_extreme_fear": self.config.vix_extreme_fear,
+            "vix_fear": self.config.vix_fear,
+            "vix_extreme_greed": self.config.vix_extreme_greed,
             # 매크로 시그널 설정
             "macro_signal_max_score": MACRO_SIGNAL_MAX_SCORE,
             "macro_event_rules": dict(MACRO_EVENT_RULES),
             "macro_sector_impact": dict(MACRO_SECTOR_IMPACT),
-            "sector_map": US_AUTO_CONFIG.sector_map,
+            "sector_map": self.config.sector_map,
             # 진입 임계값
-            "entry_threshold_uptrend": US_AUTO_CONFIG.initial_entry_threshold_uptrend,
-            "entry_threshold_sideways": US_AUTO_CONFIG.initial_entry_threshold_sideways,
-            "entry_threshold_downtrend": US_AUTO_CONFIG.initial_entry_threshold_downtrend,
-            "min_volume_ratio": US_AUTO_CONFIG.initial_min_volume_ratio,
+            "entry_threshold_uptrend": self.config.initial_entry_threshold_uptrend,
+            "entry_threshold_sideways": self.config.initial_entry_threshold_sideways,
+            "entry_threshold_downtrend": self.config.initial_entry_threshold_downtrend,
+            "min_volume_ratio": self.config.initial_min_volume_ratio,
         }
 
     def analyze_candidates(self, candidates: List[Dict]) -> List[Dict]:
@@ -111,7 +112,7 @@ class USStockAnalyzer:
         self, symbol: str, name: str, vix_value: Optional[float]
     ) -> Optional[Dict]:
         """단일 종목 상세 분석."""
-        df = fetch_us_stock_data(symbol, days=US_AUTO_CONFIG.data_period_days)
+        df = fetch_us_stock_data(symbol, days=self.config.data_period_days)
         if df is None or df.empty or len(df) < 50:
             logger.warning("%s(%s): 데이터 부족 또는 없음", name, symbol)
             return None

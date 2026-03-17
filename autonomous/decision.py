@@ -23,10 +23,12 @@ class DecisionEngine:
         trade_rule: TradeRule = None,
         position_tracker: PositionTracker = None,
         state: PipelineState = None,
+        config=None,
     ):
         self.trade_rule = trade_rule or TradeRule()
         self.tracker = position_tracker or PositionTracker()
         self.state = state or PipelineState()
+        self.config = config or AUTO_CONFIG
 
     def make_buy_decisions(
         self, analyzed_stocks: List[Dict]
@@ -53,10 +55,10 @@ class DecisionEngine:
         current_count = len(all_open)
 
         # 남은 슬롯
-        available_slots = AUTO_CONFIG.max_positions - current_count
+        available_slots = self.config.max_positions - current_count
         if available_slots <= 0:
             logger.info("최대 포지션 수 도달 (%d/%d)",
-                        current_count, AUTO_CONFIG.max_positions)
+                        current_count, self.config.max_positions)
             return []
 
         # 종목별 매수 판단
@@ -76,8 +78,8 @@ class DecisionEngine:
             if rec.get("recommend"):
                 # 포지션 크기를 AUTO_CONFIG 기준으로 조정
                 rec["weight_pct"] = min(
-                    rec.get("weight_pct", AUTO_CONFIG.target_weight_pct),
-                    AUTO_CONFIG.target_weight_pct,
+                    rec.get("weight_pct", self.config.target_weight_pct),
+                    self.config.target_weight_pct,
                 )
                 buy_candidates.append({
                     "stock_data": data,
@@ -173,28 +175,28 @@ class DecisionEngine:
                 total_equity = equity_history[-1]["total_equity"]
                 if total_equity > 0:
                     weekly_loss_pct = abs(weekly["total_pnl"]) / total_equity * 100
-                    if weekly_loss_pct >= AUTO_CONFIG.weekly_loss_limit_pct:
+                    if weekly_loss_pct >= self.config.weekly_loss_limit_pct:
                         logger.warning(
                             "주간 손실 한도 초과: %.1f%% >= %.1f%%",
-                            weekly_loss_pct, AUTO_CONFIG.weekly_loss_limit_pct,
+                            weekly_loss_pct, self.config.weekly_loss_limit_pct,
                         )
                         return False
 
         # 연속 패배 한도
         consec = self.state.get_consecutive_losses()
-        if consec >= AUTO_CONFIG.max_consecutive_losses:
+        if consec >= self.config.max_consecutive_losses:
             logger.warning(
                 "연속 패배 한도: %d연패 >= %d",
-                consec, AUTO_CONFIG.max_consecutive_losses,
+                consec, self.config.max_consecutive_losses,
             )
             return False
 
         # 최대 낙폭 킬스위치
         max_dd = self.state.get_max_drawdown()
-        if max_dd >= AUTO_CONFIG.max_drawdown_pct:
+        if max_dd >= self.config.max_drawdown_pct:
             logger.warning(
                 "최대 낙폭 킬스위치: %.1f%% >= %.1f%%",
-                max_dd, AUTO_CONFIG.max_drawdown_pct,
+                max_dd, self.config.max_drawdown_pct,
             )
             return False
 
@@ -205,7 +207,7 @@ class DecisionEngine:
     ) -> bool:
         """섹터 집중도를 체크한다."""
         ticker = stock_data.get("ticker", "")
-        sector_map = AUTO_CONFIG.sector_map
+        sector_map = self.config.sector_map
         sector = sector_map.get(ticker, "기타")
 
         # 같은 섹터의 현재 보유 수
@@ -214,10 +216,10 @@ class DecisionEngine:
             if sector_map.get(pos["ticker"], "기타") == sector
         )
 
-        if sector_count >= AUTO_CONFIG.max_sector_positions:
+        if sector_count >= self.config.max_sector_positions:
             logger.debug(
                 "%s: 섹터 한도 초과 (%s: %d/%d)",
-                ticker, sector, sector_count, AUTO_CONFIG.max_sector_positions,
+                ticker, sector, sector_count, self.config.max_sector_positions,
             )
             return False
 

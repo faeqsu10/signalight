@@ -48,6 +48,7 @@ class AutonomousPipeline:
             trade_rule=self.trade_rule,
             position_tracker=self.tracker,
             state=self.state,
+            config=self.config,
         )
         self.executor = SafeExecutor(
             state=self.state,

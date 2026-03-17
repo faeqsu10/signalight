@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 from trading.alpaca_client import AlpacaClient
 from trading import Order
 from trading.position_tracker import PositionTracker
-from autonomous.us.config import US_AUTO_CONFIG
+from autonomous.us.config import US_AUTO_CONFIG, USAutonomousConfig
 from autonomous.state import PipelineState
 from config import DRY_RUN_VIRTUAL_ASSET_USD
 
@@ -26,10 +26,11 @@ class USSafeExecutor:
         self,
         state: PipelineState = None,
         position_tracker: PositionTracker = None,
+        config: Optional[USAutonomousConfig] = None,
     ):
         self.state = state or PipelineState()
         self.tracker = position_tracker or PositionTracker()
-        self.config = US_AUTO_CONFIG
+        self.config = config or US_AUTO_CONFIG
         self.daily_orders = []  # type: List[Order]
 
         # AlpacaClient (dry_run이어도 생성 — paper trading이므로 무해)
@@ -222,6 +223,8 @@ class USSafeExecutor:
         )
 
         if order and order.status in ("filled", "simulated"):
+            if sell_pct < 100:
+                self.tracker.partial_sell(ticker, sell_pct)
             if action == "target1":
                 self.tracker.mark_target_hit(ticker, 1)
                 self.tracker.update_stop_loss(ticker, int(entry_price))

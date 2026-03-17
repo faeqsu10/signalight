@@ -69,9 +69,6 @@ def parse_args():
 
 def main():
     global logger
-    logger = setup_logging(service_name="auto-us", log_basename="auto-us")
-    ops_store = OpsEventStore()
-
     args = parse_args()
 
     # 모드에 따른 설정 선택
@@ -79,6 +76,12 @@ def main():
         config = US_MEANREV_CONFIG
     else:
         config = US_AUTO_CONFIG
+
+    service_name = "auto-us-meanrev" if args.mode == "meanrev" else "auto-us"
+    log_basename = "auto-us-meanrev" if args.mode == "meanrev" else "auto-us"
+
+    logger = setup_logging(service_name=service_name, log_basename=log_basename)
+    ops_store = OpsEventStore()
 
     if args.live:
         config.dry_run = False
@@ -89,7 +92,7 @@ def main():
 
     ops_store.record_event(
         level="INFO",
-        service="auto-us",
+        service=service_name,
         event="runner_started",
         message="US runner started",
         context={"mode": args.mode, "live": args.live, "once": args.once},
@@ -161,7 +164,7 @@ def main():
                 logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
                 ops_store.record_event(
                     level="ERROR",
-                    service="auto-us",
+                    service=service_name,
                     event="schedule_loop_error",
                     message=str(e),
                     error_type=type(e).__name__,
@@ -169,10 +172,10 @@ def main():
             time.sleep(30)
     except Exception as e:
         logger.critical("파이프라인 크래시: %s", e, exc_info=True)
-        log_event(logger, logging.CRITICAL, "runner_crash", "US runner crashed", service="auto-us", error_type=type(e).__name__)
+        log_event(logger, logging.CRITICAL, "runner_crash", "US runner crashed", service=service_name, error_type=type(e).__name__)
         ops_store.record_event(
             level="CRITICAL",
-            service="auto-us",
+            service=service_name,
             event="runner_crash",
             message=str(e),
             error_type=type(e).__name__,
@@ -188,7 +191,7 @@ def main():
     logger.info("US 파이프라인 정상 종료")
     ops_store.record_event(
         level="INFO",
-        service="auto-us",
+        service=service_name,
         event="runner_stopped",
         message="US runner stopped",
     )
@@ -231,6 +234,14 @@ def _kst_slots_for_et_time(et_day: str, hour: int, minute: int) -> list[tuple[st
 
 def _schedule_tagged(day: str, time_str: str, callback, tag: str):
     return getattr(schedule.every(), day).at(time_str).do(callback).tag(tag)
+
+
+def _schedule_tagged_once(registered_slots: set, day: str, time_str: str, callback, tag: str):
+    slot = (tag, day, time_str)
+    if slot in registered_slots:
+        return None
+    registered_slots.add(slot)
+    return _schedule_tagged(day, time_str, callback, tag)
 
 
 def _run_if_kst_matches_et_time(et_days: tuple[str, ...], target_hour: int, target_minute: int, callback):
@@ -280,13 +291,15 @@ def _register_schedules(pipeline: USAutonomousPipeline, monitor_only: bool, conf
     if config is None:
         config = US_AUTO_CONFIG
     interval = config.monitor_interval_min
+    registered_slots = set()
 
     if not monitor_only:
         for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
             for local_day, local_time in _kst_slots_for_et_time(
                 day, config.market_open_hour, config.market_open_minute
             ):
-                _schedule_tagged(
+                _schedule_tagged_once(
+                    registered_slots,
                     local_day,
                     local_time,
                     lambda cb=pipeline.run_morning_scan, h=config.market_open_hour, m=config.market_open_minute: _run_if_kst_matches_et_time(
@@ -302,7 +315,8 @@ def _register_schedules(pipeline: USAutonomousPipeline, monitor_only: bool, conf
             for local_day, local_time in _kst_slots_for_et_time(
                 day, config.market_close_hour, config.market_close_minute
             ):
-                _schedule_tagged(
+                _schedule_tagged_once(
+                    registered_slots,
                     local_day,
                     local_time,
                     lambda cb=pipeline.run_daily_cycle, h=config.market_close_hour, m=config.market_close_minute: _run_if_kst_matches_et_time(
@@ -326,7 +340,8 @@ def _register_schedules(pipeline: USAutonomousPipeline, monitor_only: bool, conf
                 if hour == config.market_close_hour and minute > 40:
                     continue
                 for local_day, local_time in _kst_slots_for_et_time(day, hour, minute):
-                    _schedule_tagged(
+                    _schedule_tagged_once(
+                        registered_slots,
                         local_day,
                         local_time,
                         lambda cb=pipeline.run_intraday_monitor: _run_if_kst_matches_et_window(
@@ -347,7 +362,8 @@ def _register_schedules(pipeline: USAutonomousPipeline, monitor_only: bool, conf
     )
 
     for local_day, local_time in _kst_slots_for_et_time("friday", 16, 30):
-        _schedule_tagged(
+        _schedule_tagged_once(
+            registered_slots,
             local_day,
             local_time,
             lambda cb=pipeline.run_weekly_evaluation: _run_if_kst_matches_weekly("friday", 16, 30, cb),

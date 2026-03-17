@@ -8,7 +8,7 @@ import logging
 from typing import Dict, List, Optional, Set
 
 from scanner.us_market_scanner import USMarketScanner
-from autonomous.us.config import US_AUTO_CONFIG
+from autonomous.us.config import US_AUTO_CONFIG, USAutonomousConfig
 
 logger = logging.getLogger("signalight.us")
 
@@ -23,7 +23,12 @@ DEFAULT_WEIGHTS = {
 class USUniverseSelector:
     """미국 주식 유니버스 선정기."""
 
-    def __init__(self, scan_weights: Optional[Dict[str, float]] = None):
+    def __init__(
+        self,
+        scan_weights: Optional[Dict[str, float]] = None,
+        config: Optional[USAutonomousConfig] = None,
+    ):
+        self.config = config or US_AUTO_CONFIG
         self.scanner = USMarketScanner()
         self.scan_weights = scan_weights or dict(DEFAULT_WEIGHTS)
 
@@ -51,11 +56,11 @@ class USUniverseSelector:
         if held_tickers is None:
             held_tickers = set()
         if max_candidates is None:
-            max_candidates = US_AUTO_CONFIG.universe_max_candidates
+            max_candidates = self.config.universe_max_candidates
 
         logger.info("US 유니버스 스캔 시작")
 
-        scan_limit = US_AUTO_CONFIG.universe_scan_limit
+        scan_limit = self.config.universe_scan_limit
 
         golden_cross = []
         rsi_oversold = []
@@ -71,7 +76,7 @@ class USUniverseSelector:
         try:
             rsi_oversold = self.scanner.scan_rsi_oversold(
                 limit=scan_limit,
-                oversold_threshold=US_AUTO_CONFIG.scan_rsi_oversold_threshold,
+                oversold_threshold=self.config.scan_rsi_oversold_threshold,
             )
             logger.info("RSI 과매도: %d종목", len(rsi_oversold))
         except Exception as e:
@@ -79,7 +84,7 @@ class USUniverseSelector:
 
         try:
             volume_surge = self.scanner.scan_volume_surge(
-                min_ratio=US_AUTO_CONFIG.scan_volume_surge_ratio,
+                min_ratio=self.config.scan_volume_surge_ratio,
                 limit=scan_limit,
             )
             logger.info("거래량 급증: %d종목", len(volume_surge))
@@ -89,7 +94,7 @@ class USUniverseSelector:
         try:
             near_golden_cross = self.scanner.scan_near_golden_cross(
                 limit=scan_limit,
-                proximity_ratio=US_AUTO_CONFIG.scan_near_golden_cross_proximity,
+                proximity_ratio=self.config.scan_near_golden_cross_proximity,
             )
             logger.info("근접 골든크로스: %d종목", len(near_golden_cross))
         except Exception as e:
@@ -161,16 +166,16 @@ class USUniverseSelector:
         filtered = sorted(candidates.values(), key=lambda x: x["composite_score"], reverse=True)
 
         # 적응형 완화: 후보 부족 시 재스캔
-        min_candidates = US_AUTO_CONFIG.universe_min_candidates
-        max_relaxation_rounds = US_AUTO_CONFIG.universe_max_relaxation_rounds
+        min_candidates = self.config.universe_min_candidates
+        max_relaxation_rounds = self.config.universe_max_relaxation_rounds
 
         if len(filtered) < min_candidates:
-            current_rsi = US_AUTO_CONFIG.scan_rsi_oversold_threshold
-            current_vol = US_AUTO_CONFIG.scan_volume_surge_ratio
+            current_rsi = self.config.scan_rsi_oversold_threshold
+            current_vol = self.config.scan_volume_surge_ratio
 
             for round_num in range(1, max_relaxation_rounds + 1):
-                relaxed_rsi = current_rsi + (US_AUTO_CONFIG.universe_rsi_relaxation_step * round_num)
-                relaxed_vol = current_vol - (US_AUTO_CONFIG.universe_volume_relaxation_step * round_num)
+                relaxed_rsi = current_rsi + (self.config.universe_rsi_relaxation_step * round_num)
+                relaxed_vol = current_vol - (self.config.universe_volume_relaxation_step * round_num)
                 relaxed_vol = max(relaxed_vol, 0.5)  # 하한선
 
                 logger.info(

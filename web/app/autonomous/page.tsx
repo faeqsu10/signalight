@@ -38,10 +38,25 @@ interface Trade {
   pnl_amount: number | null;
 }
 
+interface CurrentPosition {
+  ticker: string;
+  name: string;
+  phase: number;
+  entry_price: number;
+  entry_date: string;
+  stop_loss: number;
+  target1: number;
+  target2: number;
+  highest_close: number;
+  weight_pct: number;
+  remaining_pct: number;
+}
+
 interface MarketData {
   equity: EquityPoint[];
   daily_pnl: DailyPnl[];
   trades: Trade[];
+  current_positions: CurrentPosition[];
   summary: {
     total_trades: number;
     win_rate: number;
@@ -54,10 +69,13 @@ interface MarketData {
 interface AutonomousData {
   kr: MarketData;
   us: MarketData;
+  us_meanrev: MarketData;
 }
 
-function fmtAmount(amount: number, market: "kr" | "us") {
-  if (market === "us") {
+type MarketKey = "kr" | "us" | "us_meanrev";
+
+function fmtAmount(amount: number, market: MarketKey) {
+  if (market !== "kr") {
     return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: 0 });
   }
   if (Math.abs(amount) >= 100_000_000) {
@@ -69,7 +87,7 @@ function fmtAmount(amount: number, market: "kr" | "us") {
   return amount.toLocaleString("ko-KR") + "원";
 }
 
-function fmtPnl(amount: number | null, pct: number | null, market: "kr" | "us") {
+function fmtPnl(amount: number | null, pct: number | null, market: MarketKey) {
   if (amount === null && pct === null) return "-";
   const parts: string[] = [];
   if (pct !== null) {
@@ -83,7 +101,7 @@ function fmtPnl(amount: number | null, pct: number | null, market: "kr" | "us") 
   return parts.join(" / ");
 }
 
-function EquityChart({ equity, market }: { equity: EquityPoint[]; market: "kr" | "us" }) {
+function EquityChart({ equity, market }: { equity: EquityPoint[]; market: MarketKey }) {
   if (equity.length === 0) {
     return (
       <div style={{ height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -181,7 +199,7 @@ function EquityChart({ equity, market }: { equity: EquityPoint[]; market: "kr" |
   );
 }
 
-function SummaryCards({ data, market }: { data: MarketData; market: "kr" | "us" }) {
+function SummaryCards({ data, market }: { data: MarketData; market: MarketKey }) {
   const { summary, equity } = data;
   const latestEquity = equity.length > 0 ? equity[equity.length - 1].total : null;
   const initialEquity = equity.length > 0 ? equity[0].total : null;
@@ -284,7 +302,7 @@ function SummaryCards({ data, market }: { data: MarketData; market: "kr" | "us" 
   );
 }
 
-function DailyPnlBars({ daily_pnl, market }: { daily_pnl: DailyPnl[]; market: "kr" | "us" }) {
+function DailyPnlBars({ daily_pnl, market }: { daily_pnl: DailyPnl[]; market: MarketKey }) {
   if (daily_pnl.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text-dim)", fontSize: 13 }}>
@@ -339,7 +357,7 @@ function DailyPnlBars({ daily_pnl, market }: { daily_pnl: DailyPnl[]; market: "k
               }}
             >
               {isPos ? "+" : ""}
-              {market === "us"
+              {market !== "kr"
                 ? "$" + d.pnl.toLocaleString("en-US")
                 : d.pnl.toLocaleString() + "원"}
             </span>
@@ -353,7 +371,7 @@ function DailyPnlBars({ daily_pnl, market }: { daily_pnl: DailyPnl[]; market: "k
   );
 }
 
-function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" }) {
+function TradesTable({ trades, market }: { trades: Trade[]; market: MarketKey }) {
   if (trades.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -402,7 +420,7 @@ function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" 
                   {t.quantity.toLocaleString()}
                 </td>
                 <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                  {market === "us"
+                  {market !== "kr"
                     ? "$" + t.price.toLocaleString("en-US", { minimumFractionDigits: 2 })
                     : t.price.toLocaleString("ko-KR") + "원"}
                 </td>
@@ -440,19 +458,51 @@ function TradesTable({ trades, market }: { trades: Trade[]; market: "kr" | "us" 
   );
 }
 
+function CurrentPositionsPanel({ positions, market }: { positions: CurrentPosition[]; market: MarketKey }) {
+  if (positions.length === 0) {
+    return (
+      <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text-dim)", fontSize: 13 }}>
+        현재 보유 종목 없음
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      {positions.map((pos) => (
+        <div key={`${pos.ticker}-${pos.entry_date}`} className="glass-card" style={{ padding: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+            <div>
+              <div style={{ fontWeight: 700 }}>{pos.name}</div>
+              <div style={{ color: "var(--text-dim)", fontSize: 12 }}>{pos.ticker}</div>
+            </div>
+            <span className="badge-hold">{pos.weight_pct.toFixed(1)}%</span>
+          </div>
+          <div style={{ marginTop: 12, display: "grid", gap: 6, fontSize: 12 }}>
+            <div style={{ color: "var(--text-dim)" }}>진입가 {fmtAmount(pos.entry_price, market)}</div>
+            <div style={{ color: "var(--text-dim)" }}>목표1 {fmtAmount(pos.target1, market)} / 손절 {fmtAmount(pos.stop_loss, market)}</div>
+            <div style={{ color: "var(--text-dim)" }}>잔여 {pos.remaining_pct.toFixed(1)}% / 진입일 {pos.entry_date}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AutonomousPage() {
   const { data, isLoading } = useSWR<AutonomousData>("/api/autonomous", fetcher, {
     refreshInterval: 60000,
   });
-  const [market, setMarketState] = useState<"kr" | "us">(() => {
+  const [market, setMarketState] = useState<MarketKey>(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.replace("#", "");
       if (hash === "us") return "us";
+      if (hash === "us_meanrev") return "us_meanrev";
     }
     return "kr";
   });
 
-  const setMarket = (m: "kr" | "us") => {
+  const setMarket = (m: MarketKey) => {
     setMarketState(m);
     window.location.hash = m;
   };
@@ -473,7 +523,7 @@ export default function AutonomousPage() {
         title="AUTONOMOUS OPERATIONS"
         description="KR·US 운용 상태, 에퀴티, 일별 손익, 최근 체결을 한 흐름으로 점검합니다."
         badges={[
-          market === "kr" ? "KR Runtime" : "US Runtime",
+          market === "kr" ? "KR Runtime" : market === "us" ? "US Swing Runtime" : "US MeanRev Runtime",
           marketData?.updated_at
             ? `Last Sync ${marketData.updated_at.replace("T", " ").slice(0, 16)}`
             : "Waiting for Snapshot",
@@ -495,7 +545,11 @@ export default function AutonomousPage() {
                   border: "1px solid var(--glass-border)",
                 }}
               >
-                {(["kr", "us"] as const).map((m) => (
+                {([
+                  ["kr", "KR 전략"],
+                  ["us", "US 스윙"],
+                  ["us_meanrev", "US 평균회귀"],
+                ] as const).map(([m, label]) => (
                   <button
                     key={m}
                     onClick={() => setMarket(m)}
@@ -505,7 +559,7 @@ export default function AutonomousPage() {
                       color: market === m ? "#08111d" : "var(--text-dim)",
                     }}
                   >
-                    {m === "kr" ? "KR 전략" : "US 전략"}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -576,7 +630,7 @@ export default function AutonomousPage() {
         {!isLoading && marketData && (
           <>
             {/* US placeholder notice */}
-            {market === "us" && marketData.equity.length === 0 && (
+            {(market === "us" || market === "us_meanrev") && marketData.equity.length === 0 && (
               <div
                 style={{
                   padding: "12px 16px",
@@ -599,6 +653,15 @@ export default function AutonomousPage() {
                 description="총 자산, 누적 수익률, MDD, 승률을 한 번에 확인합니다."
               />
               <SummaryCards data={marketData} market={market} />
+            </section>
+
+            <section className="glass-card space-y-4" style={{ padding: 20 }}>
+              <SectionHeader
+                eyebrow="Holdings"
+                title="Current Positions"
+                description="현재 보유 종목, 진입가, 목표가와 잔여 비중을 확인합니다."
+              />
+              <CurrentPositionsPanel positions={marketData.current_positions} market={market} />
             </section>
 
             {/* Equity Curve */}

@@ -125,6 +125,25 @@ class PerformanceEvaluator:
             fmt = f"{value:+,}" if sign else f"{value:,}"
             return f"{fmt}{self._currency}"
 
+    def _format_holdings_snapshot(self, limit: int = 5) -> List[str]:
+        """현재 보유 종목을 짧게 요약한다."""
+        open_positions = self.tracker.get_all_open()
+        lines = [f"보유: {len(open_positions)}종목"]
+        if not open_positions:
+            return lines
+
+        preview = []
+        for pos in open_positions[:limit]:
+            ticker = pos.get("ticker", "")
+            name = pos.get("name", ticker)
+            weight_pct = pos.get("weight_pct", 0) or 0
+            preview.append(f"{name}({ticker}) {weight_pct:.1f}%")
+
+        lines.append("포지션: " + ", ".join(preview))
+        if len(open_positions) > limit:
+            lines.append(f"... 외 {len(open_positions) - limit}종목")
+        return lines
+
     def _format_optimizer_status(self, status: Dict) -> List[str]:
         """피드백 루프(optimizer) 상태를 초보자 친화적으로 포맷한다."""
         lines = ["<b>피드백 루프 상태</b>"]
@@ -411,6 +430,9 @@ class PerformanceEvaluator:
                 lines.append(f"보유: {holding_days}일")
             if reason:
                 lines.append(f"사유: {reason}")
+
+        lines.append("")
+        lines.extend(self._format_holdings_snapshot())
 
         if self._config.dry_run:
             lines.append("\n<i>(시뮬레이션 모드)</i>")
