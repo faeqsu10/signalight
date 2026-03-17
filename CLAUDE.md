@@ -161,9 +161,14 @@ signalight/
 2. **문서 업데이트** — 구조/기능 변경 시 `tasks/todo.md`, `lessons.md`, `improvements.md` 갱신
 3. **CLAUDE.md 동기화** — 프로젝트 구조 변경 시 아키텍처 섹션 업데이트
 4. **Python ↔ TS 동기화** — 지표 로직 변경 시 양쪽 반영
-5. **테스트 검증** — 코드 작성 후 import/실행 테스트로 동작 확인
+5. **역할 분리 검증** — 코드 작성자와 테스트/리뷰/검증 담당자는 분리한다. 코드 작성자가 자기 변경을 직접 리뷰하거나 최종 검증하지 않는다.
 6. **교훈 기록** — 실수나 새로운 발견은 `tasks/lessons.md`에 기록
 7. **엣지 케이스 기준 준수** — 테스트 설계/보강 시 `docs/edgecase_test.md`를 우선 참고
+
+## 에이전트 역할 분리 원칙
+- 코드 작성 에이전트와 리뷰/테스트/검증 에이전트는 반드시 분리한다.
+- 코드 작성 에이전트는 구현까지만 담당하고, 리뷰/테스트/최종 검증은 별도 에이전트가 맡는다.
+- 이 원칙은 예외 없이 항상 적용한다.
 
 ## 파일 간 관계 (Python ↔ TypeScript 포팅 매핑)
 | Python | TypeScript | 설명 |
@@ -183,6 +188,7 @@ signalight/
 - **자율 트레이딩**: systemd user service (`signalight-auto.service`) — dry_run 스케줄 기반 자동매매
 - **미국 자율 트레이딩**: systemd user service (`signalight-auto-us.service`) — Alpaca Paper Trading 스케줄 기반 자동매매
 - **웹 대시보드**: Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
+- **자율매매 대시보드 API**: 로컬/서버 DB가 있으면 실시간 조회, 없으면 `web/public/data/autonomous.json` fallback
 - **데이터 소스**: pykrx, Yahoo Finance, 네이버 금융 크롤링, Google Gemini API
 - **로깅**: 구조화 로깅 (콘솔+파일, 10MB 로테이션 × 5백업) — `infra/logging_config.py`
 - **운영 이벤트 DB**: `storage/ops_events.db` — 파이프라인 실행 요약, 주문/오류 핵심 이벤트 저장

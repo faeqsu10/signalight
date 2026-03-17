@@ -126,3 +126,8 @@
 - 사용자/프로젝트가 별도 orchestration 규칙을 주면 `CLAUDE.md`와 로컬 기억 저장소 둘 다 동기화해야 다음 세션에 유지된다.
 - 비단순 작업은 plan-first, verification-first, role separation 원칙으로 취급하는 편이 충돌이 적다.
 - `tasks/worklog-template.md`가 없어도 `tasks/worklogs/YYYY-MM-DD-{주제}.md` 형식의 로그는 남겨야 한다.
+
+## 자율매매 대시보드 실시간화
+- Vercel 같은 정적/서버리스 배포에서는 로컬 SQLite에 직접 붙을 수 없으므로 `DB 우선 + JSON fallback` 구조가 안전하다.
+- `better-sqlite3`를 쓰는 API route는 `runtime = "nodejs"`와 `dynamic = "force-dynamic"`를 명시하는 편이 예측 가능하다.
+- US 거래 로그는 cents, 가상 포지션 가격은 dollars로 저장돼 있어 대시보드 변환 규칙을 분리해야 한다.

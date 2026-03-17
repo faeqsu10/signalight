@@ -5,6 +5,12 @@
 한국/미국 주식 매매 시그널 분석 + 자율 트레이딩 시스템.
 기술적 지표, 수급, 매크로, 뉴스 감성을 종합하여 매수/매도 타이밍을 분석합니다.
 
+## 협업 원칙
+
+- 코드 작성 에이전트와 리뷰/테스트/검증 에이전트는 분리한다.
+- 코드 작성 에이전트가 자신의 변경을 직접 리뷰하거나 최종 검증하지 않는다.
+- 이 역할 분리 원칙은 항상 적용한다.
+
 ## 주요 기능
 
 ### 텔레그램 봇
@@ -24,7 +30,7 @@
 - Next.js 14 기반 실시간 캔들차트 + RSI/MACD/볼린저밴드
 - 종목 스크리너 (골든크로스, RSI 과매도, 거래량 급증)
 - 회복 분석 (6항목 체크리스트 + 포지션 진단)
-- 자율매매 대시보드 (`/autonomous` — 에퀴티 차트, 거래 이력, 포지션)
+- 자율매매 대시보드 (`/autonomous` — 런타임 DB 우선, 스냅샷 fallback)
 - 백테스트 결과 요약 카드
 
 ## 분석 지표
@@ -123,8 +129,11 @@ TRADING_ENV=mock
 
 # 텔레그램 봇 (필수)
 TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_CHAT_ID=your_signal_channel_chat_id
+TELEGRAM_ADMIN_CHAT_ID=your_admin_dm_or_ops_chat_id
 AUTO_TRADE_CHAT_ID=your_auto_trade_chat_id
+LONG_TRADE_CHAT_ID=your_position_trade_chat_id
+MEANREV_CHAT_ID=your_meanrev_trade_chat_id
 
 # Google Gemini (선택 — 없으면 감성 분석 건너뜀)
 GOOGLE_API_KEY=your_google_api_key
@@ -178,6 +187,49 @@ journalctl --user -u signalight -f
 journalctl --user -u signalight-auto -f
 journalctl --user -u signalight-auto-us -f
 ```
+
+## 로그 관리
+
+- 백엔드 공통 로깅 설정: `infra/logging_config.py`
+- 운영 이벤트 저장소: `infra/ops_event_store.py`
+- 텍스트 로그:
+  - `logs/signalight.log`
+  - `logs/auto-kr.log`
+  - `logs/auto-us.log`
+- JSON 구조화 로그:
+  - `logs/signalight.jsonl`
+  - `logs/auto-kr.jsonl`
+  - `logs/auto-us.jsonl`
+- 경고/에러 전용 로그:
+  - `logs/signalight.error.log`
+  - `logs/auto-kr.error.log`
+  - `logs/auto-us.error.log`
+- 운영 이벤트 DB:
+  - `storage/ops_events.db`
+
+운영 이벤트 DB에는 전체 `INFO` 로그가 아니라 중요한 이벤트만 저장합니다.
+- 파이프라인 실행 시작/종료 요약
+- 주문 성공/실패
+- 킬스위치/서킷브레이커 같은 핵심 상태 이벤트
+- 경고/오류 요약
+
+SQLite에서 바로 확인할 수 있습니다.
+
+```bash
+sqlite3 storage/ops_events.db "SELECT created_at, service, event, message FROM ops_event_logs ORDER BY id DESC LIMIT 20;"
+sqlite3 storage/ops_events.db "SELECT run_date, service, cycle_id, status, scanned_count, analyzed_count, buy_count, sell_count FROM ops_run_summary ORDER BY id DESC LIMIT 20;"
+```
+
+CLI로도 조회할 수 있습니다.
+
+```bash
+python3 scripts/ops_log_report.py --mode events --limit 20
+python3 scripts/ops_log_report.py --mode runs --service auto-kr --limit 10
+python3 scripts/ops_log_report.py --mode events --service auto-us --level ERROR --limit 10
+python3 scripts/ops_log_report.py --mode summary
+```
+
+운영 장애 확인 절차는 [docs/operations.md](/home/faeqsu10/project/signalight/docs/operations.md)에 정리했습니다.
 
 ## 텔레그램 명령어
 

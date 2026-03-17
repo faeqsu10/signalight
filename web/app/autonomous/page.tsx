@@ -491,7 +491,7 @@ function CurrentPositionsPanel({ positions, market }: { positions: CurrentPositi
 
 export default function AutonomousPage() {
   const { data, isLoading } = useSWR<AutonomousData>("/api/autonomous", fetcher, {
-    refreshInterval: 60000,
+    refreshInterval: 30000,
   });
   const [market, setMarketState] = useState<MarketKey>(() => {
     if (typeof window !== "undefined") {
@@ -526,7 +526,7 @@ export default function AutonomousPage() {
           market === "kr" ? "KR Runtime" : market === "us" ? "US Swing Runtime" : "US MeanRev Runtime",
           marketData?.updated_at
             ? `Last Sync ${marketData.updated_at.replace("T", " ").slice(0, 16)}`
-            : "Waiting for Snapshot",
+            : "Waiting for Runtime",
         ]}
         actions={[
           { href: "/", label: "Overview" },
@@ -629,8 +629,8 @@ export default function AutonomousPage() {
 
         {!isLoading && marketData && (
           <>
-            {/* US placeholder notice */}
-            {(market === "us" || market === "us_meanrev") && marketData.equity.length === 0 && (
+            {/* Snapshot fallback notice */}
+            {marketData.updated_at && marketData.equity.length === 0 && (
               <div
                 style={{
                   padding: "12px 16px",
@@ -641,7 +641,7 @@ export default function AutonomousPage() {
                   fontSize: 13,
                 }}
               >
-                미국 자율매매 데이터는 준비 중입니다. DB market 컬럼 분리 후 활성화됩니다.
+                런타임 DB가 없어서 최근 export 스냅샷 또는 빈 데이터가 표시되고 있습니다.
               </div>
             )}
 
@@ -650,7 +650,7 @@ export default function AutonomousPage() {
               <SectionHeader
                 eyebrow="Performance"
                 title="Performance Board"
-                description="총 자산, 누적 수익률, MDD, 승률을 한 번에 확인합니다."
+                description="런타임 DB 기준 성과를 30초마다 다시 읽어 보여줍니다."
               />
               <SummaryCards data={marketData} market={market} />
             </section>

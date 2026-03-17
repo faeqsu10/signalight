@@ -188,6 +188,7 @@
 - [x] KR/US 진입 임계값 적극적 완화 (0.8/1.2/1.8)
 - [x] KR/US DB 분리 (MDD 킬스위치 오탐 해결)
 - [x] export 스크립트 KR/US 분리 지원
+- [x] 자율매매 대시보드 API DB 우선 조회 + JSON fallback 정리
 
 ## Backlog
 - [x] Vercel 배포
