@@ -122,7 +122,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-18T01:06:01"
+    "updated_at": "2026-03-18T04:50:02"
   },
   "us": {
     "equity": [
@@ -245,7 +245,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-18T01:06:01"
+    "updated_at": "2026-03-18T04:50:02"
   },
   "us_meanrev": {
     "equity": [
@@ -254,6 +254,13 @@
         "total": 9998057,
         "invested": 5386130,
         "cash": 4611927,
+        "positions": 10
+      },
+      {
+        "date": "2026-03-18",
+        "total": 10043208,
+        "invested": 6751520,
+        "cash": 3291687,
         "positions": 10
       }
     ],
@@ -264,9 +271,29 @@
         "trades": 10,
         "wins": 0,
         "losses": 0
+      },
+      {
+        "date": "2026-03-18",
+        "pnl": 41600,
+        "trades": 11,
+        "wins": 4,
+        "losses": 0
       }
     ],
     "trades": [
+      {
+        "date": "2026-03-18",
+        "ticker": "QCOM",
+        "name": "Qualcomm",
+        "side": "buy",
+        "quantity": 61,
+        "price": 13100,
+        "amount": 799100,
+        "status": "filled",
+        "reason": "confluence=0.7",
+        "pnl_pct": null,
+        "pnl_amount": null
+      },
       {
         "date": "2026-03-18",
         "ticker": "BAC",
@@ -645,14 +672,27 @@
         "highest_close": 286,
         "weight_pct": 8.0,
         "remaining_pct": 100.0
+      },
+      {
+        "ticker": "QCOM",
+        "name": "Qualcomm",
+        "phase": 1,
+        "entry_price": 131,
+        "entry_date": "2026-03-18",
+        "stop_loss": 125,
+        "target1": 133,
+        "target2": 134,
+        "highest_close": 131,
+        "weight_pct": 8.0,
+        "remaining_pct": 100.0
       }
     ],
     "summary": {
-      "total_trades": 10,
-      "win_rate": 0.0,
-      "total_pnl": 0,
+      "total_trades": 21,
+      "win_rate": 19.0,
+      "total_pnl": 41600,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-18T01:06:01"
+    "updated_at": "2026-03-18T04:50:02"
   }
 }
