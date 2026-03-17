@@ -121,3 +121,8 @@
 - Yahoo Finance로 OHLCV 가져온 후 한글 컬럼명(종가/고가/저가/시가/거래량)으로 변환
 - 이렇게 하면 analyze_detailed() 등 기존 전략 코드를 수정 없이 재활용 가능
 - investor_df=None으로 전달 — 미국 주식은 외인/기관 데이터 없음 (graceful degradation)
+
+## 저장소 운영 규칙 우선순위
+- 사용자/프로젝트가 별도 orchestration 규칙을 주면 `CLAUDE.md`와 로컬 기억 저장소 둘 다 동기화해야 다음 세션에 유지된다.
+- 비단순 작업은 plan-first, verification-first, role separation 원칙으로 취급하는 편이 충돌이 적다.
+- `tasks/worklog-template.md`가 없어도 `tasks/worklogs/YYYY-MM-DD-{주제}.md` 형식의 로그는 남겨야 한다.

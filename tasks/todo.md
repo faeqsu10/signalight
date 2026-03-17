@@ -1,5 +1,9 @@
 # Signalight TODO
 
+## Current Admin Tasks
+- [x] 사용자 지정 AI 협업 규칙을 `CLAUDE.md`와 로컬 기억 저장소에 반영
+- [x] 작업 교훈과 작업 로그 기록
+
 ## Python 백엔드 (텔레그램 봇)
 - [x] 프로젝트 구조 생성
 - [x] 기본 시그널 로직 (MA 크로스, RSI, MACD)

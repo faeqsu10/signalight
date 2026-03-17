@@ -28,7 +28,8 @@ signalight/
 │   ├── storage/
 │   │   └── db.py           # SQLite (시그널 이력, 감성, LLM 판단, watch_list)
 │   ├── infra/
-│   │   └── logging_config.py # 구조화 로깅 (콘솔+파일 로테이션)
+│   │   ├── logging_config.py # 구조화 로깅 (콘솔+텍스트+JSON+에러 로그)
+│   │   └── ops_event_store.py # 운영 이벤트 SQLite 저장소 (핵심 이벤트/실행 요약)
 │   ├── bot/
 │   │   ├── telegram.py     # 텔레그램 메시지 전송 (4096자 분할 + 3회 재시도)
 │   │   ├── formatter.py    # 메시지 포맷터 (분석 보고서 스타일: 시장 온도, 주목 종목, 프로그레스 바, 한줄 코멘트)
@@ -148,6 +149,7 @@ signalight/
 - `.omc/state/`, `.omc/project-memory.json` — 플러그인 상태 파일
 - `*.png`, `*.jpg` — 스크린샷/이미지 파일
 - `node_modules/`, `__pycache__/`, `.next/` — 빌드 산출물
+- `docs/edgecase_test.md` — 엣지 케이스 테스트 원칙 문서, 비공개 자산
 
 **커밋 OK**:
 - `.omc/plans/` — 로드맵/계획 문서
@@ -161,6 +163,7 @@ signalight/
 4. **Python ↔ TS 동기화** — 지표 로직 변경 시 양쪽 반영
 5. **테스트 검증** — 코드 작성 후 import/실행 테스트로 동작 확인
 6. **교훈 기록** — 실수나 새로운 발견은 `tasks/lessons.md`에 기록
+7. **엣지 케이스 기준 준수** — 테스트 설계/보강 시 `docs/edgecase_test.md`를 우선 참고
 
 ## 파일 간 관계 (Python ↔ TypeScript 포팅 매핑)
 | Python | TypeScript | 설명 |
@@ -182,6 +185,7 @@ signalight/
 - **웹 대시보드**: Vercel 배포 완료 (https://web-iota-ten-60.vercel.app)
 - **데이터 소스**: pykrx, Yahoo Finance, 네이버 금융 크롤링, Google Gemini API
 - **로깅**: 구조화 로깅 (콘솔+파일, 10MB 로테이션 × 5백업) — `infra/logging_config.py`
+- **운영 이벤트 DB**: `storage/ops_events.db` — 파이프라인 실행 요약, 주문/오류 핵심 이벤트 저장
 - **DB**: SQLite WAL 모드 (시그널 이력, 감성, LLM 판단, watch_list, 자율매매 상태)
 - **Docker**: Multi-stage Dockerfile + docker-compose.yml 구성 완료
 - **캐싱**: Python in-memory 4시간 TTL + 웹 API in-memory 5분 TTL
@@ -197,54 +201,137 @@ signalight/
 - `tasks/improvements.md` — 개선사항 추적 (우선순위별)
 - `CLAUDE.md` (이 파일) — 프로젝트 가이드 (구조 변경 시 업데이트)
 - `DEVOPS_ANALYSIS.md` — 인프라/배포 종합 분석 (Phase 2)
+- `docs/edgecase_test.md` — 비공개 엣지 케이스 테스트 원칙 문서 (테스트 작성 시 상시 참고, 커밋 금지)
+
+## 운영 로그 규칙
+- 원본 운영 로그는 파일 + `journalctl`을 기준으로 본다.
+- 전체 로그를 SQLite에 저장하지 않는다.
+- `storage/ops_events.db`에는 장애 파악에 필요한 핵심 운영 이벤트만 저장한다.
+- 새 파이프라인/러너 작업 시 `cycle_id`, `service`, `event`를 포함한 구조화 로그를 우선 사용한다.
 
 ---
 
 ## Workflow Orchestration
 
-### 1. Plan First
-- 3단계 이상이거나 구조적 결정이 필요한 작업은 plan mode 진입
-- 문제가 생기면 즉시 멈추고 재계획 - 밀어붙이지 않는다
-- 검증 단계도 계획에 포함
-- 모호함을 줄이기 위해 상세 스펙을 먼저 작성
+### 1. Plan Node Default
+- 3+ 단계 또는 아키텍처 결정 시 plan mode 진입
+- 문제 발생 시 즉시 재계획
+- **사전 스펙 필수**: 1,000줄+ 또는 파일 10개+ 변경 예상 시 `tasks/spec-{feature}.md` 작성
+  - 목표
+  - 입력
+  - 출력
+  - 실패 조건
+  - 완료 기준
+- **테스트 선행**: 테스트 스켈레톤(함수명 + assert 조건)을 별도 커밋으로 먼저 생성
+- 구현 커밋이 이를 통과시키는 2-커밋 패턴 유지
+- **커밋 분리**: 1,000줄 초과 변경 시 최소 3커밋으로 분리
+  - 모듈
+  - 테스트
+  - 마이그레이션
 
-### 2. Subagent 전략
-- 메인 컨텍스트를 깔끔하게 유지하기 위해 subagent 적극 활용
-- 리서치, 탐색, 병렬 분석은 subagent에 위임
-- 복잡한 문제는 subagent로 더 많은 compute 투입
-- subagent당 하나의 명확한 목표
+### 2. Subagent Strategy
+- 연구/탐색/병렬 분석을 subagent로 오프로드
+- 메인 컨텍스트 윈도우를 불필요하게 소모하지 않는다
 
-### 3. 자기 개선 루프
-- 유저 수정을 받으면: `tasks/lessons.md`에 패턴 기록
-- 같은 실수를 방지하는 규칙 작성
-- 세션 시작 시 lessons 검토
+### 3. Self-Improvement Loop
+- 수정 후 `tasks/lessons.md` 업데이트
+- 반복 실수는 규칙으로 승격
 
-### 4. 완료 전 검증
-- 동작 증명 없이 완료 처리하지 않는다
-- 테스트 실행, 로그 확인, 정상 동작 시연
-- "시니어 엔지니어가 승인할 수준인가?" 자문
+### 4. Verification Before Done
+- 완료 전 테스트/로그/diff 확인 필수
+- 완료 처리는 결정론적 검증 게이트 통과 후에만 한다
 
-### 5. 균형 잡힌 우아함
-- 비단순 변경: "더 우아한 방법이 있는가?" 자문
-- 단순하고 명확한 수정은 오버엔지니어링 금지
+### 5. Demand Elegance (Balanced)
+- 비자명한 변경에만 적용
+- 단순 수정은 과도하게 복잡하게 만들지 않는다
 
-### 6. 자율적 버그 수정
-- 버그 리포트 받으면 질문 없이 해결
-- 로그, 에러, 실패 테스트 확인 후 직접 수정
+### 6. Autonomous Bug Fixing
+- 버그 보고 시 즉시 수정
+- 사용자 컨텍스트 스위칭 최소화
+
+### 7. Role Separation (역할 분리)
+- **비단순 작업 기준**: 파일 3개 이상 변경, 새 모듈 생성, 또는 3단계 이상 구현
+- 비단순 작업에서는 **구현 에이전트 ≠ 검증 에이전트** 원칙 적용
+- 구현 완료 후 반드시 별도 에이전트로 테스트/리뷰 수행
+  - `test-engineer`: 엣지 케이스 + 통합 테스트 설계
+  - `code-reviewer` 또는 `critic`: 보안/에러/멱등성 리뷰
+  - `verifier`: 최종 검증 (smoke check + 결과 비교)
+
+## AI Collaboration Rules
+
+아래 규칙은 AI 에이전트(Claude Code 포함)가 이 저장소에서 작업할 때 기본 운영 원칙으로 따른다.
+
+### 1. 코드보다 의도를 먼저 검토
+- 기본 검토 대상은 diff 자체보다 `목표`, `입력`, `출력`, `실패 조건`, `완료 기준`
+- acceptance criteria 없는 비단순 작업은 바로 구현에 들어가지 않는다
+
+### 2. 검증 규칙을 구현 전에 정한다
+- 테스트와 verify 기준은 구현 후 보완이 아니라 사전 정의가 원칙
+- pass/fail 기준 없는 기능은 완료 처리하지 않는다
+
+### 3. 인간은 상류 의사결정에 집중
+- 사람은 줄단위 코드 감시보다 데이터 충분성, 규칙 타당성, 운영 리스크를 우선 판단
+- 특히 달핀통에서는 `데이터가 정말 판단을 뒷받침하는가`를 먼저 본다
+
+### 4. 단일 에이전트를 신뢰하지 않는다
+- 중요한 작업은 작성 역할과 검증 역할을 분리
+- 가능하면 `critic`, `debugger`, `verifier` 성격의 검토를 따로 둔다
+
+### 5. 완료 기준은 결정론적 게이트
+- 아래 중 관련 항목 통과가 완료 기준
+  - pytest
+  - verify 스크립트
+  - schema/domain 계약 검증
+  - import/smoke check
+  - 보안/정적 규칙
+- "AI가 괜찮다고 판단했다"만으로 완료 처리하지 않는다
+
+### 6. 고위험 변경은 자동 에스컬레이션
+- 아래 변경은 반드시 추가 검토 또는 인간 판단을 거친다
+  - 인증/권한
+  - TypeDB schema/rules
+  - DB 스키마
+  - Compose/인프라
+  - 외부 연동 비밀값/토큰
+  - 새 의존성 추가
+
+### 7. 변경은 작게 나누고, 검증은 자주 한다
+- 큰 한 번의 리뷰보다 작은 변경과 자주 돌리는 검증을 우선
+- 병렬 작업 시에는 기능 경계보다 파일 소유권 경계를 먼저 정한다
+
+### 8. 운영 관측성이 없는 기능은 미완료다
+- 새 기능은 가능하면 `request_id`, `trace_id`, `run_id` 또는 동등한 추적 키를 남긴다
+- 처리 성공과 후처리 실패를 구분해 기록한다
+
+### 9. 롤백/재실행 가능성을 함께 설계
+- 새 기능은 실패 시 끌 수 있는 방법과 재실행 멱등성을 같이 본다
+- 배치/도출/동기화는 부분 실패 후 재복구 경로가 있어야 한다
+
+### 10. 줄단위 코드 리뷰는 예외적 정밀 검사로 사용
+- 기본 게이트는 스펙, 검증, 관측성
+- 줄단위 코드 리뷰는 아래에 집중
+  - 보안 민감 변경
+  - 복잡한 알고리즘
+  - 다중 시스템 경계
+  - 운영 장애 발생 지점
 
 ## Task Management
 
-1. `tasks/todo.md`에 체크리스트로 계획 작성
-2. 구현 전 계획 확인
-3. 진행하면서 완료 항목 체크
-4. 각 단계마다 변경사항 요약
-5. 결과를 `tasks/todo.md`에 기록
-6. 수정 받으면 `tasks/lessons.md` 업데이트
-7. 개선 아이디어는 `tasks/improvements.md`에 기록
+1. **Plan First**: `tasks/todo.md`에 체크리스트 작성
+2. **Track Progress**: 진행 중 체크
+3. **Capture Lessons**: `tasks/lessons.md`에 교훈 기록
+4. **작업 로그**: 작업 종료 시 `tasks/worklogs/YYYY-MM-DD-{주제}.md`에 기록
+   - 작업 시간: `HH:MM 시작 ~ HH:MM 완료 (약 N시간)`
+   - 전/후 비교 + 이점
+   - 커밋 목록
+   - 테스트 결과
+   - 미완료 항목
+   - 대표님 보고 요약 (비개발자 1~3줄)
+   - 템플릿: `tasks/worklog-template.md`
 
 ## Core Principles
 
-- **단순함 우선**: 변경은 최대한 간결하게. 영향 범위 최소화.
-- **근본 원인 해결**: 임시 수정 금지. 시니어 개발자 기준.
-- **최소 영향**: 필요한 부분만 수정. 버그 유입 방지.
+- **Simplicity First**: 최소한의 변경으로 목표 달성
+- **No Laziness**: 근본 원인 해결, 임시 수정 금지
+- **Minimal Impact**: 필요한 부분만 변경
 - **양쪽 동기화**: Python/TS 지표 로직 변경 시 반드시 양쪽 반영.
