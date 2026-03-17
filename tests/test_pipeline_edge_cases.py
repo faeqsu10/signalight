@@ -497,6 +497,62 @@ class TestIntradayRestartRecovery:
         assert result["warning_count"] == 0
         assert result["error_count"] == 0
 
+    def test_kr_intraday_monitor_logs_buy_rejection_summary_when_no_decision(self):
+        """KR 파이프라인은 후보가 있어도 매수 결정이 없으면 탈락 사유 요약을 남긴다."""
+        from autonomous.pipeline import AutonomousPipeline
+
+        pipeline = AutonomousPipeline.__new__(AutonomousPipeline)
+        pipeline._daily_candidates = [{"ticker": "005930", "name": "삼성전자"}]
+        pipeline._daily_scan_date = date.today()
+        pipeline._start_run = MagicMock(return_value="cycle-kr")
+        pipeline._finish_run = MagicMock()
+        pipeline._record_ops_event = MagicMock()
+        pipeline._log_buy_rejection_summary = MagicMock()
+        pipeline.run_morning_scan = MagicMock()
+        pipeline.tracker = MagicMock()
+        pipeline.tracker.get_all_open.return_value = []
+        pipeline.analyzer = MagicMock()
+        pipeline.decision = MagicMock()
+        pipeline.decision.make_buy_decisions.return_value = []
+        pipeline.executor = MagicMock()
+        pipeline.evaluator = MagicMock()
+        pipeline.config = MagicMock()
+
+        pipeline.run_intraday_monitor()
+
+        pipeline._log_buy_rejection_summary.assert_called_once_with(
+            pipeline._daily_candidates,
+            cycle_id="cycle-kr",
+        )
+
+    def test_us_intraday_monitor_logs_buy_rejection_summary_when_no_decision(self):
+        """US 파이프라인도 후보가 있어도 매수 결정이 없으면 탈락 사유 요약을 남긴다."""
+        from autonomous.us.pipeline import USAutonomousPipeline
+
+        pipeline = USAutonomousPipeline.__new__(USAutonomousPipeline)
+        pipeline._daily_candidates = [{"ticker": "AAPL", "name": "Apple"}]
+        pipeline._daily_scan_date = date.today()
+        pipeline._start_run = MagicMock(return_value="cycle-us")
+        pipeline._finish_run = MagicMock()
+        pipeline._record_ops_event = MagicMock()
+        pipeline._log_buy_rejection_summary = MagicMock()
+        pipeline.run_morning_scan = MagicMock()
+        pipeline.tracker = MagicMock()
+        pipeline.tracker.get_all_open.return_value = []
+        pipeline.analyzer = MagicMock()
+        pipeline.decision = MagicMock()
+        pipeline.decision.make_buy_decisions.return_value = []
+        pipeline.executor = MagicMock()
+        pipeline.evaluator = MagicMock()
+        pipeline.config = MagicMock()
+
+        pipeline.run_intraday_monitor()
+
+        pipeline._log_buy_rejection_summary.assert_called_once_with(
+            pipeline._daily_candidates,
+            cycle_id="cycle-us",
+        )
+
     def test_us_kst_slots_cover_dst_and_standard_open(self):
         """US 장 시작 시각은 EDT/EST 둘 다 KST 슬롯으로 등록된다."""
         from autonomous.us.runner import _kst_slots_for_et_time

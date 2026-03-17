@@ -7,6 +7,7 @@ import logging
 import os
 from datetime import date
 from typing import List, Dict
+from collections import Counter
 from uuid import uuid4
 
 from trading.rules import TradeRule
@@ -448,6 +449,8 @@ class AutonomousPipeline:
 
             if remaining:
                 buy_decisions = self.decision.make_buy_decisions(remaining)
+                if not buy_decisions:
+                    self._log_buy_rejection_summary(remaining, cycle_id=cycle_id)
                 for decision in buy_decisions:
                     try:
                         order = self.executor.execute_buy(
@@ -627,6 +630,7 @@ class AutonomousPipeline:
         buy_decisions = self.decision.make_buy_decisions(analyzed)
         if not buy_decisions:
             logger.info("매수 조건 충족 종목 없음")
+            self._log_buy_rejection_summary(analyzed)
             return phase_result
 
         # 매수 결정 로깅
@@ -676,6 +680,40 @@ class AutonomousPipeline:
 
         phase_result["buys"] = buy_count
         return phase_result
+
+    def _log_buy_rejection_summary(self, analyzed_stocks: List[Dict], cycle_id: str = "") -> None:
+        """매수 실패 사유를 집계해 로그와 ops 이벤트에 남긴다."""
+        if not analyzed_stocks:
+            return
+
+        open_positions = self.tracker.get_all_open()
+        reason_counts = Counter()
+
+        for stock in analyzed_stocks:
+            recommendation = self.trade_rule.should_buy(stock, open_positions)
+            if recommendation.get("recommend"):
+                reason = "__recommended__"
+            else:
+                reason = recommendation.get("reason") or "사유 없음"
+            reason_counts[reason] += 1
+
+        rejected = [(reason, count) for reason, count in reason_counts.items() if reason != "__recommended__"]
+        if not rejected:
+            return
+
+        rejected.sort(key=lambda item: (-item[1], item[0]))
+        top_reasons = rejected[:5]
+        summary = ", ".join(f"{reason}={count}" for reason, count in top_reasons)
+
+        logger.info("매수 탈락 사유 상위: %s", summary)
+        self._record_ops_event(
+            "INFO",
+            "buy_rejection_summary",
+            summary,
+            cycle_id=cycle_id,
+            analyzed_count=len(analyzed_stocks),
+            reasons=dict(top_reasons),
+        )
 
     def _save_equity_snapshot(self) -> None:
         """에퀴티 스냅샷을 저장한다."""
