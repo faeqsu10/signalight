@@ -5,6 +5,7 @@
 
 import logging
 import os
+import subprocess
 from datetime import date
 from typing import List, Dict
 from collections import Counter
@@ -211,27 +212,9 @@ class AutonomousPipeline:
 
         # ── 웹 대시보드 데이터 export + 자동 배포 ──
         try:
-            import subprocess
-            project_root = os.path.dirname(os.path.dirname(__file__))
-            subprocess.run(
-                ["python3", "scripts/export_auto_data.py"],
-                cwd=project_root,
-                timeout=30,
+            self._export_dashboard_snapshot(
+                commit_message="auto: update autonomous trading data",
             )
-            # autonomous.json을 커밋+푸시하여 Vercel 자동 배포
-            data_file = "web/public/data/autonomous.json"
-            subprocess.run(["git", "add", data_file], cwd=project_root, timeout=10)
-            diff_result = subprocess.run(
-                ["git", "diff", "--cached", "--quiet", data_file],
-                cwd=project_root, timeout=10,
-            )
-            if diff_result.returncode != 0:  # 변경사항이 있을 때만 커밋
-                subprocess.run(
-                    ["git", "commit", "-m", "auto: update autonomous trading data"],
-                    cwd=project_root, timeout=15,
-                )
-                subprocess.Popen(["git", "push"], cwd=project_root)
-                logger.info("웹 데이터 export + push 완료")
         except Exception as e:
             logger.warning("웹 데이터 export 실패: %s", e)
             result["warning_count"] += 1
@@ -510,6 +493,24 @@ class AutonomousPipeline:
         logger.info("장중 모니터링: 매수 %d건, 매도 %d건",
                     result["buys"], result["sells"])
 
+        if result["buys"] > 0 or result["sells"] > 0:
+            try:
+                self._save_equity_snapshot()
+                self._record_daily_pnl()
+                self._export_dashboard_snapshot(
+                    commit_message="auto: refresh autonomous dashboard snapshot",
+                )
+            except Exception as e:
+                logger.warning("장중 대시보드 export 실패: %s", e)
+                result["warning_count"] += 1
+                self._record_ops_event(
+                    "WARNING",
+                    "intraday_dashboard_export_failed",
+                    str(e),
+                    cycle_id=cycle_id,
+                    error_type=type(e).__name__,
+                )
+
         self._finish_run("intraday_monitor", cycle_id, "success" if result["error_count"] == 0 else "warning", result)
         return result
 
@@ -715,6 +716,40 @@ class AutonomousPipeline:
             analyzed_count=len(analyzed_stocks),
             reasons=dict(top_reasons),
         )
+
+    def _export_dashboard_snapshot(self, commit_message: str) -> None:
+        """대시보드 스냅샷을 export하고 변경분이 있으면 push한다."""
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        data_file = "web/public/data/autonomous.json"
+
+        subprocess.run(
+            ["python3", "scripts/export_auto_data.py"],
+            cwd=project_root,
+            timeout=30,
+            check=False,
+        )
+        subprocess.run(
+            ["git", "add", data_file],
+            cwd=project_root,
+            timeout=10,
+            check=False,
+        )
+        diff_result = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", data_file],
+            cwd=project_root,
+            timeout=10,
+            check=False,
+        )
+
+        if diff_result.returncode != 0:
+            subprocess.run(
+                ["git", "commit", "-m", commit_message],
+                cwd=project_root,
+                timeout=15,
+                check=False,
+            )
+            subprocess.Popen(["git", "push"], cwd=project_root)
+            logger.info("웹 데이터 export + push 완료")
 
     def _save_equity_snapshot(self) -> None:
         """에퀴티 스냅샷을 저장한다."""
