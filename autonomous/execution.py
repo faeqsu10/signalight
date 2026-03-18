@@ -12,8 +12,9 @@ from trading import Order, TradingConfig
 from trading.kiwoom_client import KiwoomClient
 from trading.position_tracker import PositionTracker
 from trading.portfolio import PortfolioManager
-from autonomous.config import AUTO_CONFIG
+from autonomous.config import AUTO_CONFIG, AutonomousConfig
 from autonomous.state import PipelineState
+from bot.telegram import send_message
 from config import DRY_RUN_VIRTUAL_ASSET
 
 logger = logging.getLogger("signalight.auto")
@@ -26,34 +27,37 @@ class SafeExecutor:
         self,
         state: PipelineState = None,
         position_tracker: PositionTracker = None,
+        config: Optional[AutonomousConfig] = None,
     ):
         self.state = state or PipelineState()
         self.tracker = position_tracker or PositionTracker()
+        self.runtime_config = config or AUTO_CONFIG
 
         # 키움 클라이언트 (dry_run이면 None)
         trading_config = TradingConfig(
-            dry_run=AUTO_CONFIG.dry_run,
-            use_mock=AUTO_CONFIG.use_mock,
-            daily_loss_limit_pct=AUTO_CONFIG.daily_loss_limit_pct,
-            max_single_position_pct=AUTO_CONFIG.max_single_position_pct,
-            max_order_amount=AUTO_CONFIG.max_order_amount,
+            dry_run=self.runtime_config.dry_run,
+            use_mock=self.runtime_config.use_mock,
+            daily_loss_limit_pct=self.runtime_config.daily_loss_limit_pct,
+            max_single_position_pct=self.runtime_config.max_single_position_pct,
+            max_order_amount=self.runtime_config.max_order_amount,
         )
 
         self.client = None  # type: Optional[KiwoomClient]
         self.portfolio = None  # type: Optional[PortfolioManager]
-        if not AUTO_CONFIG.dry_run:
-            self.client = KiwoomClient(use_mock=AUTO_CONFIG.use_mock)
+        if not self.runtime_config.dry_run:
+            self.client = KiwoomClient(use_mock=self.runtime_config.use_mock)
             self.portfolio = PortfolioManager(client=self.client)
 
         self.config = trading_config
         self.daily_orders = []  # type: List[Order]
+        self._cb_notified_date = None  # type: Optional[date]
 
     # ── 안전장치 체크 ──
 
     def _check_kill_switch(self) -> bool:
         """킬스위치 파일 존재 여부 확인."""
-        if os.path.exists(AUTO_CONFIG.kill_switch_path):
-            logger.warning("킬스위치 활성: %s", AUTO_CONFIG.kill_switch_path)
+        if os.path.exists(self.runtime_config.kill_switch_path):
+            logger.warning("킬스위치 활성: %s", self.runtime_config.kill_switch_path)
             return False
         return True
 
@@ -66,13 +70,13 @@ class SafeExecutor:
             return False
 
         open_time = now.replace(
-            hour=AUTO_CONFIG.market_open_hour,
-            minute=AUTO_CONFIG.market_open_minute,
+            hour=self.runtime_config.market_open_hour,
+            minute=self.runtime_config.market_open_minute,
             second=0,
         )
         close_time = now.replace(
-            hour=AUTO_CONFIG.market_close_hour,
-            minute=AUTO_CONFIG.market_close_minute,
+            hour=self.runtime_config.market_close_hour,
+            minute=self.runtime_config.market_close_minute,
             second=0,
         )
 
@@ -102,6 +106,19 @@ class SafeExecutor:
         cb = self.state.is_circuit_breaker_active()
         if cb:
             logger.warning("서킷 브레이커 활성: %s", cb["trigger_type"])
+            if self._cb_notified_date != date.today():
+                self._cb_notified_date = date.today()
+                chat_id = self.runtime_config.auto_trade_chat_id
+                if chat_id:
+                    bot_token = self.runtime_config.bot_token or None
+                    bot_label = self.runtime_config.bot_label
+                    send_message(
+                        f"⚠️ <b>[{bot_label}] 서킷브레이커 발동</b>\n"
+                        f"유형: {cb.get('trigger_type', '?')}\n"
+                        f"상세: {cb.get('detail', '')}\n"
+                        f"재개: {cb.get('resume_date', '미정')}",
+                        chat_id=chat_id, bot_token=bot_token,
+                    )
             return False
 
         return True
@@ -126,7 +143,7 @@ class SafeExecutor:
         ticker = stock_data.get("ticker", "")
         name = stock_data.get("name", ticker)
         price = stock_data.get("price", 0)
-        weight_pct = recommendation.get("weight_pct", AUTO_CONFIG.target_weight_pct)
+        weight_pct = recommendation.get("weight_pct", self.runtime_config.target_weight_pct)
 
         if price <= 0:
             logger.warning("매수 실패: %s 가격 0", ticker)
@@ -139,8 +156,8 @@ class SafeExecutor:
             return None
 
         order_amount = price * quantity
-        if order_amount > AUTO_CONFIG.max_order_amount:
-            quantity = AUTO_CONFIG.max_order_amount // price
+        if order_amount > self.runtime_config.max_order_amount:
+            quantity = self.runtime_config.max_order_amount // price
             if quantity <= 0:
                 return None
 
@@ -269,12 +286,12 @@ class SafeExecutor:
     ) -> Optional[Order]:
         """주문을 실행하고 로그를 기록한다."""
 
-        if AUTO_CONFIG.dry_run:
+        if self.runtime_config.dry_run:
             # 시뮬레이션 모드
             order = Order(
                 ticker=ticker, name=name, side=side,
                 quantity=quantity, price=price,
-                order_type=AUTO_CONFIG.order_type,
+                order_type=self.runtime_config.order_type,
                 status="simulated", reason=reason,
             )
             logger.info(
@@ -301,7 +318,7 @@ class SafeExecutor:
         self.state.log_trade(
             ticker=ticker, name=name, side=side,
             quantity=quantity, price=price,
-            order_type=AUTO_CONFIG.order_type,
+            order_type=self.runtime_config.order_type,
             status=order.status,
             order_id=order.order_id or "",
             reason=reason,
@@ -329,7 +346,7 @@ class SafeExecutor:
             DRY_RUN_VIRTUAL_ASSET * pos.get("weight_pct", 0) / 100
             for pos in open_positions
         )
-        max_exposure = DRY_RUN_VIRTUAL_ASSET * AUTO_CONFIG.max_exposure_pct / 100
+        max_exposure = DRY_RUN_VIRTUAL_ASSET * self.runtime_config.max_exposure_pct / 100
         if invested >= max_exposure:
             logger.info(
                 "최대 노출 한도 도달: 투자금 %s >= 한도 %s", invested, max_exposure

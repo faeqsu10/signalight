@@ -91,6 +91,8 @@ class AutonomousConfig:
     db_name: str = "signalight_swing.db"
     fixed_target_pct: float = 0.0  # 0이면 ATR 기반, >0이면 고정 퍼센트 목표
     skip_trend_gate: bool = False  # True이면 추세 게이트 스킵 (평균회귀용)
+    quick_profit_take_pct: float = 0.0  # 소폭 이익 후 빠른 청산 허용
+    quick_profit_take_requires_non_buy: bool = True  # 비매수 상태일 때만 빠른 청산
 
     # ── 피드백 루프(optimizer) ──
     optimizer_default_weight_golden_cross: float = 3.0
@@ -196,12 +198,16 @@ MEANREV_CONFIG = AutonomousConfig(
     bot_token=os.getenv("MEANREV_BOT_TOKEN", ""),
     auto_trade_chat_id=os.getenv("MEANREV_CHAT_ID", os.getenv("AUTO_TRADE_CHAT_ID", "")),
     db_name="signalight_meanrev.db",
-    # 평균회귀 전용: 공격적 초기 설정 (데이터 수집 우선)
+    # 평균회귀 전용: 더 넓게 스캔하고 더 빨리 정리
+    kill_switch_path="/tmp/signalight_meanrev_kill",
+    scan_rsi_oversold_threshold=50.0,
+    scan_volume_surge_ratio=1.0,
+    scan_near_golden_cross_proximity=0.96,
     initial_entry_threshold_uptrend=0.1,    # 거의 무조건 진입
     initial_entry_threshold_sideways=0.1,
-    initial_entry_threshold_downtrend=0.3,  # 하락장만 약간 필터
+    initial_entry_threshold_downtrend=0.2,
     initial_min_volume_ratio=0.2,           # 거래량 필터 완화
-    max_holding_days=15,           # 최대 15일
+    max_holding_days=5,
     split_buy_phases=1,            # 분할매수 없음 — 한 번에 매수
     split_buy_confirm_days=0,
     target1_atr_mult=1.5,
@@ -210,12 +216,13 @@ MEANREV_CONFIG = AutonomousConfig(
     stop_loss_atr_uptrend=2.0,
     stop_loss_atr_sideways=2.0,
     stop_loss_atr_downtrend=2.0,
-    max_loss_pct=8.0,              # 8% 손절
-    target_weight_pct=5.0,         # 종목당 5%
-    max_positions=15,              # 최대 15종목 (공격적)
+    max_loss_pct=5.0,
+    target_weight_pct=4.0,
+    max_positions=10,
     max_sector_positions=4,        # 섹터 제한 완화
     indicator_rsi_oversold=35.0,   # RSI 35 이하 매수 (공격적 확대)
-    scan_rsi_oversold_threshold=45.0,  # 스캔은 45 이하로 넓게
-    fixed_target_pct=5.0,          # 5% 고정 목표
+    fixed_target_pct=2.0,
     skip_trend_gate=True,          # 추세 게이트 스킵
+    quick_profit_take_pct=1.0,
+    quick_profit_take_requires_non_buy=False,
 )

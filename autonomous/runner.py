@@ -24,8 +24,10 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import schedule
-from infra.logging_config import setup_logging
+from infra.logging_config import setup_logging, log_event
+from infra.ops_event_store import OpsEventStore
 from autonomous.pipeline import AutonomousPipeline
+from bot.telegram import send_message
 
 logger = None  # setup_logging()으로 초기화
 
@@ -55,8 +57,6 @@ def parse_args():
 
 def main():
     global logger
-    logger = setup_logging()
-
     args = parse_args()
 
     # 모드에 따른 설정 선택
@@ -70,6 +70,19 @@ def main():
         from autonomous.config import SWING_CONFIG
         config = SWING_CONFIG
 
+    service_name = {
+        "swing": "auto-kr-swing",
+        "position": "auto-kr-position",
+        "meanrev": "auto-kr-meanrev",
+    }.get(config.bot_mode, "auto-kr")
+    log_basename = {
+        "swing": "auto-kr",
+        "position": "auto-kr-position",
+        "meanrev": "auto-kr-meanrev",
+    }.get(config.bot_mode, "auto-kr")
+    logger = setup_logging(service_name=service_name, log_basename=log_basename)
+    ops_store = OpsEventStore()
+
     # 모드 설정
     if args.live:
         config.dry_run = False
@@ -77,6 +90,14 @@ def main():
     else:
         config.dry_run = True
         logger.info("시뮬레이션 모드로 시작합니다.")
+
+    ops_store.record_event(
+        level="INFO",
+        service=service_name,
+        event="runner_started",
+        message="KR runner started",
+        context={"mode": args.mode, "live": args.live, "once": args.once},
+    )
 
     # 파이프라인 생성
     pipeline = AutonomousPipeline(config=config)
@@ -88,6 +109,12 @@ def main():
         nonlocal _shutdown_requested
         logger.info("종료 시그널 수신 — 현재 작업 완료 후 종료")
         _shutdown_requested = True
+        chat_id = config.auto_trade_chat_id
+        if chat_id:
+            send_message(
+                f"⛔ <b>{config.bot_label} 종료 중...</b>",
+                chat_id=chat_id, bot_token=config.bot_token or None,
+            )
 
     signal.signal(signal.SIGINT, _signal_handler)
     signal.signal(signal.SIGTERM, _signal_handler)
@@ -106,6 +133,15 @@ def main():
                 config.max_consecutive_losses,
                 config.max_drawdown_pct)
 
+    if chat_id:
+        startup_msg = (
+            f"✅ <b>{config.bot_label} 파이프라인 시작</b>\n"
+            f"모드: {'실전' if not config.dry_run else '시뮬레이션'}\n"
+            f"환경: {'모의투자' if config.use_mock else '실전투자'}\n"
+            f"포지션: {config.target_weight_pct:.0f}% × 최대 {config.max_positions}종목"
+        )
+        send_message(startup_msg, chat_id=chat_id, bot_token=config.bot_token or None)
+
     # --once: 1회 실행 (스캔 + 모니터링 1회)
     if args.once:
         logger.info("1회 실행 모드")
@@ -123,14 +159,45 @@ def main():
     logger.info("스케줄 등록 완료. 실행 중... (Ctrl+C로 종료)")
 
     # 메인 루프
-    while not _shutdown_requested:
-        try:
-            schedule.run_pending()
-        except Exception as e:
-            logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
-        time.sleep(30)
+    try:
+        while not _shutdown_requested:
+            try:
+                schedule.run_pending()
+            except Exception as e:
+                logger.error("스케줄 실행 중 예외 — 루프 유지: %s", e, exc_info=True)
+                ops_store.record_event(
+                    level="ERROR",
+                    service=service_name,
+                    event="schedule_loop_error",
+                    message=str(e),
+                    error_type=type(e).__name__,
+                )
+            time.sleep(30)
+    except Exception as e:
+        logger.critical("파이프라인 크래시: %s", e, exc_info=True)
+        log_event(logger, logging.CRITICAL, "runner_crash", "KR runner crashed", service=service_name, error_type=type(e).__name__)
+        ops_store.record_event(
+            level="CRITICAL",
+            service=service_name,
+            event="runner_crash",
+            message=str(e),
+            error_type=type(e).__name__,
+        )
+        chat_id = config.auto_trade_chat_id
+        if chat_id:
+            send_message(
+                f"🚨 <b>{config.bot_label} 크래시!</b>\n{str(e)[:200]}",
+                chat_id=chat_id, bot_token=config.bot_token or None,
+            )
+        raise
 
     logger.info("파이프라인 정상 종료")
+    ops_store.record_event(
+        level="INFO",
+        service=service_name,
+        event="runner_stopped",
+        message="KR runner stopped",
+    )
 
 
 def _register_schedules(pipeline: AutonomousPipeline, monitor_only: bool, config):

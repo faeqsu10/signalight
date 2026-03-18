@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from pykrx import stock
 
 from scanner.market_scanner import MarketScanner
-from autonomous.config import AUTO_CONFIG
+from autonomous.config import AUTO_CONFIG, AutonomousConfig
 
 logger = logging.getLogger("signalight.auto")
 
@@ -27,15 +27,20 @@ class UniverseSelector:
         "near_golden_cross": 1.5,
     }
 
-    def __init__(self, scan_weights: Dict[str, float] = None):
+    def __init__(
+        self,
+        scan_weights: Dict[str, float] = None,
+        config: AutonomousConfig = None,
+    ):
+        self.config = config or AUTO_CONFIG
         scanner_settings = {
-            "data_period_days": AUTO_CONFIG.data_period_days,
-            "short_ma": AUTO_CONFIG.indicator_short_ma,
-            "long_ma": AUTO_CONFIG.indicator_long_ma,
-            "rsi_period": AUTO_CONFIG.indicator_rsi_period,
+            "data_period_days": self.config.data_period_days,
+            "short_ma": self.config.indicator_short_ma,
+            "long_ma": self.config.indicator_long_ma,
+            "rsi_period": self.config.indicator_rsi_period,
         }
         self.scanner = MarketScanner(
-            market=AUTO_CONFIG.universe_market,
+            market=self.config.universe_market,
             settings=scanner_settings,
         )
         self.scan_weights = scan_weights or dict(self.DEFAULT_WEIGHTS)
@@ -63,12 +68,12 @@ class UniverseSelector:
         if held_tickers is None:
             held_tickers = set()
         if max_candidates is None:
-            max_candidates = AUTO_CONFIG.universe_max_candidates
+            max_candidates = self.config.universe_max_candidates
 
-        logger.info("유니버스 스캔 시작 (시장: %s)", AUTO_CONFIG.universe_market)
+        logger.info("유니버스 스캔 시작 (시장: %s)", self.config.universe_market)
 
         # 3종 스캔 실행 (설정 기반)
-        scan_limit = AUTO_CONFIG.universe_scan_limit
+        scan_limit = self.config.universe_scan_limit
 
         golden_cross = []
         rsi_oversold = []
@@ -84,7 +89,7 @@ class UniverseSelector:
         try:
             rsi_oversold = self.scanner.scan_rsi_oversold(
                 limit=scan_limit,
-                oversold_threshold=AUTO_CONFIG.scan_rsi_oversold_threshold,
+                oversold_threshold=self.config.scan_rsi_oversold_threshold,
             )
             logger.info("RSI 과매도: %d종목", len(rsi_oversold))
         except Exception as e:
@@ -92,7 +97,7 @@ class UniverseSelector:
 
         try:
             volume_surge = self.scanner.scan_volume_surge(
-                min_ratio=AUTO_CONFIG.scan_volume_surge_ratio,
+                min_ratio=self.config.scan_volume_surge_ratio,
                 limit=scan_limit,
             )
             logger.info("거래량 급증: %d종목", len(volume_surge))
@@ -102,7 +107,7 @@ class UniverseSelector:
         try:
             near_golden_cross = self.scanner.scan_near_golden_cross(
                 limit=scan_limit,
-                proximity_ratio=AUTO_CONFIG.scan_near_golden_cross_proximity,
+                proximity_ratio=self.config.scan_near_golden_cross_proximity,
             )
             logger.info("근접 골든크로스: %d종목", len(near_golden_cross))
         except Exception as e:
@@ -180,16 +185,16 @@ class UniverseSelector:
         filtered.sort(key=lambda x: x["composite_score"], reverse=True)
 
         # 적응형 완화: 후보 부족 시 재스캔
-        min_candidates = AUTO_CONFIG.universe_min_candidates
-        max_relaxation_rounds = AUTO_CONFIG.universe_max_relaxation_rounds
+        min_candidates = self.config.universe_min_candidates
+        max_relaxation_rounds = self.config.universe_max_relaxation_rounds
 
         if len(filtered) < min_candidates:
-            current_rsi = AUTO_CONFIG.scan_rsi_oversold_threshold
-            current_vol = AUTO_CONFIG.scan_volume_surge_ratio
+            current_rsi = self.config.scan_rsi_oversold_threshold
+            current_vol = self.config.scan_volume_surge_ratio
 
             for round_num in range(1, max_relaxation_rounds + 1):
-                relaxed_rsi = current_rsi + (AUTO_CONFIG.universe_rsi_relaxation_step * round_num)
-                relaxed_vol = current_vol - (AUTO_CONFIG.universe_volume_relaxation_step * round_num)
+                relaxed_rsi = current_rsi + (self.config.universe_rsi_relaxation_step * round_num)
+                relaxed_vol = current_vol - (self.config.universe_volume_relaxation_step * round_num)
                 relaxed_vol = max(relaxed_vol, 0.5)  # 하한선
 
                 logger.info(
@@ -281,6 +286,6 @@ class UniverseSelector:
             trading_values = recent["종가"] * recent["거래량"]
             avg_value = trading_values.mean()
 
-            return avg_value >= AUTO_CONFIG.min_trading_value
+            return avg_value >= self.config.min_trading_value
         except Exception:
             return False

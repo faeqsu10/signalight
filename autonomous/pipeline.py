@@ -43,7 +43,7 @@ class AutonomousPipeline:
         self.trade_rule = TradeRule()
         self.optimizer = StrategyOptimizer(state=self.state)
 
-        self.universe = UniverseSelector()
+        self.universe = UniverseSelector(config=self.config)
         self.analyzer = StockAnalyzer(config=self.config)
         self.decision = DecisionEngine(
             trade_rule=self.trade_rule,
@@ -54,6 +54,7 @@ class AutonomousPipeline:
         self.executor = SafeExecutor(
             state=self.state,
             position_tracker=self.tracker,
+            config=self.config,
         )
         self.evaluator = PerformanceEvaluator(
             state=self.state,
@@ -61,7 +62,11 @@ class AutonomousPipeline:
             config=self.config,
         )
         self.ops_store = OpsEventStore()
-        self.service_name = "auto-kr"
+        self.service_name = {
+            "swing": "auto-kr-swing",
+            "position": "auto-kr-position",
+            "meanrev": "auto-kr-meanrev",
+        }.get(self.config.bot_mode, "auto-kr")
         self._optimizer_status = None
         self._daily_candidates = []   # 장 시작 스캔 후보 캐시
         self._daily_scan_date = None  # 스캔 날짜 (중복 방지)
@@ -98,6 +103,8 @@ class AutonomousPipeline:
             "sector_map": self.config.sector_map,
             "fixed_target_pct": self.config.fixed_target_pct,
             "skip_trend_gate": self.config.skip_trend_gate,
+            "quick_profit_take_pct": self.config.quick_profit_take_pct,
+            "quick_profit_take_requires_non_buy": self.config.quick_profit_take_requires_non_buy,
         }
 
     def _new_cycle_id(self, cycle_type: str) -> str:
