@@ -131,3 +131,7 @@
 - Vercel 같은 정적/서버리스 배포에서는 로컬 SQLite에 직접 붙을 수 없으므로 `DB 우선 + JSON fallback` 구조가 안전하다.
 - `better-sqlite3`를 쓰는 API route는 `runtime = "nodejs"`와 `dynamic = "force-dynamic"`를 명시하는 편이 예측 가능하다.
 - US 거래 로그는 cents, 가상 포지션 가격은 dollars로 저장돼 있어 대시보드 변환 규칙을 분리해야 한다.
+
+## 역할 분리 문서화
+- 역할 분리 원칙만 적어두면 운영 중 다시 흐려지기 쉽다.
+- 구현자, 리뷰어, 검증자의 책임과 금지사항을 별도 문서로 고정하는 편이 재사용성이 높다.

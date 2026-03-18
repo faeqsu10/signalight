@@ -189,6 +189,7 @@
 - [x] KR/US DB 분리 (MDD 킬스위치 오탐 해결)
 - [x] export 스크립트 KR/US 분리 지원
 - [x] 자율매매 대시보드 API DB 우선 조회 + JSON fallback 정리
+- [x] 역할 분리용 에이전트 정의 문서 추가 (`docs/agents`)
 
 ## Backlog
 - [x] Vercel 배포

@@ -169,6 +169,7 @@ signalight/
 - 코드 작성 에이전트와 리뷰/테스트/검증 에이전트는 반드시 분리한다.
 - 코드 작성 에이전트는 구현까지만 담당하고, 리뷰/테스트/최종 검증은 별도 에이전트가 맡는다.
 - 이 원칙은 예외 없이 항상 적용한다.
+- 역할별 정의 문서는 `docs/agents/implementer.md`, `docs/agents/reviewer.md`, `docs/agents/verifier.md` 를 기준으로 한다.
 
 ## 파일 간 관계 (Python ↔ TypeScript 포팅 매핑)
 | Python | TypeScript | 설명 |

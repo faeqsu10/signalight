@@ -10,6 +10,10 @@
 - 코드 작성 에이전트와 리뷰/테스트/검증 에이전트는 분리한다.
 - 코드 작성 에이전트가 자신의 변경을 직접 리뷰하거나 최종 검증하지 않는다.
 - 이 역할 분리 원칙은 항상 적용한다.
+- 역할 정의 문서:
+  - `docs/agents/implementer.md`
+  - `docs/agents/reviewer.md`
+  - `docs/agents/verifier.md`
 
 ## 주요 기능
 
