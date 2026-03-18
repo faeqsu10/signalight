@@ -74,6 +74,12 @@ interface AutonomousData {
 
 type MarketKey = "kr" | "us" | "us_meanrev";
 
+function inferRuntimeMode(data: MarketData) {
+  if (data.trades.some((trade) => trade.status === "simulated")) return "SIM";
+  if (data.trades.some((trade) => trade.status === "filled")) return "LIVE";
+  return "UNKNOWN";
+}
+
 function fmtAmount(amount: number, market: MarketKey) {
   if (market !== "kr") {
     return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: 0 });
@@ -508,6 +514,7 @@ export default function AutonomousPage() {
   };
 
   const marketData: MarketData | undefined = data?.[market];
+  const runtimeMode = marketData ? inferRuntimeMode(marketData) : "UNKNOWN";
 
   return (
     <div
@@ -524,6 +531,7 @@ export default function AutonomousPage() {
         description="KR·US 운용 상태, 에퀴티, 일별 손익, 최근 체결을 한 흐름으로 점검합니다."
         badges={[
           market === "kr" ? "KR Runtime" : market === "us" ? "US Swing Runtime" : "US MeanRev Runtime",
+          runtimeMode === "SIM" ? "SIMULATED" : runtimeMode === "LIVE" ? "LIVE/PAPER" : "MODE UNKNOWN",
           marketData?.updated_at
             ? `Last Sync ${marketData.updated_at.replace("T", " ").slice(0, 16)}`
             : "Waiting for Runtime",
@@ -741,6 +749,9 @@ export default function AutonomousPage() {
                   />
                   <span>
                     {marketData.trades.length}건
+                  </span>
+                  <span className="badge-hold">
+                    {runtimeMode === "SIM" ? "SIM" : runtimeMode === "LIVE" ? "LIVE" : "UNKNOWN"}
                   </span>
                 </div>
               </div>

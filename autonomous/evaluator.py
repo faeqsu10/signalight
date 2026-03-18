@@ -377,12 +377,13 @@ class PerformanceEvaluator:
 
         bot_label = self._config.bot_label if self._config.bot_label else ""
         label = f"[{bot_label}] " if bot_label else ""
+        mode_badge = "[SIM]" if self._config.dry_run else "[LIVE]"
 
         emoji = "🟢" if side == "buy" else "🔴"
         action = "매수" if side == "buy" else "매도"
 
         lines = [
-            f"{emoji} <b>{label}{action} 체결</b>",
+            f"{emoji} <b>{mode_badge} {label}{action} 체결</b>",
             f"{name} ({ticker}) {quantity}주 @ {self._fmt_price(price)}",
         ]
 

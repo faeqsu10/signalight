@@ -213,6 +213,18 @@ class TradeRule:
                         "역추세 매수 허용: %s direction=%s buy_score=%.2f scan=%s",
                         name, confluence_direction, buy_score, scan_signals,
                     )
+                elif bool(self._get_rule_value("allow_counter_trend_entry", False)):
+                    min_score = float(self._get_rule_value("counter_trend_min_score", 0))
+                    if confluence_score >= min_score:
+                        logger.info(
+                            "역추세 약식 진입 허용: %s direction=%s score=%.2f scan=%s",
+                            name, confluence_direction, confluence_score, scan_signals,
+                        )
+                    else:
+                        result["reason"] = (
+                            f"역추세 점수 부족 ({confluence_score:.1f} < {min_score:.1f})"
+                        )
+                        return result
                 else:
                     result["reason"] = "매수 방향 아님 (역추세 매수 신호 없음)"
                     return result

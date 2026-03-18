@@ -93,6 +93,8 @@ class AutonomousConfig:
     skip_trend_gate: bool = False  # True이면 추세 게이트 스킵 (평균회귀용)
     quick_profit_take_pct: float = 0.0  # 소폭 이익 후 빠른 청산 허용
     quick_profit_take_requires_non_buy: bool = True  # 비매수 상태일 때만 빠른 청산
+    allow_counter_trend_entry: bool = False  # buy 방향이 아니어도 역추세 스캔 진입 허용
+    counter_trend_min_score: float = 0.0  # 역추세 진입 최소 점수
 
     # ── 피드백 루프(optimizer) ──
     optimizer_default_weight_golden_cross: float = 3.0
@@ -146,14 +148,14 @@ SWING_CONFIG = AutonomousConfig(
     enabled_indicators=["MA", "RSI", "STOCH_RSI"],
     db_name="signalight_swing.db",
     # 단타 전용: 공격적 초기 설정 (데이터 수집 우선)
-    initial_entry_threshold_uptrend=0.3,
-    initial_entry_threshold_sideways=0.5,
-    initial_entry_threshold_downtrend=0.8,
-    max_holding_days=10,
+    initial_entry_threshold_uptrend=0.2,
+    initial_entry_threshold_sideways=0.4,
+    initial_entry_threshold_downtrend=0.7,
+    max_holding_days=7,
     split_buy_phases=2,
     split_buy_confirm_days=1,
-    target1_atr_mult=1.5,
-    target2_atr_mult=2.5,
+    target1_atr_mult=1.2,
+    target2_atr_mult=2.0,
     trailing_stop_atr_mult=1.0,
     stop_loss_atr_uptrend=2.0,
     stop_loss_atr_sideways=1.5,
@@ -225,4 +227,6 @@ MEANREV_CONFIG = AutonomousConfig(
     skip_trend_gate=True,          # 추세 게이트 스킵
     quick_profit_take_pct=1.0,
     quick_profit_take_requires_non_buy=False,
+    allow_counter_trend_entry=True,
+    counter_trend_min_score=0.1,
 )

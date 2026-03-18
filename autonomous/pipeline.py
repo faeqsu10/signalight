@@ -105,6 +105,8 @@ class AutonomousPipeline:
             "skip_trend_gate": self.config.skip_trend_gate,
             "quick_profit_take_pct": self.config.quick_profit_take_pct,
             "quick_profit_take_requires_non_buy": self.config.quick_profit_take_requires_non_buy,
+            "allow_counter_trend_entry": self.config.allow_counter_trend_entry,
+            "counter_trend_min_score": self.config.counter_trend_min_score,
         }
 
     def _new_cycle_id(self, cycle_type: str) -> str:
