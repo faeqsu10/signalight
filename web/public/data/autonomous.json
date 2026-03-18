@@ -122,7 +122,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-18T15:25:25"
+    "updated_at": "2026-03-19T04:50:08"
   },
   "us": {
     "equity": [
@@ -259,7 +259,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-18T15:25:25"
+    "updated_at": "2026-03-19T04:50:08"
   },
   "us_meanrev": {
     "equity": [
@@ -276,6 +276,13 @@
         "invested": 6751520,
         "cash": 3291687,
         "positions": 10
+      },
+      {
+        "date": "2026-03-19",
+        "total": 9963009,
+        "invested": 5870250,
+        "cash": 4092758,
+        "positions": 9
       }
     ],
     "daily_pnl": [
@@ -292,9 +299,29 @@
         "trades": 11,
         "wins": 4,
         "losses": 0
+      },
+      {
+        "date": "2026-03-19",
+        "pnl": 16000,
+        "trades": 1,
+        "wins": 1,
+        "losses": 0
       }
     ],
     "trades": [
+      {
+        "date": "2026-03-19",
+        "ticker": "AMD",
+        "name": "AMD",
+        "side": "sell",
+        "quantity": 40,
+        "price": 20000,
+        "amount": 800000,
+        "status": "filled",
+        "reason": "quick_profit",
+        "pnl_pct": 2.04,
+        "pnl_amount": 16000
+      },
       {
         "date": "2026-03-18",
         "ticker": "QCOM",
@@ -636,19 +663,6 @@
         "remaining_pct": 100.0
       },
       {
-        "ticker": "AMD",
-        "name": "AMD",
-        "phase": 1,
-        "entry_price": 196,
-        "entry_date": "2026-03-18",
-        "stop_loss": 186,
-        "target1": 200,
-        "target2": 203,
-        "highest_close": 196,
-        "weight_pct": 8.0,
-        "remaining_pct": 100.0
-      },
-      {
         "ticker": "TSLA",
         "name": "Tesla",
         "phase": 1,
@@ -657,7 +671,7 @@
         "stop_loss": 377,
         "target1": 404,
         "target2": 408,
-        "highest_close": 397,
+        "highest_close": 399,
         "weight_pct": 8.0,
         "remaining_pct": 100.0
       },
@@ -670,7 +684,7 @@
         "stop_loss": 204,
         "target1": 217,
         "target2": 219,
-        "highest_close": 213,
+        "highest_close": 214,
         "weight_pct": 8.0,
         "remaining_pct": 100.0
       },
@@ -683,7 +697,7 @@
         "stop_loss": 274,
         "target1": 291,
         "target2": 294,
-        "highest_close": 286,
+        "highest_close": 287,
         "weight_pct": 8.0,
         "remaining_pct": 100.0
       },
@@ -696,17 +710,17 @@
         "stop_loss": 125,
         "target1": 133,
         "target2": 134,
-        "highest_close": 131,
+        "highest_close": 132,
         "weight_pct": 8.0,
         "remaining_pct": 100.0
       }
     ],
     "summary": {
-      "total_trades": 21,
-      "win_rate": 19.0,
-      "total_pnl": 41600,
-      "max_drawdown": 0.0
+      "total_trades": 22,
+      "win_rate": 22.7,
+      "total_pnl": 57600,
+      "max_drawdown": 0.8
     },
-    "updated_at": "2026-03-18T15:25:25"
+    "updated_at": "2026-03-19T04:50:08"
   }
 }
