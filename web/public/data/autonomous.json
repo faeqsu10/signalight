@@ -122,7 +122,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.0
     },
-    "updated_at": "2026-03-19T15:25:14"
+    "updated_at": "2026-03-19T15:25:15"
   },
   "us": {
     "equity": [
@@ -273,7 +273,7 @@
       "total_pnl": 0,
       "max_drawdown": 0.8
     },
-    "updated_at": "2026-03-19T15:25:14"
+    "updated_at": "2026-03-19T15:25:15"
   },
   "us_meanrev": {
     "equity": [
@@ -735,6 +735,6 @@
       "total_pnl": 57600,
       "max_drawdown": 0.8
     },
-    "updated_at": "2026-03-19T15:25:14"
+    "updated_at": "2026-03-19T15:25:15"
   }
 }
