@@ -1,740 +1,1242 @@
 {
-  "kr": {
-    "equity": [
-      {
-        "date": "2026-03-10",
-        "total": 50000000,
-        "invested": 0,
-        "cash": 50000000,
-        "positions": 0
-      },
-      {
-        "date": "2026-03-11",
-        "total": 50000000,
-        "invested": 0,
-        "cash": 50000000,
-        "positions": 0
-      },
-      {
-        "date": "2026-03-12",
-        "total": 50000000,
-        "invested": 0,
-        "cash": 50000000,
-        "positions": 0
-      },
-      {
-        "date": "2026-03-13",
-        "total": 50000000,
-        "invested": 0,
-        "cash": 50000000,
-        "positions": 2
-      }
-    ],
-    "daily_pnl": [
-      {
-        "date": "2026-03-10",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-11",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-12",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-13",
-        "pnl": 0,
-        "trades": 2,
-        "wins": 0,
-        "losses": 0
-      }
-    ],
-    "trades": [
-      {
-        "date": "2026-03-13",
-        "ticker": "036460",
-        "name": "한국가스공사",
-        "side": "buy",
-        "quantity": 13,
-        "price": 36000,
-        "amount": 468000,
-        "status": "simulated",
-        "reason": "confluence=2.1",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-13",
-        "ticker": "003670",
-        "name": "포스코퓨처엠",
-        "side": "buy",
-        "quantity": 2,
-        "price": 191100,
-        "amount": 382200,
-        "status": "simulated",
-        "reason": "confluence=2.4",
-        "pnl_pct": null,
-        "pnl_amount": null
-      }
-    ],
-    "current_positions": [
-      {
-        "ticker": "003670",
-        "name": "포스코퓨처엠",
-        "phase": 1,
-        "entry_price": 191100,
-        "entry_date": "2026-03-13",
-        "stop_loss": 0,
-        "target1": 0,
-        "target2": 0,
-        "highest_close": 191100,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "036460",
-        "name": "한국가스공사",
-        "phase": 1,
-        "entry_price": 36000,
-        "entry_date": "2026-03-13",
-        "stop_loss": 0,
-        "target1": 0,
-        "target2": 0,
-        "highest_close": 36000,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      }
-    ],
-    "summary": {
-      "total_trades": 2,
-      "win_rate": 0.0,
-      "total_pnl": 0,
-      "max_drawdown": 0.0
+  "profiles": [
+    {
+      "botId": "kr_swing",
+      "market": "KR",
+      "strategy": "swing",
+      "label": "🇰🇷 단타",
+      "currency": "KRW",
+      "dashboardAliases": [
+        "kr"
+      ]
     },
-    "updated_at": "2026-03-19T15:25:15"
+    {
+      "botId": "kr_position",
+      "market": "KR",
+      "strategy": "position",
+      "label": "🇰🇷 장기",
+      "currency": "KRW",
+      "dashboardAliases": [
+        "kr_position"
+      ]
+    },
+    {
+      "botId": "kr_meanrev",
+      "market": "KR",
+      "strategy": "meanrev",
+      "label": "🔄 평균회귀",
+      "currency": "KRW",
+      "dashboardAliases": [
+        "kr_meanrev"
+      ]
+    },
+    {
+      "botId": "us_swing",
+      "market": "US",
+      "strategy": "swing",
+      "label": "🔵🇺🇸 US 단타",
+      "currency": "USD",
+      "dashboardAliases": [
+        "us"
+      ]
+    },
+    {
+      "botId": "us_meanrev",
+      "market": "US",
+      "strategy": "meanrev",
+      "label": "🔄🇺🇸 평균회귀",
+      "currency": "USD",
+      "dashboardAliases": [
+        "us_meanrev"
+      ]
+    }
+  ],
+  "aliases": {
+    "kr": "kr_swing",
+    "kr_position": "kr_position",
+    "kr_meanrev": "kr_meanrev",
+    "us": "us_swing",
+    "us_meanrev": "us_meanrev"
   },
-  "us": {
-    "equity": [
-      {
-        "date": "2026-03-14",
-        "total": 9990003,
-        "invested": 540220,
-        "cash": 9449782,
-        "positions": 3
+  "bots": {
+    "kr_swing": {
+      "equity": [
+        {
+          "date": "2026-03-16",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-17",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-18",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-19",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        }
+      ],
+      "daily_pnl": [
+        {
+          "date": "2026-03-16",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-17",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-18",
+          "pnl": 0,
+          "trades": 26,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-19",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 67100,
+          "amount": 67100,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "078930",
+          "name": "GS",
+          "side": "buy",
+          "quantity": 1,
+          "price": 66800,
+          "amount": 66800,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "010140",
+          "name": "삼성중공업",
+          "side": "buy",
+          "quantity": 4,
+          "price": 28900,
+          "amount": 115600,
+          "status": "rejected",
+          "reason": "confluence=1.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        }
+      ],
+      "current_positions": [],
+      "summary": {
+        "total_trades": 26,
+        "win_rate": 0.0,
+        "total_pnl": 0,
+        "max_drawdown": 0.0
       },
-      {
-        "date": "2026-03-17",
-        "total": 9998057,
-        "invested": 5386130,
-        "cash": 4611927,
-        "positions": 3
-      },
-      {
-        "date": "2026-03-18",
-        "total": 10043502,
-        "invested": 6751814,
-        "cash": 3291687,
-        "positions": 3
-      },
-      {
-        "date": "2026-03-19",
-        "total": 9963343,
-        "invested": 5870584,
-        "cash": 4092758,
-        "positions": 3
-      }
-    ],
-    "daily_pnl": [
-      {
-        "date": "2026-03-14",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-17",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-18",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-19",
-        "pnl": 0,
-        "trades": 0,
-        "wins": 0,
-        "losses": 0
-      }
-    ],
-    "trades": [
-      {
-        "date": "2026-03-13",
-        "ticker": "ADBE",
-        "name": "Adobe",
-        "side": "buy",
-        "quantity": 7,
-        "price": 25300,
-        "amount": 177100,
-        "status": "filled",
-        "reason": "confluence=0.0",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-13",
-        "ticker": "META",
-        "name": "Meta",
-        "side": "buy",
-        "quantity": 3,
-        "price": 62600,
-        "amount": 187800,
-        "status": "filled",
-        "reason": "confluence=1.9",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-13",
-        "ticker": "GS",
-        "name": "GoldmanSachs",
-        "side": "buy",
-        "quantity": 2,
-        "price": 79600,
-        "amount": 159200,
-        "status": "filled",
-        "reason": "confluence=2.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      }
-    ],
-    "current_positions": [
-      {
-        "ticker": "GS",
-        "name": "GoldmanSachs",
-        "phase": 1,
-        "entry_price": 796,
-        "entry_date": "2026-03-13",
-        "stop_loss": 749,
-        "target1": 858,
-        "target2": 904,
-        "highest_close": 813,
-        "weight_pct": 2.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "META",
-        "name": "Meta",
-        "phase": 1,
-        "entry_price": 626,
-        "entry_date": "2026-03-13",
-        "stop_loss": 597,
-        "target1": 664,
-        "target2": 692,
-        "highest_close": 634,
-        "weight_pct": 2.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "ADBE",
-        "name": "Adobe",
-        "phase": 1,
-        "entry_price": 253,
-        "entry_date": "2026-03-13",
-        "stop_loss": 236,
-        "target1": 275,
-        "target2": 291,
-        "highest_close": 257,
-        "weight_pct": 2.0,
-        "remaining_pct": 100.0
-      }
-    ],
-    "summary": {
-      "total_trades": 0,
-      "win_rate": 0.0,
-      "total_pnl": 0,
-      "max_drawdown": 0.8
+      "updated_at": "2026-03-20T04:50:18"
     },
-    "updated_at": "2026-03-19T15:25:15"
-  },
-  "us_meanrev": {
-    "equity": [
-      {
-        "date": "2026-03-17",
-        "total": 9998057,
-        "invested": 5386130,
-        "cash": 4611927,
-        "positions": 10
+    "kr_position": {
+      "equity": [
+        {
+          "date": "2026-03-16",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-17",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-18",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-19",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        }
+      ],
+      "daily_pnl": [
+        {
+          "date": "2026-03-16",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-17",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-18",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-19",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        }
+      ],
+      "trades": [],
+      "current_positions": [],
+      "summary": {
+        "total_trades": 0,
+        "win_rate": 0.0,
+        "total_pnl": 0,
+        "max_drawdown": 0.0
       },
-      {
-        "date": "2026-03-18",
-        "total": 10043208,
-        "invested": 6751520,
-        "cash": 3291687,
-        "positions": 10
-      },
-      {
-        "date": "2026-03-19",
-        "total": 9963009,
-        "invested": 5870250,
-        "cash": 4092758,
-        "positions": 9
-      }
-    ],
-    "daily_pnl": [
-      {
-        "date": "2026-03-17",
-        "pnl": 0,
-        "trades": 10,
-        "wins": 0,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-18",
-        "pnl": 41600,
-        "trades": 11,
-        "wins": 4,
-        "losses": 0
-      },
-      {
-        "date": "2026-03-19",
-        "pnl": 16000,
-        "trades": 1,
-        "wins": 1,
-        "losses": 0
-      }
-    ],
-    "trades": [
-      {
-        "date": "2026-03-19",
-        "ticker": "AMD",
-        "name": "AMD",
-        "side": "sell",
-        "quantity": 40,
-        "price": 20000,
-        "amount": 800000,
-        "status": "filled",
-        "reason": "quick_profit",
-        "pnl_pct": 2.04,
-        "pnl_amount": 16000
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "QCOM",
-        "name": "Qualcomm",
-        "side": "buy",
-        "quantity": 61,
-        "price": 13100,
-        "amount": 799100,
-        "status": "filled",
-        "reason": "confluence=0.7",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "BAC",
-        "name": "BankOfAmerica",
-        "side": "sell",
-        "quantity": 72,
-        "price": 4700,
-        "amount": 338400,
-        "status": "filled",
-        "reason": "stop_loss",
-        "pnl_pct": 0.0,
-        "pnl_amount": 0
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "UNH",
-        "name": "UnitedHealth",
-        "side": "buy",
-        "quantity": 28,
-        "price": 28600,
-        "amount": 800800,
-        "status": "filled",
-        "reason": "confluence=0.2",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "AMZN",
-        "name": "Amazon",
-        "side": "buy",
-        "quantity": 37,
-        "price": 21300,
-        "amount": 788100,
-        "status": "filled",
-        "reason": "confluence=0.2",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "TSLA",
-        "name": "Tesla",
-        "side": "buy",
-        "quantity": 20,
-        "price": 39700,
-        "amount": 794000,
-        "status": "filled",
-        "reason": "confluence=0.2",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "BAC",
-        "name": "BankOfAmerica",
-        "side": "sell",
-        "quantity": 34,
-        "price": 4700,
-        "amount": 159800,
-        "status": "filled",
-        "reason": "target1",
-        "pnl_pct": 0.0,
-        "pnl_amount": 0
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "QCOM",
-        "name": "Qualcomm",
-        "side": "sell",
-        "quantity": 38,
-        "price": 13100,
-        "amount": 497800,
-        "status": "filled",
-        "reason": "quick_profit",
-        "pnl_pct": 1.55,
-        "pnl_amount": 7600
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "DIS",
-        "name": "Disney",
-        "side": "sell",
-        "quantity": 50,
-        "price": 10000,
-        "amount": 500000,
-        "status": "filled",
-        "reason": "quick_profit",
-        "pnl_pct": 2.04,
-        "pnl_amount": 10000
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "GS",
-        "name": "GoldmanSachs",
-        "side": "sell",
-        "quantity": 8,
-        "price": 80600,
-        "amount": 644800,
-        "status": "filled",
-        "reason": "quick_profit",
-        "pnl_pct": 1.64,
-        "pnl_amount": 10400
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "AMD",
-        "name": "AMD",
-        "side": "buy",
-        "quantity": 40,
-        "price": 19600,
-        "amount": 784000,
-        "status": "filled",
-        "reason": "confluence=0.2",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-18",
-        "ticker": "GM",
-        "name": "GM",
-        "side": "sell",
-        "quantity": 68,
-        "price": 7400,
-        "amount": 503200,
-        "status": "filled",
-        "reason": "quick_profit",
-        "pnl_pct": 2.78,
-        "pnl_amount": 13600
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "BA",
-        "name": "Boeing",
-        "side": "buy",
-        "quantity": 23,
-        "price": 21300,
-        "amount": 489900,
-        "status": "filled",
-        "reason": "confluence=0.2",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "AAPL",
-        "name": "Apple",
-        "side": "buy",
-        "quantity": 19,
-        "price": 25200,
-        "amount": 478800,
-        "status": "filled",
-        "reason": "confluence=0.3",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "JPM",
-        "name": "JPMorgan",
-        "side": "buy",
-        "quantity": 17,
-        "price": 28500,
-        "amount": 484500,
-        "status": "filled",
-        "reason": "confluence=0.4",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "META",
-        "name": "Meta",
-        "side": "buy",
-        "quantity": 7,
-        "price": 62700,
-        "amount": 438900,
-        "status": "filled",
-        "reason": "confluence=0.7",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "BAC",
-        "name": "BankOfAmerica",
-        "side": "buy",
-        "quantity": 106,
-        "price": 4700,
-        "amount": 498200,
-        "status": "filled",
-        "reason": "confluence=0.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "QCOM",
-        "name": "Qualcomm",
-        "side": "buy",
-        "quantity": 38,
-        "price": 12900,
-        "amount": 490200,
-        "status": "filled",
-        "reason": "confluence=0.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "GM",
-        "name": "GM",
-        "side": "buy",
-        "quantity": 68,
-        "price": 7200,
-        "amount": 489600,
-        "status": "filled",
-        "reason": "confluence=1.0",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "DIS",
-        "name": "Disney",
-        "side": "buy",
-        "quantity": 50,
-        "price": 9800,
-        "amount": 490000,
-        "status": "filled",
-        "reason": "confluence=1.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "PG",
-        "name": "Procter&Gamble",
-        "side": "buy",
-        "quantity": 32,
-        "price": 15100,
-        "amount": 483200,
-        "status": "filled",
-        "reason": "confluence=1.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      },
-      {
-        "date": "2026-03-17",
-        "ticker": "GS",
-        "name": "GoldmanSachs",
-        "side": "buy",
-        "quantity": 6,
-        "price": 79300,
-        "amount": 475800,
-        "status": "filled",
-        "reason": "confluence=1.8",
-        "pnl_pct": null,
-        "pnl_amount": null
-      }
-    ],
-    "current_positions": [
-      {
-        "ticker": "PG",
-        "name": "Procter&Gamble",
-        "phase": 1,
-        "entry_price": 151,
-        "entry_date": "2026-03-17",
-        "stop_loss": 145,
-        "target1": 157,
-        "target2": 161,
-        "highest_close": 153,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "META",
-        "name": "Meta",
-        "phase": 1,
-        "entry_price": 627,
-        "entry_date": "2026-03-17",
-        "stop_loss": 597,
-        "target1": 667,
-        "target2": 697,
-        "highest_close": 634,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "JPM",
-        "name": "JPMorgan",
-        "phase": 1,
-        "entry_price": 285,
-        "entry_date": "2026-03-17",
-        "stop_loss": 273,
-        "target1": 301,
-        "target2": 313,
-        "highest_close": 290,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "AAPL",
-        "name": "Apple",
-        "phase": 1,
-        "entry_price": 252,
-        "entry_date": "2026-03-17",
-        "stop_loss": 243,
-        "target1": 264,
-        "target2": 273,
-        "highest_close": 254,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "BA",
-        "name": "Boeing",
-        "phase": 1,
-        "entry_price": 213,
-        "entry_date": "2026-03-17",
-        "stop_loss": 202,
-        "target1": 227,
-        "target2": 237,
-        "highest_close": 216,
-        "weight_pct": 5.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "TSLA",
-        "name": "Tesla",
-        "phase": 1,
-        "entry_price": 397,
-        "entry_date": "2026-03-18",
-        "stop_loss": 377,
-        "target1": 404,
-        "target2": 408,
-        "highest_close": 399,
-        "weight_pct": 8.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "AMZN",
-        "name": "Amazon",
-        "phase": 1,
-        "entry_price": 213,
-        "entry_date": "2026-03-18",
-        "stop_loss": 204,
-        "target1": 217,
-        "target2": 219,
-        "highest_close": 214,
-        "weight_pct": 8.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "UNH",
-        "name": "UnitedHealth",
-        "phase": 1,
-        "entry_price": 286,
-        "entry_date": "2026-03-18",
-        "stop_loss": 274,
-        "target1": 291,
-        "target2": 294,
-        "highest_close": 287,
-        "weight_pct": 8.0,
-        "remaining_pct": 100.0
-      },
-      {
-        "ticker": "QCOM",
-        "name": "Qualcomm",
-        "phase": 1,
-        "entry_price": 131,
-        "entry_date": "2026-03-18",
-        "stop_loss": 125,
-        "target1": 133,
-        "target2": 134,
-        "highest_close": 132,
-        "weight_pct": 8.0,
-        "remaining_pct": 100.0
-      }
-    ],
-    "summary": {
-      "total_trades": 22,
-      "win_rate": 22.7,
-      "total_pnl": 57600,
-      "max_drawdown": 0.8
+      "updated_at": "2026-03-20T04:50:18"
     },
-    "updated_at": "2026-03-19T15:25:15"
+    "kr_meanrev": {
+      "equity": [
+        {
+          "date": "2026-03-16",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-17",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-18",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-19",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        }
+      ],
+      "daily_pnl": [
+        {
+          "date": "2026-03-16",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-17",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-18",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-19",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        }
+      ],
+      "trades": [],
+      "current_positions": [],
+      "summary": {
+        "total_trades": 0,
+        "win_rate": 0.0,
+        "total_pnl": 0,
+        "max_drawdown": 0.0
+      },
+      "updated_at": "2026-03-20T04:50:18"
+    },
+    "us_swing": {
+      "equity": [
+        {
+          "date": "2026-03-14",
+          "total": 9990003,
+          "invested": 540220,
+          "cash": 9449782,
+          "positions": 3
+        },
+        {
+          "date": "2026-03-17",
+          "total": 9998057,
+          "invested": 5386130,
+          "cash": 4611927,
+          "positions": 3
+        },
+        {
+          "date": "2026-03-18",
+          "total": 10043502,
+          "invested": 6751814,
+          "cash": 3291687,
+          "positions": 3
+        },
+        {
+          "date": "2026-03-19",
+          "total": 9963343,
+          "invested": 5870584,
+          "cash": 4092758,
+          "positions": 3
+        },
+        {
+          "date": "2026-03-20",
+          "total": 9907849,
+          "invested": 4888910,
+          "cash": 5018939,
+          "positions": 3
+        }
+      ],
+      "daily_pnl": [
+        {
+          "date": "2026-03-14",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-17",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-18",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-19",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-20",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-03-13",
+          "ticker": "ADBE",
+          "name": "Adobe",
+          "side": "buy",
+          "quantity": 7,
+          "price": 25300,
+          "amount": 177100,
+          "status": "filled",
+          "reason": "confluence=0.0",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-13",
+          "ticker": "META",
+          "name": "Meta",
+          "side": "buy",
+          "quantity": 3,
+          "price": 62600,
+          "amount": 187800,
+          "status": "filled",
+          "reason": "confluence=1.9",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-13",
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "side": "buy",
+          "quantity": 2,
+          "price": 79600,
+          "amount": 159200,
+          "status": "filled",
+          "reason": "confluence=2.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        }
+      ],
+      "current_positions": [
+        {
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "phase": 1,
+          "entry_price": 796,
+          "entry_date": "2026-03-13",
+          "stop_loss": 749,
+          "target1": 858,
+          "target2": 904,
+          "highest_close": 813,
+          "weight_pct": 2.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "META",
+          "name": "Meta",
+          "phase": 1,
+          "entry_price": 626,
+          "entry_date": "2026-03-13",
+          "stop_loss": 597,
+          "target1": 664,
+          "target2": 692,
+          "highest_close": 634,
+          "weight_pct": 2.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "ADBE",
+          "name": "Adobe",
+          "phase": 1,
+          "entry_price": 253,
+          "entry_date": "2026-03-13",
+          "stop_loss": 236,
+          "target1": 275,
+          "target2": 291,
+          "highest_close": 257,
+          "weight_pct": 2.0,
+          "remaining_pct": 100.0
+        }
+      ],
+      "summary": {
+        "total_trades": 0,
+        "win_rate": 0.0,
+        "total_pnl": 0,
+        "max_drawdown": 1.35
+      },
+      "updated_at": "2026-03-20T04:50:18"
+    },
+    "us_meanrev": {
+      "equity": [
+        {
+          "date": "2026-03-17",
+          "total": 9998057,
+          "invested": 5386130,
+          "cash": 4611927,
+          "positions": 10
+        },
+        {
+          "date": "2026-03-18",
+          "total": 10043208,
+          "invested": 6751520,
+          "cash": 3291687,
+          "positions": 10
+        },
+        {
+          "date": "2026-03-19",
+          "total": 9963009,
+          "invested": 5870250,
+          "cash": 4092758,
+          "positions": 9
+        }
+      ],
+      "daily_pnl": [
+        {
+          "date": "2026-03-17",
+          "pnl": 0,
+          "trades": 10,
+          "wins": 0,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-18",
+          "pnl": 41600,
+          "trades": 11,
+          "wins": 4,
+          "losses": 0
+        },
+        {
+          "date": "2026-03-19",
+          "pnl": 16000,
+          "trades": 1,
+          "wins": 1,
+          "losses": 0
+        }
+      ],
+      "trades": [
+        {
+          "date": "2026-03-20",
+          "ticker": "PG",
+          "name": "Procter&Gamble",
+          "side": "sell",
+          "quantity": 32,
+          "price": 14500,
+          "amount": 464000,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -3.97,
+          "pnl_amount": -19200
+        },
+        {
+          "date": "2026-03-19",
+          "ticker": "BA",
+          "name": "Boeing",
+          "side": "sell",
+          "quantity": 23,
+          "price": 20100,
+          "amount": 462300,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -5.63,
+          "pnl_amount": -27600
+        },
+        {
+          "date": "2026-03-19",
+          "ticker": "AMD",
+          "name": "AMD",
+          "side": "sell",
+          "quantity": 40,
+          "price": 20000,
+          "amount": 800000,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 2.04,
+          "pnl_amount": 16000
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "QCOM",
+          "name": "Qualcomm",
+          "side": "buy",
+          "quantity": 61,
+          "price": 13100,
+          "amount": 799100,
+          "status": "filled",
+          "reason": "confluence=0.7",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "BAC",
+          "name": "BankOfAmerica",
+          "side": "sell",
+          "quantity": 72,
+          "price": 4700,
+          "amount": 338400,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": 0.0,
+          "pnl_amount": 0
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "UNH",
+          "name": "UnitedHealth",
+          "side": "buy",
+          "quantity": 28,
+          "price": 28600,
+          "amount": 800800,
+          "status": "filled",
+          "reason": "confluence=0.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "AMZN",
+          "name": "Amazon",
+          "side": "buy",
+          "quantity": 37,
+          "price": 21300,
+          "amount": 788100,
+          "status": "filled",
+          "reason": "confluence=0.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "TSLA",
+          "name": "Tesla",
+          "side": "buy",
+          "quantity": 20,
+          "price": 39700,
+          "amount": 794000,
+          "status": "filled",
+          "reason": "confluence=0.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "BAC",
+          "name": "BankOfAmerica",
+          "side": "sell",
+          "quantity": 34,
+          "price": 4700,
+          "amount": 159800,
+          "status": "filled",
+          "reason": "target1",
+          "pnl_pct": 0.0,
+          "pnl_amount": 0
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "QCOM",
+          "name": "Qualcomm",
+          "side": "sell",
+          "quantity": 38,
+          "price": 13100,
+          "amount": 497800,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.55,
+          "pnl_amount": 7600
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "DIS",
+          "name": "Disney",
+          "side": "sell",
+          "quantity": 50,
+          "price": 10000,
+          "amount": 500000,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 2.04,
+          "pnl_amount": 10000
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "side": "sell",
+          "quantity": 8,
+          "price": 80600,
+          "amount": 644800,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.64,
+          "pnl_amount": 10400
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "AMD",
+          "name": "AMD",
+          "side": "buy",
+          "quantity": 40,
+          "price": 19600,
+          "amount": 784000,
+          "status": "filled",
+          "reason": "confluence=0.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-18",
+          "ticker": "GM",
+          "name": "GM",
+          "side": "sell",
+          "quantity": 68,
+          "price": 7400,
+          "amount": 503200,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 2.78,
+          "pnl_amount": 13600
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "BA",
+          "name": "Boeing",
+          "side": "buy",
+          "quantity": 23,
+          "price": 21300,
+          "amount": 489900,
+          "status": "filled",
+          "reason": "confluence=0.2",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "AAPL",
+          "name": "Apple",
+          "side": "buy",
+          "quantity": 19,
+          "price": 25200,
+          "amount": 478800,
+          "status": "filled",
+          "reason": "confluence=0.3",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "JPM",
+          "name": "JPMorgan",
+          "side": "buy",
+          "quantity": 17,
+          "price": 28500,
+          "amount": 484500,
+          "status": "filled",
+          "reason": "confluence=0.4",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "META",
+          "name": "Meta",
+          "side": "buy",
+          "quantity": 7,
+          "price": 62700,
+          "amount": 438900,
+          "status": "filled",
+          "reason": "confluence=0.7",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "BAC",
+          "name": "BankOfAmerica",
+          "side": "buy",
+          "quantity": 106,
+          "price": 4700,
+          "amount": 498200,
+          "status": "filled",
+          "reason": "confluence=0.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "QCOM",
+          "name": "Qualcomm",
+          "side": "buy",
+          "quantity": 38,
+          "price": 12900,
+          "amount": 490200,
+          "status": "filled",
+          "reason": "confluence=0.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "GM",
+          "name": "GM",
+          "side": "buy",
+          "quantity": 68,
+          "price": 7200,
+          "amount": 489600,
+          "status": "filled",
+          "reason": "confluence=1.0",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "DIS",
+          "name": "Disney",
+          "side": "buy",
+          "quantity": 50,
+          "price": 9800,
+          "amount": 490000,
+          "status": "filled",
+          "reason": "confluence=1.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "PG",
+          "name": "Procter&Gamble",
+          "side": "buy",
+          "quantity": 32,
+          "price": 15100,
+          "amount": 483200,
+          "status": "filled",
+          "reason": "confluence=1.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-17",
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "side": "buy",
+          "quantity": 6,
+          "price": 79300,
+          "amount": 475800,
+          "status": "filled",
+          "reason": "confluence=1.8",
+          "pnl_pct": null,
+          "pnl_amount": null
+        }
+      ],
+      "current_positions": [
+        {
+          "ticker": "META",
+          "name": "Meta",
+          "phase": 1,
+          "entry_price": 627,
+          "entry_date": "2026-03-17",
+          "stop_loss": 597,
+          "target1": 667,
+          "target2": 697,
+          "highest_close": 634,
+          "weight_pct": 5.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "JPM",
+          "name": "JPMorgan",
+          "phase": 1,
+          "entry_price": 285,
+          "entry_date": "2026-03-17",
+          "stop_loss": 273,
+          "target1": 301,
+          "target2": 313,
+          "highest_close": 290,
+          "weight_pct": 5.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "AAPL",
+          "name": "Apple",
+          "phase": 1,
+          "entry_price": 252,
+          "entry_date": "2026-03-17",
+          "stop_loss": 243,
+          "target1": 264,
+          "target2": 273,
+          "highest_close": 254,
+          "weight_pct": 5.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "TSLA",
+          "name": "Tesla",
+          "phase": 1,
+          "entry_price": 397,
+          "entry_date": "2026-03-18",
+          "stop_loss": 377,
+          "target1": 404,
+          "target2": 408,
+          "highest_close": 399,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "AMZN",
+          "name": "Amazon",
+          "phase": 1,
+          "entry_price": 213,
+          "entry_date": "2026-03-18",
+          "stop_loss": 204,
+          "target1": 217,
+          "target2": 219,
+          "highest_close": 214,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "UNH",
+          "name": "UnitedHealth",
+          "phase": 1,
+          "entry_price": 286,
+          "entry_date": "2026-03-18",
+          "stop_loss": 274,
+          "target1": 291,
+          "target2": 294,
+          "highest_close": 287,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "QCOM",
+          "name": "Qualcomm",
+          "phase": 1,
+          "entry_price": 131,
+          "entry_date": "2026-03-18",
+          "stop_loss": 125,
+          "target1": 133,
+          "target2": 134,
+          "highest_close": 132,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        }
+      ],
+      "summary": {
+        "total_trades": 22,
+        "win_rate": 22.7,
+        "total_pnl": 57600,
+        "max_drawdown": 0.8
+      },
+      "updated_at": "2026-03-20T04:50:18"
+    }
   }
 }
