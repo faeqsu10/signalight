@@ -247,6 +247,7 @@ class USAutonomousPipeline:
                 sell_count=0,
                 top_candidates=self._daily_candidates,
                 currency="USD",
+                trade_status_text="장중 모니터링 전",
             )
         except Exception as e:
             logger.warning("스캔 요약 전송 실패: %s", e)

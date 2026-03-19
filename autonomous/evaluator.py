@@ -268,6 +268,7 @@ class PerformanceEvaluator:
         sell_count: int,
         top_candidates: List[Dict],
         currency: str = "KRW",
+        trade_status_text: str = "",
     ) -> None:
         """사이클 스캔 결과 요약을 텔레그램으로 전송한다.
 
@@ -279,6 +280,7 @@ class PerformanceEvaluator:
             sell_count: 매도 체결 건수
             top_candidates: 상위 후보 리스트 (analyze_candidates 결과)
             currency: "KRW" 또는 "USD"
+            trade_status_text: 체결 상태 설명 문구
         """
         chat_id = self._config.auto_trade_chat_id
         if not chat_id:
@@ -309,8 +311,12 @@ class PerformanceEvaluator:
             "━━━━━━━━━━━━━━━━━━",
             f"📊 스캔: {scan_count}종목 후보",
             f"📈 분석: {analyze_count}종목 완료",
-            f"🎯 매수: {buy_count}건, 매도: {sell_count}건",
         ]
+
+        if trade_status_text:
+            lines.append(f"🎯 체결: {trade_status_text}")
+        else:
+            lines.append(f"🎯 매수: {buy_count}건, 매도: {sell_count}건")
 
         # 상위 후보 (최대 5개)
         top = sorted(
