@@ -629,7 +629,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-21T02:35:18"
+      "updated_at": "2026-03-21T02:40:20"
     },
     "kr_position": {
       "equity": [
@@ -714,7 +714,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T02:35:18"
+      "updated_at": "2026-03-21T02:40:20"
     },
     "kr_meanrev": {
       "equity": [
@@ -799,7 +799,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T02:35:18"
+      "updated_at": "2026-03-21T02:40:20"
     },
     "us_swing": {
       "equity": [
@@ -967,7 +967,7 @@
           "stop_loss": 749,
           "target1": 858,
           "target2": 904,
-          "highest_close": 813,
+          "highest_close": 821,
           "weight_pct": 2.0,
           "remaining_pct": 100.0
         },
@@ -1004,7 +1004,7 @@
         "total_pnl": -33000,
         "max_drawdown": 1.89
       },
-      "updated_at": "2026-03-21T02:35:18"
+      "updated_at": "2026-03-21T02:40:20"
     },
     "us_meanrev": {
       "equity": [
@@ -1034,6 +1034,13 @@
           "total": 9877744,
           "invested": 7468078,
           "cash": 2409666,
+          "positions": 10
+        },
+        {
+          "date": "2026-03-21",
+          "total": 9852891,
+          "invested": 4959082,
+          "cash": 4893809,
           "positions": 10
         }
       ],
@@ -1065,9 +1072,68 @@
           "trades": 6,
           "wins": 0,
           "losses": 2
+        },
+        {
+          "date": "2026-03-21",
+          "pnl": -169900,
+          "trades": 4,
+          "wins": 1,
+          "losses": 1
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-21",
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "side": "buy",
+          "quantity": 9,
+          "price": 80600,
+          "amount": 725400,
+          "status": "filled",
+          "reason": "confluence=0.1",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-21",
+          "ticker": "PG",
+          "name": "Procter&Gamble",
+          "side": "buy",
+          "quantity": 54,
+          "price": 14500,
+          "amount": 783000,
+          "status": "filled",
+          "reason": "confluence=0.9",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-21",
+          "ticker": "JPM",
+          "name": "JPMorgan",
+          "side": "sell",
+          "quantity": 17,
+          "price": 28800,
+          "amount": 489600,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.05,
+          "pnl_amount": 5100
+        },
+        {
+          "date": "2026-03-21",
+          "ticker": "META",
+          "name": "Meta",
+          "side": "sell",
+          "quantity": 50,
+          "price": 59200,
+          "amount": 2960000,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -5.58,
+          "pnl_amount": -175000
+        },
         {
           "date": "2026-03-20",
           "ticker": "KO",
@@ -1405,74 +1471,9 @@
           "reason": "confluence=1.0",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "DIS",
-          "name": "Disney",
-          "side": "buy",
-          "quantity": 50,
-          "price": 9800,
-          "amount": 490000,
-          "status": "filled",
-          "reason": "confluence=1.8",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "PG",
-          "name": "Procter&Gamble",
-          "side": "buy",
-          "quantity": 32,
-          "price": 15100,
-          "amount": 483200,
-          "status": "filled",
-          "reason": "confluence=1.8",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "GS",
-          "name": "GoldmanSachs",
-          "side": "buy",
-          "quantity": 6,
-          "price": 79300,
-          "amount": 475800,
-          "status": "filled",
-          "reason": "confluence=1.8",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
-        {
-          "ticker": "META",
-          "name": "Meta",
-          "phase": 1,
-          "entry_price": 627,
-          "entry_date": "2026-03-17",
-          "stop_loss": 597,
-          "target1": 667,
-          "target2": 697,
-          "highest_close": 634,
-          "weight_pct": 5.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "JPM",
-          "name": "JPMorgan",
-          "phase": 1,
-          "entry_price": 285,
-          "entry_date": "2026-03-17",
-          "stop_loss": 273,
-          "target1": 301,
-          "target2": 313,
-          "highest_close": 290,
-          "weight_pct": 5.0,
-          "remaining_pct": 100.0
-        },
         {
           "ticker": "AAPL",
           "name": "Apple",
@@ -1547,7 +1548,7 @@
           "stop_loss": 938,
           "target1": 993,
           "target2": 1003,
-          "highest_close": 974,
+          "highest_close": 980,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
         },
@@ -1576,15 +1577,41 @@
           "highest_close": 75,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
+        },
+        {
+          "ticker": "PG",
+          "name": "Procter&Gamble",
+          "phase": 1,
+          "entry_price": 145,
+          "entry_date": "2026-03-21",
+          "stop_loss": 140,
+          "target1": 147,
+          "target2": 149,
+          "highest_close": 145,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "phase": 1,
+          "entry_price": 806,
+          "entry_date": "2026-03-21",
+          "stop_loss": 765,
+          "target1": 822,
+          "target2": 830,
+          "highest_close": 806,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
         }
       ],
       "summary": {
-        "total_trades": 28,
-        "win_rate": 17.9,
-        "total_pnl": -9600,
-        "max_drawdown": 1.65
+        "total_trades": 32,
+        "win_rate": 18.8,
+        "total_pnl": -179500,
+        "max_drawdown": 1.89
       },
-      "updated_at": "2026-03-21T02:35:18"
+      "updated_at": "2026-03-21T02:40:20"
     }
   }
 }
