@@ -629,7 +629,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-20T22:40:22"
+      "updated_at": "2026-03-20T22:40:49"
     },
     "kr_position": {
       "equity": [
@@ -714,7 +714,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T22:40:22"
+      "updated_at": "2026-03-20T22:40:49"
     },
     "kr_meanrev": {
       "equity": [
@@ -799,7 +799,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T22:40:22"
+      "updated_at": "2026-03-20T22:40:49"
     },
     "us_swing": {
       "equity": [
@@ -990,7 +990,7 @@
         "total_pnl": 0,
         "max_drawdown": 1.69
       },
-      "updated_at": "2026-03-20T22:40:22"
+      "updated_at": "2026-03-20T22:40:49"
     },
     "us_meanrev": {
       "equity": [
@@ -1017,10 +1017,10 @@
         },
         {
           "date": "2026-03-20",
-          "total": 9907744,
-          "invested": 4888805,
-          "cash": 5018939,
-          "positions": 7
+          "total": 9877744,
+          "invested": 7468078,
+          "cash": 2409666,
+          "positions": 10
         }
       ],
       "daily_pnl": [
@@ -1047,13 +1047,78 @@
         },
         {
           "date": "2026-03-20",
-          "pnl": -19200,
-          "trades": 1,
+          "pnl": -67200,
+          "trades": 6,
           "wins": 0,
-          "losses": 1
+          "losses": 2
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-20",
+          "ticker": "KO",
+          "name": "CocaCola",
+          "side": "buy",
+          "quantity": 104,
+          "price": 7500,
+          "amount": 780000,
+          "status": "filled",
+          "reason": "confluence=1.5",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "JNJ",
+          "name": "Johnson&Johnson",
+          "side": "buy",
+          "quantity": 33,
+          "price": 23700,
+          "amount": 782100,
+          "status": "filled",
+          "reason": "confluence=1.5",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "COST",
+          "name": "Costco",
+          "side": "buy",
+          "quantity": 8,
+          "price": 97400,
+          "amount": 779200,
+          "status": "filled",
+          "reason": "confluence=1.7",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "WMT",
+          "name": "Walmart",
+          "side": "buy",
+          "quantity": 65,
+          "price": 12000,
+          "amount": 780000,
+          "status": "filled",
+          "reason": "confluence=2.0",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "TSLA",
+          "name": "Tesla",
+          "side": "sell",
+          "quantity": 20,
+          "price": 37300,
+          "amount": 746000,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -6.05,
+          "pnl_amount": -48000
+        },
         {
           "date": "2026-03-20",
           "ticker": "PG",
@@ -1408,19 +1473,6 @@
           "remaining_pct": 100.0
         },
         {
-          "ticker": "TSLA",
-          "name": "Tesla",
-          "phase": 1,
-          "entry_price": 397,
-          "entry_date": "2026-03-18",
-          "stop_loss": 377,
-          "target1": 404,
-          "target2": 408,
-          "highest_close": 399,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
           "ticker": "AMZN",
           "name": "Amazon",
           "phase": 1,
@@ -1458,15 +1510,67 @@
           "highest_close": 132,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
+        },
+        {
+          "ticker": "WMT",
+          "name": "Walmart",
+          "phase": 1,
+          "entry_price": 120,
+          "entry_date": "2026-03-20",
+          "stop_loss": 114,
+          "target1": 122,
+          "target2": 123,
+          "highest_close": 120,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "COST",
+          "name": "Costco",
+          "phase": 1,
+          "entry_price": 974,
+          "entry_date": "2026-03-20",
+          "stop_loss": 938,
+          "target1": 993,
+          "target2": 1003,
+          "highest_close": 974,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "JNJ",
+          "name": "Johnson&Johnson",
+          "phase": 1,
+          "entry_price": 237,
+          "entry_date": "2026-03-20",
+          "stop_loss": 229,
+          "target1": 241,
+          "target2": 244,
+          "highest_close": 237,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "KO",
+          "name": "CocaCola",
+          "phase": 1,
+          "entry_price": 75,
+          "entry_date": "2026-03-20",
+          "stop_loss": 73,
+          "target1": 76,
+          "target2": 77,
+          "highest_close": 75,
+          "weight_pct": 8.0,
+          "remaining_pct": 100.0
         }
       ],
       "summary": {
-        "total_trades": 23,
-        "win_rate": 21.7,
-        "total_pnl": 38400,
-        "max_drawdown": 1.35
+        "total_trades": 28,
+        "win_rate": 17.9,
+        "total_pnl": -9600,
+        "max_drawdown": 1.65
       },
-      "updated_at": "2026-03-20T22:40:22"
+      "updated_at": "2026-03-20T22:40:49"
     }
   }
 }
