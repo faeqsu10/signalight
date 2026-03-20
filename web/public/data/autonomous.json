@@ -119,10 +119,10 @@
         },
         {
           "date": "2026-03-20",
-          "total": 50194079.2342578,
-          "invested": 5000000,
-          "cash": 45194079.2342578,
-          "positions": 2
+          "total": 10000000,
+          "invested": 0,
+          "cash": 10000000,
+          "positions": 3
         }
       ],
       "daily_pnl": [
@@ -185,12 +185,142 @@
         {
           "date": "2026-03-20",
           "pnl": -94900,
-          "trades": 3,
+          "trades": 13,
           "wins": 0,
           "losses": 1
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 41650,
+          "amount": 83300,
+          "status": "filled",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
         {
           "date": "2026-03-20",
           "ticker": "263750",
@@ -450,136 +580,6 @@
           "reason": "confluence=1.2",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "010140",
-          "name": "삼성중공업",
-          "side": "buy",
-          "quantity": 4,
-          "price": 28900,
-          "amount": 115600,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "078930",
-          "name": "GS",
-          "side": "buy",
-          "quantity": 1,
-          "price": 67100,
-          "amount": 67100,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "010140",
-          "name": "삼성중공업",
-          "side": "buy",
-          "quantity": 4,
-          "price": 28900,
-          "amount": 115600,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "078930",
-          "name": "GS",
-          "side": "buy",
-          "quantity": 1,
-          "price": 67100,
-          "amount": 67100,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "010140",
-          "name": "삼성중공업",
-          "side": "buy",
-          "quantity": 4,
-          "price": 28900,
-          "amount": 115600,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "078930",
-          "name": "GS",
-          "side": "buy",
-          "quantity": 1,
-          "price": 67100,
-          "amount": 67100,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "010140",
-          "name": "삼성중공업",
-          "side": "buy",
-          "quantity": 4,
-          "price": 28900,
-          "amount": 115600,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "078930",
-          "name": "GS",
-          "side": "buy",
-          "quantity": 1,
-          "price": 67100,
-          "amount": 67100,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "010140",
-          "name": "삼성중공업",
-          "side": "buy",
-          "quantity": 4,
-          "price": 28900,
-          "amount": 115600,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "078930",
-          "name": "GS",
-          "side": "buy",
-          "quantity": 1,
-          "price": 66800,
-          "amount": 66800,
-          "status": "rejected",
-          "reason": "confluence=1.2",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
@@ -592,7 +592,7 @@
           "stop_loss": 0,
           "target1": 0,
           "target2": 0,
-          "highest_close": 199300,
+          "highest_close": 199500,
           "weight_pct": 5.0,
           "remaining_pct": 100.0
         },
@@ -605,18 +605,31 @@
           "stop_loss": 0,
           "target1": 0,
           "target2": 0,
-          "highest_close": 37250,
+          "highest_close": 37350,
           "weight_pct": 5.0,
+          "remaining_pct": 100.0
+        },
+        {
+          "ticker": "263750",
+          "name": "펄어비스",
+          "phase": 1,
+          "entry_price": 41650,
+          "entry_date": "2026-03-20",
+          "stop_loss": 38318,
+          "target1": 49091,
+          "target2": 54052,
+          "highest_close": 41650,
+          "weight_pct": 1.2,
           "remaining_pct": 100.0
         }
       ],
       "summary": {
-        "total_trades": 31,
+        "total_trades": 41,
         "win_rate": 0.0,
         "total_pnl": -94900,
-        "max_drawdown": 0.0
+        "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-20T13:30:10"
+      "updated_at": "2026-03-20T14:16:13"
     },
     "kr_position": {
       "equity": [
@@ -687,7 +700,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T13:30:10"
+      "updated_at": "2026-03-20T14:16:13"
     },
     "kr_meanrev": {
       "equity": [
@@ -758,7 +771,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T13:30:10"
+      "updated_at": "2026-03-20T14:16:13"
     },
     "us_swing": {
       "equity": [
@@ -923,7 +936,7 @@
         "total_pnl": 0,
         "max_drawdown": 1.35
       },
-      "updated_at": "2026-03-20T13:30:10"
+      "updated_at": "2026-03-20T14:16:13"
     },
     "us_meanrev": {
       "equity": [
@@ -1399,7 +1412,7 @@
         "total_pnl": 38400,
         "max_drawdown": 1.35
       },
-      "updated_at": "2026-03-20T13:30:10"
+      "updated_at": "2026-03-20T14:16:13"
     }
   }
 }
