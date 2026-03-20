@@ -88,6 +88,13 @@
           "invested": 0,
           "cash": 50000000,
           "positions": 0
+        },
+        {
+          "date": "2026-03-20",
+          "total": 50000000,
+          "invested": 600000,
+          "cash": 49400000,
+          "positions": 1
         }
       ],
       "daily_pnl": [
@@ -118,9 +125,42 @@
           "trades": 0,
           "wins": 0,
           "losses": 0
+        },
+        {
+          "date": "2026-03-20",
+          "pnl": 0,
+          "trades": 2,
+          "wins": 0,
+          "losses": 0
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 2,
+          "price": 43950,
+          "amount": 87900,
+          "status": "rejected",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
+        {
+          "date": "2026-03-20",
+          "ticker": "263750",
+          "name": "펄어비스",
+          "side": "buy",
+          "quantity": 10,
+          "price": 43950,
+          "amount": 439500,
+          "status": "simulated",
+          "reason": "confluence=0.6",
+          "pnl_pct": null,
+          "pnl_amount": null
+        },
         {
           "date": "2026-03-18",
           "ticker": "078930",
@@ -460,14 +500,28 @@
           "pnl_amount": null
         }
       ],
-      "current_positions": [],
+      "current_positions": [
+        {
+          "ticker": "263750",
+          "name": "펄어비스",
+          "phase": 1,
+          "entry_price": 43950,
+          "entry_date": "2026-03-20",
+          "stop_loss": 40434,
+          "target1": 52909,
+          "target2": 58882,
+          "highest_close": 43950,
+          "weight_pct": 1.2,
+          "remaining_pct": 100.0
+        }
+      ],
       "summary": {
-        "total_trades": 26,
+        "total_trades": 28,
         "win_rate": 0.0,
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T04:50:29"
+      "updated_at": "2026-03-20T09:10:15"
     },
     "kr_position": {
       "equity": [
@@ -538,7 +592,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T04:50:29"
+      "updated_at": "2026-03-20T09:10:15"
     },
     "kr_meanrev": {
       "equity": [
@@ -609,7 +663,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T04:50:29"
+      "updated_at": "2026-03-20T09:10:15"
     },
     "us_swing": {
       "equity": [
@@ -774,7 +828,7 @@
         "total_pnl": 0,
         "max_drawdown": 1.35
       },
-      "updated_at": "2026-03-20T04:50:29"
+      "updated_at": "2026-03-20T09:10:15"
     },
     "us_meanrev": {
       "equity": [
@@ -1250,7 +1304,7 @@
         "total_pnl": 38400,
         "max_drawdown": 1.35
       },
-      "updated_at": "2026-03-20T04:50:29"
+      "updated_at": "2026-03-20T09:10:15"
     }
   }
 }
