@@ -629,7 +629,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-21T02:40:20"
+      "updated_at": "2026-03-21T02:45:14"
     },
     "kr_position": {
       "equity": [
@@ -714,7 +714,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T02:40:20"
+      "updated_at": "2026-03-21T02:45:14"
     },
     "kr_meanrev": {
       "equity": [
@@ -799,7 +799,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T02:40:20"
+      "updated_at": "2026-03-21T02:45:14"
     },
     "us_swing": {
       "equity": [
@@ -1004,7 +1004,7 @@
         "total_pnl": -33000,
         "max_drawdown": 1.89
       },
-      "updated_at": "2026-03-21T02:40:20"
+      "updated_at": "2026-03-21T02:45:14"
     },
     "us_meanrev": {
       "equity": [
@@ -1038,10 +1038,10 @@
         },
         {
           "date": "2026-03-21",
-          "total": 9852891,
-          "invested": 4959082,
-          "cash": 4893809,
-          "positions": 10
+          "total": 9852855,
+          "invested": 4220238,
+          "cash": 5632617,
+          "positions": 9
         }
       ],
       "daily_pnl": [
@@ -1075,13 +1075,26 @@
         },
         {
           "date": "2026-03-21",
-          "pnl": -169900,
-          "trades": 4,
-          "wins": 1,
+          "pnl": -157300,
+          "trades": 5,
+          "wins": 2,
           "losses": 1
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-21",
+          "ticker": "GS",
+          "name": "GoldmanSachs",
+          "side": "sell",
+          "quantity": 9,
+          "price": 82000,
+          "amount": 738000,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.74,
+          "pnl_amount": 12600
+        },
         {
           "date": "2026-03-21",
           "ticker": "GS",
@@ -1458,19 +1471,6 @@
           "reason": "confluence=0.8",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "GM",
-          "name": "GM",
-          "side": "buy",
-          "quantity": 68,
-          "price": 7200,
-          "amount": 489600,
-          "status": "filled",
-          "reason": "confluence=1.0",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
@@ -1590,28 +1590,15 @@
           "highest_close": 145,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
-        },
-        {
-          "ticker": "GS",
-          "name": "GoldmanSachs",
-          "phase": 1,
-          "entry_price": 806,
-          "entry_date": "2026-03-21",
-          "stop_loss": 765,
-          "target1": 822,
-          "target2": 830,
-          "highest_close": 806,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
         }
       ],
       "summary": {
-        "total_trades": 32,
-        "win_rate": 18.8,
-        "total_pnl": -179500,
-        "max_drawdown": 1.89
+        "total_trades": 33,
+        "win_rate": 21.2,
+        "total_pnl": -166900,
+        "max_drawdown": 1.9
       },
-      "updated_at": "2026-03-21T02:40:20"
+      "updated_at": "2026-03-21T02:45:14"
     }
   }
 }
