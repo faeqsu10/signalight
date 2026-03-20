@@ -629,7 +629,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-20T22:40:49"
+      "updated_at": "2026-03-21T02:35:18"
     },
     "kr_position": {
       "equity": [
@@ -714,7 +714,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T22:40:49"
+      "updated_at": "2026-03-21T02:35:18"
     },
     "kr_meanrev": {
       "equity": [
@@ -799,7 +799,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-20T22:40:49"
+      "updated_at": "2026-03-21T02:35:18"
     },
     "us_swing": {
       "equity": [
@@ -837,6 +837,13 @@
           "invested": 5115498,
           "cash": 4758084,
           "positions": 4
+        },
+        {
+          "date": "2026-03-21",
+          "total": 9853490,
+          "invested": 6947723,
+          "cash": 2905767,
+          "positions": 3
         }
       ],
       "daily_pnl": [
@@ -874,9 +881,29 @@
           "trades": 1,
           "wins": 0,
           "losses": 0
+        },
+        {
+          "date": "2026-03-21",
+          "pnl": -33000,
+          "trades": 1,
+          "wins": 0,
+          "losses": 1
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-21",
+          "ticker": "META",
+          "name": "Meta",
+          "side": "sell",
+          "quantity": 10,
+          "price": 59300,
+          "amount": 593000,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -5.27,
+          "pnl_amount": -33000
+        },
         {
           "date": "2026-03-20",
           "ticker": "JNJ",
@@ -945,19 +972,6 @@
           "remaining_pct": 100.0
         },
         {
-          "ticker": "META",
-          "name": "Meta",
-          "phase": 1,
-          "entry_price": 626,
-          "entry_date": "2026-03-13",
-          "stop_loss": 597,
-          "target1": 664,
-          "target2": 692,
-          "highest_close": 634,
-          "weight_pct": 2.0,
-          "remaining_pct": 100.0
-        },
-        {
           "ticker": "ADBE",
           "name": "Adobe",
           "phase": 1,
@@ -985,12 +999,12 @@
         }
       ],
       "summary": {
-        "total_trades": 1,
+        "total_trades": 2,
         "win_rate": 0.0,
-        "total_pnl": 0,
-        "max_drawdown": 1.69
+        "total_pnl": -33000,
+        "max_drawdown": 1.89
       },
-      "updated_at": "2026-03-20T22:40:49"
+      "updated_at": "2026-03-21T02:35:18"
     },
     "us_meanrev": {
       "equity": [
@@ -1570,7 +1584,7 @@
         "total_pnl": -9600,
         "max_drawdown": 1.65
       },
-      "updated_at": "2026-03-20T22:40:49"
+      "updated_at": "2026-03-21T02:35:18"
     }
   }
 }
