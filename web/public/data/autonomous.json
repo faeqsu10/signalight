@@ -123,6 +123,13 @@
           "invested": 83600,
           "cash": 10000000,
           "positions": 3
+        },
+        {
+          "date": "2026-03-23",
+          "total": 9999253,
+          "invested": 83600,
+          "cash": 10000000,
+          "positions": 3
         }
       ],
       "daily_pnl": [
@@ -188,6 +195,13 @@
           "trades": 13,
           "wins": 0,
           "losses": 1
+        },
+        {
+          "date": "2026-03-23",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
         }
       ],
       "trades": [
@@ -618,7 +632,7 @@
           "stop_loss": 38318,
           "target1": 49091,
           "target2": 54052,
-          "highest_close": 41700,
+          "highest_close": 43650,
           "weight_pct": 1.2,
           "remaining_pct": 100.0
         }
@@ -629,7 +643,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-21T04:50:28"
+      "updated_at": "2026-03-23T15:25:07"
     },
     "kr_position": {
       "equity": [
@@ -714,7 +728,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T04:50:28"
+      "updated_at": "2026-03-23T15:25:07"
     },
     "kr_meanrev": {
       "equity": [
@@ -799,7 +813,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-21T04:50:28"
+      "updated_at": "2026-03-23T15:25:07"
     },
     "us_swing": {
       "equity": [
@@ -1004,7 +1018,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.19
       },
-      "updated_at": "2026-03-21T04:50:28"
+      "updated_at": "2026-03-23T15:25:07"
     },
     "us_meanrev": {
       "equity": [
@@ -1598,7 +1612,7 @@
         "total_pnl": -166900,
         "max_drawdown": 2.17
       },
-      "updated_at": "2026-03-21T04:50:28"
+      "updated_at": "2026-03-23T15:25:07"
     }
   }
 }
