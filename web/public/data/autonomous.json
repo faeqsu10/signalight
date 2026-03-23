@@ -643,7 +643,7 @@
         "total_pnl": -94900,
         "max_drawdown": 80.0
       },
-      "updated_at": "2026-03-24T00:00:30"
+      "updated_at": "2026-03-24T02:40:28"
     },
     "kr_position": {
       "equity": [
@@ -742,7 +742,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-24T00:00:30"
+      "updated_at": "2026-03-24T02:40:28"
     },
     "kr_meanrev": {
       "equity": [
@@ -841,7 +841,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-24T00:00:30"
+      "updated_at": "2026-03-24T02:40:28"
     },
     "us_swing": {
       "equity": [
@@ -1046,7 +1046,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.19
       },
-      "updated_at": "2026-03-24T00:00:30"
+      "updated_at": "2026-03-24T02:40:28"
     },
     "us_meanrev": {
       "equity": [
@@ -1087,10 +1087,10 @@
         },
         {
           "date": "2026-03-24",
-          "total": 9795571,
-          "invested": 4162956,
-          "cash": 5632615,
-          "positions": 8
+          "total": 9782522,
+          "invested": 2883227,
+          "cash": 6899295,
+          "positions": 7
         }
       ],
       "daily_pnl": [
@@ -1131,13 +1131,26 @@
         },
         {
           "date": "2026-03-24",
-          "pnl": -2000,
-          "trades": 1,
+          "pnl": -41200,
+          "trades": 2,
           "wins": 0,
-          "losses": 1
+          "losses": 2
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-24",
+          "ticker": "UNH",
+          "name": "UnitedHealth",
+          "side": "sell",
+          "quantity": 28,
+          "price": 27200,
+          "amount": 761600,
+          "status": "filled",
+          "reason": "stop_loss",
+          "pnl_pct": -4.9,
+          "pnl_amount": -39200
+        },
         {
           "date": "2026-03-24",
           "ticker": "AAPL",
@@ -1514,19 +1527,6 @@
           "reason": "confluence=0.7",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "BAC",
-          "name": "BankOfAmerica",
-          "side": "buy",
-          "quantity": 106,
-          "price": 4700,
-          "amount": 498200,
-          "status": "filled",
-          "reason": "confluence=0.8",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
@@ -1540,19 +1540,6 @@
           "target1": 217,
           "target2": 219,
           "highest_close": 214,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "UNH",
-          "name": "UnitedHealth",
-          "phase": 1,
-          "entry_price": 286,
-          "entry_date": "2026-03-18",
-          "stop_loss": 274,
-          "target1": 291,
-          "target2": 294,
-          "highest_close": 287,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
         },
@@ -1636,12 +1623,12 @@
         }
       ],
       "summary": {
-        "total_trades": 34,
-        "win_rate": 20.6,
-        "total_pnl": -168900,
-        "max_drawdown": 2.47
+        "total_trades": 35,
+        "win_rate": 20.0,
+        "total_pnl": -208100,
+        "max_drawdown": 2.6
       },
-      "updated_at": "2026-03-24T00:00:30"
+      "updated_at": "2026-03-24T02:40:28"
     }
   }
 }
