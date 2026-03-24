@@ -657,7 +657,7 @@
         "total_pnl": 236900,
         "max_drawdown": 80.01
       },
-      "updated_at": "2026-03-25T00:00:36"
+      "updated_at": "2026-03-25T02:40:23"
     },
     "kr_position": {
       "equity": [
@@ -770,7 +770,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T00:00:36"
+      "updated_at": "2026-03-25T02:40:23"
     },
     "kr_meanrev": {
       "equity": [
@@ -883,7 +883,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T00:00:36"
+      "updated_at": "2026-03-25T02:40:23"
     },
     "us_swing": {
       "equity": [
@@ -1102,7 +1102,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.78
       },
-      "updated_at": "2026-03-25T00:00:36"
+      "updated_at": "2026-03-25T02:40:23"
     },
     "us_meanrev": {
       "equity": [
@@ -1150,10 +1150,10 @@
         },
         {
           "date": "2026-03-25",
-          "total": 9818973,
-          "invested": 1367919,
-          "cash": 8451053,
-          "positions": 5
+          "total": 9823486,
+          "invested": 576313,
+          "cash": 9247173,
+          "positions": 4
         }
       ],
       "daily_pnl": [
@@ -1201,13 +1201,26 @@
         },
         {
           "date": "2026-03-25",
-          "pnl": -40500,
-          "trades": 2,
-          "wins": 0,
+          "pnl": -27500,
+          "trades": 3,
+          "wins": 1,
           "losses": 2
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-25",
+          "ticker": "WMT",
+          "name": "Walmart",
+          "side": "sell",
+          "quantity": 65,
+          "price": 12200,
+          "amount": 793000,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.67,
+          "pnl_amount": 13000
+        },
         {
           "date": "2026-03-25",
           "ticker": "QCOM",
@@ -1584,35 +1597,9 @@
           "reason": "confluence=0.2",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "AAPL",
-          "name": "Apple",
-          "side": "buy",
-          "quantity": 19,
-          "price": 25200,
-          "amount": 478800,
-          "status": "filled",
-          "reason": "confluence=0.3",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
-        {
-          "ticker": "WMT",
-          "name": "Walmart",
-          "phase": 1,
-          "entry_price": 120,
-          "entry_date": "2026-03-20",
-          "stop_loss": 114,
-          "target1": 122,
-          "target2": 123,
-          "highest_close": 120,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
         {
           "ticker": "COST",
           "name": "Costco",
@@ -1667,12 +1654,12 @@
         }
       ],
       "summary": {
-        "total_trades": 37,
-        "win_rate": 18.9,
-        "total_pnl": -248600,
+        "total_trades": 38,
+        "win_rate": 21.1,
+        "total_pnl": -235600,
         "max_drawdown": 2.77
       },
-      "updated_at": "2026-03-25T00:00:36"
+      "updated_at": "2026-03-25T02:40:23"
     }
   }
 }
