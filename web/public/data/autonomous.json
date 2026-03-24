@@ -657,7 +657,7 @@
         "total_pnl": 236900,
         "max_drawdown": 80.01
       },
-      "updated_at": "2026-03-24T15:25:26"
+      "updated_at": "2026-03-25T00:00:36"
     },
     "kr_position": {
       "equity": [
@@ -770,7 +770,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-24T15:25:26"
+      "updated_at": "2026-03-25T00:00:36"
     },
     "kr_meanrev": {
       "equity": [
@@ -883,7 +883,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-24T15:25:26"
+      "updated_at": "2026-03-25T00:00:36"
     },
     "us_swing": {
       "equity": [
@@ -1102,7 +1102,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.78
       },
-      "updated_at": "2026-03-24T15:25:26"
+      "updated_at": "2026-03-25T00:00:36"
     },
     "us_meanrev": {
       "equity": [
@@ -1147,6 +1147,13 @@
           "invested": 2865640,
           "cash": 6899295,
           "positions": 7
+        },
+        {
+          "date": "2026-03-25",
+          "total": 9818973,
+          "invested": 1367919,
+          "cash": 8451053,
+          "positions": 5
         }
       ],
       "daily_pnl": [
@@ -1191,9 +1198,42 @@
           "trades": 2,
           "wins": 0,
           "losses": 2
+        },
+        {
+          "date": "2026-03-25",
+          "pnl": -40500,
+          "trades": 2,
+          "wins": 0,
+          "losses": 2
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-25",
+          "ticker": "QCOM",
+          "name": "Qualcomm",
+          "side": "sell",
+          "quantity": 61,
+          "price": 12800,
+          "amount": 780800,
+          "status": "filled",
+          "reason": "time_exit",
+          "pnl_pct": -2.29,
+          "pnl_amount": -18300
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "AMZN",
+          "name": "Amazon",
+          "side": "sell",
+          "quantity": 37,
+          "price": 20700,
+          "amount": 765900,
+          "status": "filled",
+          "reason": "time_exit",
+          "pnl_pct": -2.82,
+          "pnl_amount": -22200
+        },
         {
           "date": "2026-03-24",
           "ticker": "UNH",
@@ -1557,61 +1597,9 @@
           "reason": "confluence=0.3",
           "pnl_pct": null,
           "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "JPM",
-          "name": "JPMorgan",
-          "side": "buy",
-          "quantity": 17,
-          "price": 28500,
-          "amount": 484500,
-          "status": "filled",
-          "reason": "confluence=0.4",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "META",
-          "name": "Meta",
-          "side": "buy",
-          "quantity": 7,
-          "price": 62700,
-          "amount": 438900,
-          "status": "filled",
-          "reason": "confluence=0.7",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
-        {
-          "ticker": "AMZN",
-          "name": "Amazon",
-          "phase": 1,
-          "entry_price": 213,
-          "entry_date": "2026-03-18",
-          "stop_loss": 204,
-          "target1": 217,
-          "target2": 219,
-          "highest_close": 214,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "QCOM",
-          "name": "Qualcomm",
-          "phase": 1,
-          "entry_price": 131,
-          "entry_date": "2026-03-18",
-          "stop_loss": 125,
-          "target1": 133,
-          "target2": 134,
-          "highest_close": 132,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
         {
           "ticker": "WMT",
           "name": "Walmart",
@@ -1679,12 +1667,12 @@
         }
       ],
       "summary": {
-        "total_trades": 35,
-        "win_rate": 20.0,
-        "total_pnl": -208100,
+        "total_trades": 37,
+        "win_rate": 18.9,
+        "total_pnl": -248600,
         "max_drawdown": 2.77
       },
-      "updated_at": "2026-03-24T15:25:26"
+      "updated_at": "2026-03-25T00:00:36"
     }
   }
 }
