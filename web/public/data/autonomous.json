@@ -671,7 +671,7 @@
         "total_pnl": 1101375,
         "max_drawdown": 80.01
       },
-      "updated_at": "2026-03-25T15:25:13"
+      "updated_at": "2026-03-26T02:35:23"
     },
     "kr_position": {
       "equity": [
@@ -798,7 +798,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T15:25:13"
+      "updated_at": "2026-03-26T02:35:23"
     },
     "kr_meanrev": {
       "equity": [
@@ -925,7 +925,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T15:25:13"
+      "updated_at": "2026-03-26T02:35:23"
     },
     "us_swing": {
       "equity": [
@@ -1121,7 +1121,7 @@
           "stop_loss": 749,
           "target1": 858,
           "target2": 904,
-          "highest_close": 838,
+          "highest_close": 851,
           "weight_pct": 2.0,
           "remaining_pct": 100.0
         },
@@ -1158,7 +1158,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.78
       },
-      "updated_at": "2026-03-25T15:25:13"
+      "updated_at": "2026-03-26T02:35:23"
     },
     "us_meanrev": {
       "equity": [
@@ -1210,6 +1210,13 @@
           "invested": 565419,
           "cash": 9247173,
           "positions": 4
+        },
+        {
+          "date": "2026-03-26",
+          "total": 9815253,
+          "invested": -59166,
+          "cash": 9874420,
+          "positions": 3
         }
       ],
       "daily_pnl": [
@@ -1261,9 +1268,29 @@
           "trades": 3,
           "wins": 1,
           "losses": 2
+        },
+        {
+          "date": "2026-03-26",
+          "pnl": 17600,
+          "trades": 1,
+          "wins": 1,
+          "losses": 0
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-26",
+          "ticker": "JNJ",
+          "name": "Johnson&Johnson",
+          "side": "sell",
+          "quantity": 44,
+          "price": 24100,
+          "amount": 1060400,
+          "status": "filled",
+          "reason": "quick_profit",
+          "pnl_pct": 1.69,
+          "pnl_amount": 17600
+        },
         {
           "date": "2026-03-25",
           "ticker": "WMT",
@@ -1640,19 +1667,6 @@
           "reason": "quick_profit",
           "pnl_pct": 2.78,
           "pnl_amount": 13600
-        },
-        {
-          "date": "2026-03-17",
-          "ticker": "BA",
-          "name": "Boeing",
-          "side": "buy",
-          "quantity": 23,
-          "price": 21300,
-          "amount": 489900,
-          "status": "filled",
-          "reason": "confluence=0.2",
-          "pnl_pct": null,
-          "pnl_amount": null
         }
       ],
       "current_positions": [
@@ -1666,19 +1680,6 @@
           "target1": 993,
           "target2": 1003,
           "highest_close": 980,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "JNJ",
-          "name": "Johnson&Johnson",
-          "phase": 1,
-          "entry_price": 237,
-          "entry_date": "2026-03-20",
-          "stop_loss": 229,
-          "target1": 241,
-          "target2": 244,
-          "highest_close": 237,
           "weight_pct": 8.0,
           "remaining_pct": 100.0
         },
@@ -1710,12 +1711,12 @@
         }
       ],
       "summary": {
-        "total_trades": 38,
-        "win_rate": 21.1,
-        "total_pnl": -235600,
+        "total_trades": 39,
+        "win_rate": 23.1,
+        "total_pnl": -218000,
         "max_drawdown": 2.77
       },
-      "updated_at": "2026-03-25T15:25:13"
+      "updated_at": "2026-03-26T02:35:23"
     }
   }
 }
