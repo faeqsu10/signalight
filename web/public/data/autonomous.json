@@ -235,29 +235,16 @@
       "trades": [
         {
           "date": "2026-03-25",
-          "ticker": "263750",
-          "name": "펄어비스",
-          "side": "sell",
-          "quantity": 1,
-          "price": 49350,
-          "amount": 49350,
-          "status": "filled",
-          "reason": "target1",
-          "pnl_pct": 18.49,
-          "pnl_amount": 7700
-        },
-        {
-          "date": "2026-03-25",
           "ticker": "036460",
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 36150,
-          "amount": 36150,
+          "price": 35950,
+          "amount": 35950,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 0.42,
-          "pnl_amount": 150
+          "pnl_pct": -0.14,
+          "pnl_amount": -50
         },
         {
           "date": "2026-03-25",
@@ -265,12 +252,12 @@
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 205000,
-          "amount": 205000,
+          "price": 203000,
+          "amount": 203000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 7.27,
-          "pnl_amount": 13900
+          "pnl_pct": 6.23,
+          "pnl_amount": 11900
         },
         {
           "date": "2026-03-25",
@@ -278,12 +265,12 @@
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 36200,
-          "amount": 36200,
+          "price": 36050,
+          "amount": 36050,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 0.56,
-          "pnl_amount": 200
+          "pnl_pct": 0.14,
+          "pnl_amount": 50
         },
         {
           "date": "2026-03-25",
@@ -304,12 +291,12 @@
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 36200,
-          "amount": 36200,
+          "price": 36050,
+          "amount": 36050,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 0.56,
-          "pnl_amount": 200
+          "pnl_pct": 0.14,
+          "pnl_amount": 50
         },
         {
           "date": "2026-03-25",
@@ -317,12 +304,38 @@
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 202000,
-          "amount": 202000,
+          "price": 202500,
+          "amount": 202500,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 5.7,
-          "pnl_amount": 10900
+          "pnl_pct": 5.97,
+          "pnl_amount": 11400
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "036460",
+          "name": "한국가스공사",
+          "side": "sell",
+          "quantity": 1,
+          "price": 36050,
+          "amount": 36050,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 0.14,
+          "pnl_amount": 50
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "003670",
+          "name": "포스코퓨처엠",
+          "side": "sell",
+          "quantity": 1,
+          "price": 201500,
+          "amount": 201500,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 5.44,
+          "pnl_amount": 10400
         },
         {
           "date": "2026-03-25",
@@ -343,12 +356,12 @@
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 200500,
-          "amount": 200500,
+          "price": 201500,
+          "amount": 201500,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 4.92,
-          "pnl_amount": 9400
+          "pnl_pct": 5.44,
+          "pnl_amount": 10400
         },
         {
           "date": "2026-03-25",
@@ -356,12 +369,12 @@
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 36250,
-          "amount": 36250,
+          "price": 36100,
+          "amount": 36100,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 0.69,
-          "pnl_amount": 250
+          "pnl_pct": 0.28,
+          "pnl_amount": 100
         },
         {
           "date": "2026-03-25",
@@ -395,12 +408,90 @@
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 200500,
-          "amount": 200500,
+          "price": 201000,
+          "amount": 201000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 4.92,
-          "pnl_amount": 9400
+          "pnl_pct": 5.18,
+          "pnl_amount": 9900
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "036460",
+          "name": "한국가스공사",
+          "side": "sell",
+          "quantity": 1,
+          "price": 36150,
+          "amount": 36150,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 0.42,
+          "pnl_amount": 150
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "003670",
+          "name": "포스코퓨처엠",
+          "side": "sell",
+          "quantity": 1,
+          "price": 201000,
+          "amount": 201000,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 5.18,
+          "pnl_amount": 9900
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "036460",
+          "name": "한국가스공사",
+          "side": "sell",
+          "quantity": 1,
+          "price": 36100,
+          "amount": 36100,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 0.28,
+          "pnl_amount": 100
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "003670",
+          "name": "포스코퓨처엠",
+          "side": "sell",
+          "quantity": 1,
+          "price": 201500,
+          "amount": 201500,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 5.44,
+          "pnl_amount": 10400
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "036460",
+          "name": "한국가스공사",
+          "side": "sell",
+          "quantity": 1,
+          "price": 36150,
+          "amount": 36150,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 0.42,
+          "pnl_amount": 150
+        },
+        {
+          "date": "2026-03-25",
+          "ticker": "003670",
+          "name": "포스코퓨처엠",
+          "side": "sell",
+          "quantity": 1,
+          "price": 202000,
+          "amount": 202000,
+          "status": "rejected",
+          "reason": "time_exit",
+          "pnl_pct": 5.7,
+          "pnl_amount": 10900
         },
         {
           "date": "2026-03-25",
@@ -421,207 +512,116 @@
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 199300,
-          "amount": 199300,
+          "price": 202500,
+          "amount": 202500,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 4.29,
-          "pnl_amount": 8200
+          "pnl_pct": 5.97,
+          "pnl_amount": 11400
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "036460",
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 35850,
-          "amount": 35850,
+          "price": 36200,
+          "amount": 36200,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": -0.42,
-          "pnl_amount": -150
+          "pnl_pct": 0.56,
+          "pnl_amount": 200
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "003670",
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 195700,
-          "amount": 195700,
+          "price": 202000,
+          "amount": 202000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 2.41,
-          "pnl_amount": 4600
+          "pnl_pct": 5.7,
+          "pnl_amount": 10900
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "036460",
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 35850,
-          "amount": 35850,
+          "price": 36200,
+          "amount": 36200,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": -0.42,
-          "pnl_amount": -150
+          "pnl_pct": 0.56,
+          "pnl_amount": 200
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "003670",
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 195500,
-          "amount": 195500,
+          "price": 202000,
+          "amount": 202000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 2.3,
-          "pnl_amount": 4400
+          "pnl_pct": 5.7,
+          "pnl_amount": 10900
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "036460",
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 35900,
-          "amount": 35900,
+          "price": 36250,
+          "amount": 36250,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": -0.28,
-          "pnl_amount": -100
+          "pnl_pct": 0.69,
+          "pnl_amount": 250
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "003670",
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 195800,
-          "amount": 195800,
+          "price": 202000,
+          "amount": 202000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 2.46,
-          "pnl_amount": 4700
+          "pnl_pct": 5.7,
+          "pnl_amount": 10900
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "036460",
           "name": "한국가스공사",
           "side": "sell",
           "quantity": 1,
-          "price": 35900,
-          "amount": 35900,
+          "price": 36300,
+          "amount": 36300,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": -0.28,
-          "pnl_amount": -100
+          "pnl_pct": 0.83,
+          "pnl_amount": 300
         },
         {
-          "date": "2026-03-24",
+          "date": "2026-03-25",
           "ticker": "003670",
           "name": "포스코퓨처엠",
           "side": "sell",
           "quantity": 1,
-          "price": 195100,
-          "amount": 195100,
+          "price": 202000,
+          "amount": 202000,
           "status": "rejected",
           "reason": "time_exit",
-          "pnl_pct": 2.09,
-          "pnl_amount": 4000
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "036460",
-          "name": "한국가스공사",
-          "side": "sell",
-          "quantity": 1,
-          "price": 35900,
-          "amount": 35900,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": -0.28,
-          "pnl_amount": -100
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "003670",
-          "name": "포스코퓨처엠",
-          "side": "sell",
-          "quantity": 1,
-          "price": 195500,
-          "amount": 195500,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": 2.3,
-          "pnl_amount": 4400
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "036460",
-          "name": "한국가스공사",
-          "side": "sell",
-          "quantity": 1,
-          "price": 35900,
-          "amount": 35900,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": -0.28,
-          "pnl_amount": -100
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "003670",
-          "name": "포스코퓨처엠",
-          "side": "sell",
-          "quantity": 1,
-          "price": 195200,
-          "amount": 195200,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": 2.15,
-          "pnl_amount": 4100
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "036460",
-          "name": "한국가스공사",
-          "side": "sell",
-          "quantity": 1,
-          "price": 35850,
-          "amount": 35850,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": -0.42,
-          "pnl_amount": -150
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "003670",
-          "name": "포스코퓨처엠",
-          "side": "sell",
-          "quantity": 1,
-          "price": 195300,
-          "amount": 195300,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": 2.2,
-          "pnl_amount": 4200
-        },
-        {
-          "date": "2026-03-24",
-          "ticker": "036460",
-          "name": "한국가스공사",
-          "side": "sell",
-          "quantity": 1,
-          "price": 35850,
-          "amount": 35850,
-          "status": "rejected",
-          "reason": "time_exit",
-          "pnl_pct": -0.42,
-          "pnl_amount": -150
+          "pnl_pct": 5.7,
+          "pnl_amount": 10900
         }
       ],
       "current_positions": [
@@ -634,7 +634,7 @@
           "stop_loss": 0,
           "target1": 0,
           "target2": 0,
-          "highest_close": 205000,
+          "highest_close": 206000,
           "weight_pct": 5.0,
           "remaining_pct": 100.0
         },
@@ -660,7 +660,7 @@
           "stop_loss": 41650,
           "target1": 49091,
           "target2": 54052,
-          "highest_close": 49350,
+          "highest_close": 52200,
           "weight_pct": 1.2,
           "remaining_pct": 100.0
         }
@@ -671,7 +671,7 @@
         "total_pnl": 320050,
         "max_drawdown": 80.01
       },
-      "updated_at": "2026-03-25T09:40:26"
+      "updated_at": "2026-03-25T15:25:03"
     },
     "kr_position": {
       "equity": [
@@ -784,7 +784,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T09:40:26"
+      "updated_at": "2026-03-25T15:25:03"
     },
     "kr_meanrev": {
       "equity": [
@@ -832,6 +832,13 @@
         },
         {
           "date": "2026-03-24",
+          "total": 50000000,
+          "invested": 0,
+          "cash": 50000000,
+          "positions": 0
+        },
+        {
+          "date": "2026-03-25",
           "total": 50000000,
           "invested": 0,
           "cash": 50000000,
@@ -887,6 +894,13 @@
           "trades": 0,
           "wins": 0,
           "losses": 0
+        },
+        {
+          "date": "2026-03-25",
+          "pnl": 0,
+          "trades": 0,
+          "wins": 0,
+          "losses": 0
         }
       ],
       "trades": [],
@@ -897,7 +911,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-25T09:40:26"
+      "updated_at": "2026-03-25T15:25:03"
     },
     "us_swing": {
       "equity": [
@@ -1130,7 +1144,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.78
       },
-      "updated_at": "2026-03-25T09:40:26"
+      "updated_at": "2026-03-25T15:25:03"
     },
     "us_meanrev": {
       "equity": [
@@ -1687,7 +1701,7 @@
         "total_pnl": -235600,
         "max_drawdown": 2.77
       },
-      "updated_at": "2026-03-25T09:40:26"
+      "updated_at": "2026-03-25T15:25:03"
     }
   }
 }
