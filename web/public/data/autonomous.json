@@ -685,7 +685,7 @@
         "total_pnl": 2067400,
         "max_drawdown": 80.01
       },
-      "updated_at": "2026-03-26T15:25:18"
+      "updated_at": "2026-03-27T00:00:13"
     },
     "kr_position": {
       "equity": [
@@ -826,7 +826,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-26T15:25:18"
+      "updated_at": "2026-03-27T00:00:13"
     },
     "kr_meanrev": {
       "equity": [
@@ -967,7 +967,7 @@
         "total_pnl": 0,
         "max_drawdown": 0.0
       },
-      "updated_at": "2026-03-26T15:25:18"
+      "updated_at": "2026-03-27T00:00:13"
     },
     "us_swing": {
       "equity": [
@@ -1214,7 +1214,7 @@
         "total_pnl": -33000,
         "max_drawdown": 2.78
       },
-      "updated_at": "2026-03-26T15:25:18"
+      "updated_at": "2026-03-27T00:00:13"
     },
     "us_meanrev": {
       "equity": [
@@ -1273,6 +1273,13 @@
           "invested": -463144,
           "cash": 10308670,
           "positions": 3
+        },
+        {
+          "date": "2026-03-27",
+          "total": 10000000,
+          "invested": 0,
+          "cash": 10000000,
+          "positions": 0
         }
       ],
       "daily_pnl": [
@@ -1331,9 +1338,55 @@
           "trades": 1,
           "wins": 1,
           "losses": 0
+        },
+        {
+          "date": "2026-03-27",
+          "pnl": -10000,
+          "trades": 3,
+          "wins": 1,
+          "losses": 1
         }
       ],
       "trades": [
+        {
+          "date": "2026-03-27",
+          "ticker": "PG",
+          "name": "Procter&Gamble",
+          "side": "sell",
+          "quantity": 54,
+          "price": 14300,
+          "amount": 772200,
+          "status": "filled",
+          "reason": "time_exit",
+          "pnl_pct": -1.38,
+          "pnl_amount": -10800
+        },
+        {
+          "date": "2026-03-27",
+          "ticker": "KO",
+          "name": "CocaCola",
+          "side": "sell",
+          "quantity": 104,
+          "price": 7500,
+          "amount": 780000,
+          "status": "filled",
+          "reason": "time_exit",
+          "pnl_pct": 0.0,
+          "pnl_amount": 0
+        },
+        {
+          "date": "2026-03-27",
+          "ticker": "COST",
+          "name": "Costco",
+          "side": "sell",
+          "quantity": 8,
+          "price": 97500,
+          "amount": 780000,
+          "status": "filled",
+          "reason": "time_exit",
+          "pnl_pct": 0.1,
+          "pnl_amount": 800
+        },
         {
           "date": "2026-03-26",
           "ticker": "JNJ",
@@ -1684,95 +1737,16 @@
           "reason": "quick_profit",
           "pnl_pct": 2.04,
           "pnl_amount": 10000
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "GS",
-          "name": "GoldmanSachs",
-          "side": "sell",
-          "quantity": 8,
-          "price": 80600,
-          "amount": 644800,
-          "status": "filled",
-          "reason": "quick_profit",
-          "pnl_pct": 1.64,
-          "pnl_amount": 10400
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "AMD",
-          "name": "AMD",
-          "side": "buy",
-          "quantity": 40,
-          "price": 19600,
-          "amount": 784000,
-          "status": "filled",
-          "reason": "confluence=0.2",
-          "pnl_pct": null,
-          "pnl_amount": null
-        },
-        {
-          "date": "2026-03-18",
-          "ticker": "GM",
-          "name": "GM",
-          "side": "sell",
-          "quantity": 68,
-          "price": 7400,
-          "amount": 503200,
-          "status": "filled",
-          "reason": "quick_profit",
-          "pnl_pct": 2.78,
-          "pnl_amount": 13600
         }
       ],
-      "current_positions": [
-        {
-          "ticker": "COST",
-          "name": "Costco",
-          "phase": 1,
-          "entry_price": 974,
-          "entry_date": "2026-03-20",
-          "stop_loss": 938,
-          "target1": 993,
-          "target2": 1003,
-          "highest_close": 980,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "KO",
-          "name": "CocaCola",
-          "phase": 1,
-          "entry_price": 75,
-          "entry_date": "2026-03-20",
-          "stop_loss": 73,
-          "target1": 76,
-          "target2": 77,
-          "highest_close": 75,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        },
-        {
-          "ticker": "PG",
-          "name": "Procter&Gamble",
-          "phase": 1,
-          "entry_price": 145,
-          "entry_date": "2026-03-21",
-          "stop_loss": 140,
-          "target1": 147,
-          "target2": 149,
-          "highest_close": 145,
-          "weight_pct": 8.0,
-          "remaining_pct": 100.0
-        }
-      ],
+      "current_positions": [],
       "summary": {
-        "total_trades": 39,
-        "win_rate": 23.1,
-        "total_pnl": -218000,
+        "total_trades": 42,
+        "win_rate": 23.8,
+        "total_pnl": -228000,
         "max_drawdown": 2.77
       },
-      "updated_at": "2026-03-26T15:25:18"
+      "updated_at": "2026-03-27T00:00:13"
     }
   }
 }
