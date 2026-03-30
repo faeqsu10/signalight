@@ -5,6 +5,8 @@
 한국/미국 주식 매매 시그널 분석 + 자율 트레이딩 시스템.
 기술적 지표, 수급, 매크로, 뉴스 감성을 종합하여 매수/매도 타이밍을 분석합니다.
 
+![메인 대시보드](screenshots/dashboard-main.png)
+
 ## 협업 원칙
 
 - 코드 작성 에이전트와 리뷰/테스트/검증 에이전트는 분리한다.
@@ -36,6 +38,23 @@
 - 회복 분석 (6항목 체크리스트 + 포지션 진단)
 - 자율매매 대시보드 (`/autonomous` — 런타임 DB 우선, 스냅샷 fallback, 체결 시 export 자동 갱신)
 - 백테스트 결과 요약 카드
+
+<details>
+<summary>웹 대시보드 스크린샷 보기</summary>
+
+#### KR Signals 분석 워크스테이션
+![시그널 분석](screenshots/signals.png)
+
+#### Macro Pulse Desk
+![매크로 대시보드](screenshots/macro.png)
+
+#### Autonomous Operations
+![자율매매 대시보드](screenshots/autonomous.png)
+
+#### Big Tech Market Scanner
+![빅테크 스캐너](screenshots/bigtech.png)
+
+</details>
 
 ## 분석 지표
 

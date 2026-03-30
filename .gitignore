@@ -16,6 +16,7 @@ web/.next/
 *.png
 *.jpg
 *.jpeg
+!screenshots/*.png
 logs/
 storage/signalight.db
 storage/signalight.db-wal
